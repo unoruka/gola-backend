@@ -1,1 +1,2848 @@
-a:c,path:u.path??[]})};for(let a of[...e.seen.entries()].reverse())o(a[0]);let n={};if(e.target==="draft-2020-12")n.$schema="https://json-schema.org/draft/2020-12/schema";else if(e.target==="draft-07")n.$schema="http://json-schema.org/draft-07/schema#";else if(e.target==="draft-04")n.$schema="http://json-schema.org/draft-04/schema#";else if(e.target==="openapi-3.0");if(e.external?.uri){let a=e.external.registry.get(t)?.id;if(!a)throw Error("Schema is missing an `id` property");n.$id=e.external.uri(a)}Object.assign(n,r.def??r.schema);let s=e.metadataRegistry.get(t)?.id;if(s!==void 0&&n.id===s)delete n.id;let i=e.external?.defs??{};for(let a of e.seen.entries()){let u=a[1];if(u.def&&u.defId){if(u.def.id===u.defId)delete u.def.id;i[u.defId]=u.def}}if(e.external);else if(Object.keys(i).length>0)if(e.target==="draft-2020-12")n.$defs=i;else n.definitions=i;try{let a=JSON.parse(JSON.stringify(n));return Object.defineProperty(a,"~standard",{value:{...t["~standard"],jsonSchema:{input:ct(t,"input",e.processors),output:ct(t,"output",e.processors)}},enumerable:!1,writable:!1}),a}catch(a){throw Error("Error converting schema to JSON.")}}function me(e,t){let r=t??{seen:new Set};if(r.seen.has(e))return!1;r.seen.add(e);let o=e._zod.def;if(o.type==="transform")return!0;if(o.type==="array")return me(o.element,r);if(o.type==="set")return me(o.valueType,r);if(o.type==="lazy")return me(o.getter(),r);if(o.type==="promise"||o.type==="optional"||o.type==="nonoptional"||o.type==="nullable"||o.type==="readonly"||o.type==="default"||o.type==="prefault")return me(o.innerType,r);if(o.type==="intersection")return me(o.left,r)||me(o.right,r);if(o.type==="record"||o.type==="map")return me(o.keyType,r)||me(o.valueType,r);if(o.type==="pipe"){if(e._zod.traits.has("$ZodCodec"))return!0;return me(o.in,r)||me(o.out,r)}if(o.type==="object"){for(let n in o.shape)if(me(o.shape[n],r))return!0;return!1}if(o.type==="union"){for(let n of o.options)if(me(n,r))return!0;return!1}if(o.type==="tuple"){for(let n of o.items)if(me(n,r))return!0;if(o.rest&&me(o.rest,r))return!0;return!1}return!1}var Hs=(e,t={})=>(r)=>{let o=Ir({...r,processors:t});return re(e,o),Sr(o,e),Pr(o,e)},ct=(e,t,r={})=>(o)=>{let{libraryOptions:n,target:s}=o??{},i=Ir({...n??{},target:s,io:t,processors:r});return re(e,i),Sr(i,e),Pr(i,e)};var vc={guid:"uuid",url:"uri",datetime:"date-time",json_string:"json-string",regex:""},Ys=(e,t,r,o)=>{let n=r;n.type="string";let{minimum:s,maximum:i,format:a,patterns:u,contentEncoding:c}=e._zod.bag;if(typeof s==="number")n.minLength=s;if(typeof i==="number")n.maxLength=i;if(a){if(n.format=vc[a]??a,n.format==="")delete n.format;if(a==="time")delete n.format}if(c)n.contentEncoding=c;if(u&&u.size>0){let d=[...u];if(d.length===1)n.pattern=d[0].source;else if(d.length>1)n.allOf=[...d.map((h)=>({...t.target==="draft-07"||t.target==="draft-04"||t.target==="openapi-3.0"?{type:"string"}:{},pattern:h.source}))]}},Xs=(e,t,r,o)=>{let n=r,{minimum:s,maximum:i,format:a,multipleOf:u,exclusiveMaximum:c,exclusiveMinimum:d}=e._zod.bag;if(typeof a==="string"&&a.includes("int"))n.type="integer";else n.type="number";let h=typeof d==="number"&&d>=(s??Number.NEGATIVE_INFINITY),y=typeof c==="number"&&c<=(i??Number.POSITIVE_INFINITY),b=t.target==="draft-04"||t.target==="openapi-3.0";if(h)if(b)n.minimum=d,n.exclusiveMinimum=!0;else n.exclusiveMinimum=d;else if(typeof s==="number")n.minimum=s;if(y)if(b)n.maximum=c,n.exclusiveMaximum=!0;else n.exclusiveMaximum=c;else if(typeof i==="number")n.maximum=i;if(typeof u==="number")n.multipleOf=u},ei=(e,t,r,o)=>{r.type="boolean"};var ti=(e,t,r,o)=>{if(t.target==="openapi-3.0")r.type="string",r.nullable=!0,r.enum=[null];else r.type="null"};var ri=(e,t,r,o)=>{r.not={}};var oi=(e,t,r,o)=>{};var ni=(e,t,r,o)=>{let n=e._zod.def,s=bt(n.entries);if(s.every((i)=>typeof i==="number"))r.type="number";if(s.every((i)=>typeof i==="string"))r.type="string";r.enum=s},si=(e,t,r,o)=>{let n=e._zod.def,s=[];for(let i of n.values)if(i===void 0){if(t.unrepresentable==="throw")throw Error("Literal `undefined` cannot be represented in JSON Schema")}else if(typeof i==="bigint")if(t.unrepresentable==="throw")throw Error("BigInt literals cannot be represented in JSON Schema");else s.push(Number(i));else s.push(i);if(s.length===0);else if(s.length===1){let i=s[0];if(r.type=i===null?"null":typeof i,t.target==="draft-04"||t.target==="openapi-3.0")r.enum=[i];else r.const=i}else{if(s.every((i)=>typeof i==="number"))r.type="number";if(s.every((i)=>typeof i==="string"))r.type="string";if(s.every((i)=>typeof i==="boolean"))r.type="boolean";if(s.every((i)=>i===null))r.type="null";r.enum=s}};var ii=(e,t,r,o)=>{if(t.unrepresentable==="throw")throw Error("Custom types cannot be represented in JSON Schema")};var ai=(e,t,r,o)=>{if(t.unrepresentable==="throw")throw Error("Transforms cannot be represented in JSON Schema")};var ci=(e,t,r,o)=>{let n=r,s=e._zod.def,{minimum:i,maximum:a}=e._zod.bag;if(typeof i==="number")n.minItems=i;if(typeof a==="number")n.maxItems=a;n.type="array",n.items=re(s.element,t,{...o,path:[...o.path,"items"]})},ui=(e,t,r,o)=>{let n=r,s=e._zod.def;n.type="object",n.properties={};let i=s.shape;for(let c in i)n.properties[c]=re(i[c],t,{...o,path:[...o.path,"properties",c]});let a=new Set(Object.keys(i)),u=new Set([...a].filter((c)=>{let d=s.shape[c]._zod;if(t.io==="input")return d.optin===void 0;else return d.optout===void 0}));if(u.size>0)n.required=Array.from(u);if(s.catchall?._zod.def.type==="never")n.additionalProperties=!1;else if(!s.catchall){if(t.io==="output")n.additionalProperties=!1}else if(s.catchall)n.additionalProperties=re(s.catchall,t,{...o,path:[...o.path,"additionalProperties"]})},li=(e,t,r,o)=>{let n=e._zod.def,s=n.inclusive===!1,i=n.options.map((a,u)=>re(a,t,{...o,path:[...o.path,s?"oneOf":"anyOf",u]}));if(s)r.oneOf=i;else r.anyOf=i},di=(e,t,r,o)=>{let n=e._zod.def,s=re(n.left,t,{...o,path:[...o.path,"allOf",0]}),i=re(n.right,t,{...o,path:[...o.path,"allOf",1]}),a=(c)=>("allOf"in c)&&Object.keys(c).length===1,u=[...a(s)?s.allOf:[s],...a(i)?i.allOf:[i]];r.allOf=u};var pi=(e,t,r,o)=>{let n=e._zod.def,s=re(n.innerType,t,o),i=t.seen.get(e);if(t.target==="openapi-3.0")i.ref=n.innerType,r.nullable=!0;else r.anyOf=[s,{type:"null"}]},mi=(e,t,r,o)=>{let n=e._zod.def;re(n.innerType,t,o);let s=t.seen.get(e);s.ref=n.innerType},fi=(e,t,r,o)=>{let n=e._zod.def;re(n.innerType,t,o);let s=t.seen.get(e);s.ref=n.innerType,r.default=JSON.parse(JSON.stringify(n.defaultValue))},hi=(e,t,r,o)=>{let n=e._zod.def;re(n.innerType,t,o);let s=t.seen.get(e);if(s.ref=n.innerType,t.io==="input")r._prefault=JSON.parse(JSON.stringify(n.defaultValue))},gi=(e,t,r,o)=>{let n=e._zod.def;re(n.innerType,t,o);let s=t.seen.get(e);s.ref=n.innerType;let i;try{i=n.catchValue(void 0)}catch{throw Error("Dynamic catch values are not supported in JSON Schema")}r.default=i},wi=(e,t,r,o)=>{let n=e._zod.def,s=n.in._zod.traits.has("$ZodTransform"),i=t.io==="input"?s?n.out:n.in:n.out;re(i,t,o);let a=t.seen.get(e);a.ref=i},yi=(e,t,r,o)=>{let n=e._zod.def;re(n.innerType,t,o);let s=t.seen.get(e);s.ref=n.innerType,r.readOnly=!0};var Ar=(e,t,r,o)=>{let n=e._zod.def;re(n.innerType,t,o);let s=t.seen.get(e);s.ref=n.innerType};var Pc=p("ZodISODateTime",(e,t)=>{Tn.init(e,t),V.init(e,t)});function _i(e){return Rs(Pc,e)}var Ac=p("ZodISODate",(e,t)=>{Cn.init(e,t),V.init(e,t)});function bi(e){return Fs(Ac,e)}var Zc=p("ZodISOTime",(e,t)=>{On.init(e,t),V.init(e,t)});function vi(e){return Ls(Zc,e)}var Nc=p("ZodISODuration",(e,t)=>{En.init(e,t),V.init(e,t)});function xi(e){return Us(Nc,e)}var Oc=(e,t)=>{It.init(e,t),e.name="ZodError",Object.defineProperties(e,{format:{value:(r)=>lo(e,r)},flatten:{value:(r)=>uo(e,r)},addIssue:{value:(r)=>{e.issues.push(r),e.message=JSON.stringify(e.issues,rt,2)}},addIssues:{value:(r)=>{e.issues.push(...r),e.message=JSON.stringify(e.issues,rt,2)}},isEmpty:{get(){return e.issues.length===0}}})};var ye=p("ZodError",Oc,{Parent:Error});var zi=St(ye),ki=Pt(ye),$i=ot(ye),Ii=nt(ye),Si=fo(ye),Pi=ho(ye),Ai=go(ye),Zi=wo(ye),Ni=yo(ye),Ti=_o(ye),Ci=bo(ye),Oi=vo(ye);var Ei=new WeakMap;function ut(e,t,r){let o=Object.getPrototypeOf(e),n=Ei.get(o);if(!n)n=new Set,Ei.set(o,n);if(n.has(t))return;n.add(t);for(let s in r){let i=r[s];Object.defineProperty(o,s,{configurable:!0,enumerable:!1,get(){let a=i.bind(this);return Object.defineProperty(this,s,{configurable:!0,writable:!0,enumerable:!0,value:a}),a},set(a){Object.defineProperty(this,s,{configurable:!0,writable:!0,enumerable:!0,value:a})}})}}var M=p("ZodType",(e,t)=>(B.init(e,t),Object.assign(e["~standard"],{jsonSchema:{input:ct(e,"input"),output:ct(e,"output")}}),e.toJSONSchema=Hs(e,{}),e.def=t,e.type=t.type,Object.defineProperty(e,"_def",{value:t}),e.parse=(r,o)=>zi(e,r,o,{callee:e.parse}),e.safeParse=(r,o)=>$i(e,r,o),e.parseAsync=async(r,o)=>ki(e,r,o,{callee:e.parseAsync}),e.safeParseAsync=async(r,o)=>Ii(e,r,o),e.spa=e.safeParseAsync,e.encode=(r,o)=>Si(e,r,o),e.decode=(r,o)=>Pi(e,r,o),e.encodeAsync=async(r,o)=>Ai(e,r,o),e.decodeAsync=async(r,o)=>Zi(e,r,o),e.safeEncode=(r,o)=>Ni(e,r,o),e.safeDecode=(r,o)=>Ti(e,r,o),e.safeEncodeAsync=async(r,o)=>Ci(e,r,o),e.safeDecodeAsync=async(r,o)=>Oi(e,r,o),ut(e,"ZodType",{check(...r){let o=this.def;return this.clone(Oe(o,{checks:[...o.checks??[],...r.map((n)=>typeof n==="function"?{_zod:{check:n,def:{check:"custom"},onattach:[]}}:n)]}),{parent:!0})},with(...r){return this.check(...r)},clone(r,o){return ze(this,r,o)},brand(){return this},register(r,o){return r.add(this,o),this},refine(r,o){return this.check(Pu(r,o))},superRefine(r,o){return this.check(Au(r,o))},overwrite(r){return this.check(De(r))},optional(){return Fi(this)},exactOptional(){return hu(this)},nullable(){return Li(this)},nullish(){return Fi(Li(this))},nonoptional(r){return vu(this,r)},array(){return te(this)},or(r){return Lt([this,r])},and(r){return lu(this,r)},transform(r){return Ui(this,mu(r))},default(r){return yu(this,r)},prefault(r){return bu(this,r)},catch(r){return zu(this,r)},pipe(r){return Ui(this,r)},readonly(){return Iu(this)},describe(r){let o=this.clone();return Ve.add(o,{description:r}),o},meta(...r){if(r.length===0)return Ve.get(this);let o=this.clone();return Ve.add(o,r[0]),o},isOptional(){return this.safeParse(void 0).success},isNullable(){return this.safeParse(null).success},apply(r){return r(this)}}),Object.defineProperty(e,"description",{get(){return Ve.get(e)?.description},configurable:!0}),e)),Bi=p("_ZodString",(e,t)=>{Tt.init(e,t),M.init(e,t),e._zod.processJSONSchema=(o,n,s)=>Ys(e,o,n,s);let r=e._zod.bag;e.format=r.format??null,e.minLength=r.minimum??null,e.maxLength=r.maximum??null,ut(e,"_ZodString",{regex(...o){return this.check(hr(...o))},includes(...o){return this.check(yr(...o))},startsWith(...o){return this.check(_r(...o))},endsWith(...o){return this.check(br(...o))},min(...o){return this.check(Qe(...o))},max(...o){return this.check(jt(...o))},length(...o){return this.check(Dt(...o))},nonempty(...o){return this.check(Qe(1,...o))},lowercase(o){return this.check(gr(o))},uppercase(o){return this.check(wr(o))},trim(){return this.check(xr())},normalize(...o){return this.check(vr(...o))},toLowerCase(){return this.check(zr())},toUpperCase(){return this.check(kr())},slugify(){return this.check($r())}})}),jc=p("ZodString",(e,t)=>{Tt.init(e,t),Bi.init(e,t),e.email=(r)=>e.check(ws(Dc,r)),e.url=(r)=>e.check(xs(Rc,r)),e.jwt=(r)=>e.check(Ds(Xc,r)),e.emoji=(r)=>e.check(zs(Fc,r)),e.guid=(r)=>e.check(fr(ji,r)),e.uuid=(r)=>e.check(ys(Ft,r)),e.uuidv4=(r)=>e.check(_s(Ft,r)),e.uuidv6=(r)=>e.check(bs(Ft,r)),e.uuidv7=(r)=>e.check(vs(Ft,r)),e.nanoid=(r)=>e.check(ks(Lc,r)),e.guid=(r)=>e.check(fr(ji,r)),e.cuid=(r)=>e.check($s(Uc,r)),e.cuid2=(r)=>e.check(Is(Bc,r)),e.ulid=(r)=>e.check(Ss(Vc,r)),e.base64=(r)=>e.check(Os(Wc,r)),e.base64url=(r)=>e.check(Es(Hc,r)),e.xid=(r)=>e.check(Ps(qc,r)),e.ksuid=(r)=>e.check(As(Mc,r)),e.ipv4=(r)=>e.check(Zs(Jc,r)),e.ipv6=(r)=>e.check(Ns(Qc,r)),e.cidrv4=(r)=>e.check(Ts(Kc,r)),e.cidrv6=(r)=>e.check(Cs(Gc,r)),e.e164=(r)=>e.check(js(Yc,r)),e.datetime=(r)=>e.check(_i(r)),e.date=(r)=>e.check(bi(r)),e.time=(r)=>e.check(vi(r)),e.duration=(r)=>e.check(xi(r))});function m(e){return gs(jc,e)}var V=p("ZodStringFormat",(e,t)=>{U.init(e,t),Bi.init(e,t)}),Dc=p("ZodEmail",(e,t)=>{zn.init(e,t),V.init(e,t)});var ji=p("ZodGUID",(e,t)=>{vn.init(e,t),V.init(e,t)});var Ft=p("ZodUUID",(e,t)=>{xn.init(e,t),V.init(e,t)});var Rc=p("ZodURL",(e,t)=>{kn.init(e,t),V.init(e,t)});var Fc=p("ZodEmoji",(e,t)=>{$n.init(e,t),V.init(e,t)});var Lc=p("ZodNanoID",(e,t)=>{In.init(e,t),V.init(e,t)});var Uc=p("ZodCUID",(e,t)=>{Sn.init(e,t),V.init(e,t)});var Bc=p("ZodCUID2",(e,t)=>{Pn.init(e,t),V.init(e,t)});var Vc=p("ZodULID",(e,t)=>{An.init(e,t),V.init(e,t)});var qc=p("ZodXID",(e,t)=>{Zn.init(e,t),V.init(e,t)});var Mc=p("ZodKSUID",(e,t)=>{Nn.init(e,t),V.init(e,t)});var Jc=p("ZodIPv4",(e,t)=>{jn.init(e,t),V.init(e,t)});var Qc=p("ZodIPv6",(e,t)=>{Dn.init(e,t),V.init(e,t)});var Kc=p("ZodCIDRv4",(e,t)=>{Rn.init(e,t),V.init(e,t)});var Gc=p("ZodCIDRv6",(e,t)=>{Fn.init(e,t),V.init(e,t)});var Wc=p("ZodBase64",(e,t)=>{Un.init(e,t),V.init(e,t)});var Hc=p("ZodBase64URL",(e,t)=>{Bn.init(e,t),V.init(e,t)});var Yc=p("ZodE164",(e,t)=>{Vn.init(e,t),V.init(e,t)});var Xc=p("ZodJWT",(e,t)=>{qn.init(e,t),V.init(e,t)});var Vi=p("ZodNumber",(e,t)=>{pr.init(e,t),M.init(e,t),e._zod.processJSONSchema=(o,n,s)=>Xs(e,o,n,s),ut(e,"ZodNumber",{gt(o,n){return this.check(Ot(o,n))},gte(o,n){return this.check(at(o,n))},min(o,n){return this.check(at(o,n))},lt(o,n){return this.check(Ct(o,n))},lte(o,n){return this.check(it(o,n))},max(o,n){return this.check(it(o,n))},int(o){return this.check(Di(o))},safe(o){return this.check(Di(o))},positive(o){return this.check(Ot(0,o))},nonnegative(o){return this.check(at(0,o))},negative(o){return this.check(Ct(0,o))},nonpositive(o){return this.check(it(0,o))},multipleOf(o,n){return this.check(Et(o,n))},step(o,n){return this.check(Et(o,n))},finite(){return this}});let r=e._zod.bag;e.minValue=Math.max(r.minimum??Number.NEGATIVE_INFINITY,r.exclusiveMinimum??Number.NEGATIVE_INFINITY)??null,e.maxValue=Math.min(r.maximum??Number.POSITIVE_INFINITY,r.exclusiveMaximum??Number.POSITIVE_INFINITY)??null,e.isInt=(r.format??"").includes("int")||Number.isSafeInteger(r.multipleOf??0.5),e.isFinite=!0,e.format=r.format??null});function S(e){return Bs(Vi,e)}var eu=p("ZodNumberFormat",(e,t)=>{Mn.init(e,t),Vi.init(e,t)});function Di(e){return Vs(eu,e)}var tu=p("ZodBoolean",(e,t)=>{Jn.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ei(e,r,o,n)});function L(e){return qs(tu,e)}var ru=p("ZodNull",(e,t)=>{Qn.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ti(e,r,o,n)});function Nr(e){return Ms(ru,e)}var ou=p("ZodUnknown",(e,t)=>{Kn.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>oi(e,r,o,n)});function Ri(){return Js(ou)}var nu=p("ZodNever",(e,t)=>{Gn.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ri(e,r,o,n)});function su(e){return Qs(nu,e)}var iu=p("ZodArray",(e,t)=>{Wn.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ci(e,r,o,n),e.element=t.element,ut(e,"ZodArray",{min(r,o){return this.check(Qe(r,o))},nonempty(r){return this.check(Qe(1,r))},max(r,o){return this.check(jt(r,o))},length(r,o){return this.check(Dt(r,o))},unwrap(){return this.element}})});function te(e,t){return Ks(iu,e,t)}var au=p("ZodObject",(e,t)=>{Xn.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ui(e,r,o,n),E(e,"shape",()=>t.shape),ut(e,"ZodObject",{keyof(){return D(Object.keys(this._zod.def.shape))},catchall(r){return this.clone({...this._zod.def,catchall:r})},passthrough(){return this.clone({...this._zod.def,catchall:Ri()})},loose(){return this.clone({...this._zod.def,catchall:Ri()})},strict(){return this.clone({...this._zod.def,catchall:su()})},strip(){return this.clone({...this._zod.def,catchall:void 0})},extend(r){return uc(this,r)},safeExtend(r){return lc(this,r)},merge(r){return dc(this,r)},pick(r){return ac(this,r)},omit(r){return cc(this,r)},partial(...r){return pc(qi,this,r[0])},required(...r){return mc(Mi,this,r[0])}})});function g(e,t){let r={type:"object",shape:e??{},...v(t)};return new au(r)}var cu=p("ZodUnion",(e,t)=>{es.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>li(e,r,o,n),e.options=t.options});function Lt(e,t){return new cu({type:"union",options:e,...v(t)})}var uu=p("ZodIntersection",(e,t)=>{ts.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>di(e,r,o,n)});function lu(e,t){return new uu({type:"intersection",left:e,right:t})}var Zr=p("ZodEnum",(e,t)=>{rs.init(e,t),M.init(e,t),e._zod.processJSONSchema=(o,n,s)=>ni(e,o,n,s),e.enum=t.entries,e.options=Object.values(t.entries);let r=new Set(Object.keys(t.entries));e.extract=(o,n)=>{let s={};for(let i of o)if(r.has(i))s[i]=t.entries[i];else throw Error(`Key ${i} not found in enum`);return new Zr({...t,checks:[],...v(n),entries:s})},e.exclude=(o,n)=>{let s={...t.entries};for(let i of o)if(r.has(i))delete s[i];else throw Error(`Key ${i} not found in enum`);return new Zr({...t,checks:[],...v(n),entries:s})}});function D(e,t){let r=Array.isArray(e)?Object.fromEntries(e.map((o)=>[o,o])):e;return new Zr({type:"enum",entries:r,...v(t)})}var du=p("ZodLiteral",(e,t)=>{os.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>si(e,r,o,n),e.values=new Set(t.values),Object.defineProperty(e,"value",{get(){if(t.values.length>1)throw Error("This schema contains multiple valid literal values. Use `.values` instead.");return t.values[0]}})});function Ut(e,t){return new du({type:"literal",values:Array.isArray(e)?e:[e],...v(t)})}var pu=p("ZodTransform",(e,t)=>{ns.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ai(e,r,o,n),e._zod.parse=(r,o)=>{if(o.direction==="backward")throw new et(e.constructor.name);r.addIssue=(s)=>{if(typeof s==="string")r.issues.push(Be(s,r.value,t));else{let i=s;if(i.fatal)i.continue=!1;i.code??(i.code="custom"),i.input??(i.input=r.value),i.inst??(i.inst=e),r.issues.push(Be(i))}};let n=t.transform(r.value,r);if(n instanceof Promise)return n.then((s)=>(r.value=s,r.fallback=!0,r));return r.value=n,r.fallback=!0,r}});function mu(e){return new pu({type:"transform",transform:e})}var qi=p("ZodOptional",(e,t)=>{mr.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>Ar(e,r,o,n),e.unwrap=()=>e._zod.def.innerType});function Fi(e){return new qi({type:"optional",innerType:e})}var fu=p("ZodExactOptional",(e,t)=>{ss.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>Ar(e,r,o,n),e.unwrap=()=>e._zod.def.innerType});function hu(e){return new fu({type:"optional",innerType:e})}var gu=p("ZodNullable",(e,t)=>{is.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>pi(e,r,o,n),e.unwrap=()=>e._zod.def.innerType});function Li(e){return new gu({type:"nullable",innerType:e})}var wu=p("ZodDefault",(e,t)=>{as.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>fi(e,r,o,n),e.unwrap=()=>e._zod.def.innerType,e.removeDefault=e.unwrap});function yu(e,t){return new wu({type:"default",innerType:e,get defaultValue(){return typeof t==="function"?t():nr(t)}})}var _u=p("ZodPrefault",(e,t)=>{cs.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>hi(e,r,o,n),e.unwrap=()=>e._zod.def.innerType});function bu(e,t){return new _u({type:"prefault",innerType:e,get defaultValue(){return typeof t==="function"?t():nr(t)}})}var Mi=p("ZodNonOptional",(e,t)=>{us.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>mi(e,r,o,n),e.unwrap=()=>e._zod.def.innerType});function vu(e,t){return new Mi({type:"nonoptional",innerType:e,...v(t)})}var xu=p("ZodCatch",(e,t)=>{ls.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>gi(e,r,o,n),e.unwrap=()=>e._zod.def.innerType,e.removeCatch=e.unwrap});function zu(e,t){return new xu({type:"catch",innerType:e,catchValue:typeof t==="function"?t:()=>t})}var ku=p("ZodPipe",(e,t)=>{ds.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>wi(e,r,o,n),e.in=t.in,e.out=t.out});function Ui(e,t){return new ku({type:"pipe",in:e,out:t})}var $u=p("ZodReadonly",(e,t)=>{ps.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>yi(e,r,o,n),e.unwrap=()=>e._zod.def.innerType});function Iu(e){return new $u({type:"readonly",innerType:e})}var Su=p("ZodCustom",(e,t)=>{ms.init(e,t),M.init(e,t),e._zod.processJSONSchema=(r,o,n)=>ii(e,r,o,n)});function Pu(e,t={}){return Gs(Su,e,t)}function Au(e,t){return Ws(e,t)}var Tr="@hatch/space-sdk/privileged-contract/v1",Ji="hatch-space-privileged-handlers-v1";function Cr(e){let t={};for(let[r,o]of Object.entries(e))t[r]={__brand:Tr,name:r,request:o.request,response:o.response,...o.capabilities!==void 0?{capabilities:o.capabilities}:{},...o.timeoutMs!==void 0?{timeoutMs:o.timeoutMs}:{}};return t}function Or(e,t){let r=[];for(let[o,n]of Object.entries(t)){if(n===void 0)continue;let s=e[o];if(!Qi(s))throw Error(`privileged handler '${o}' does not have a contract descriptor`);r.push({contract:s,handler:n})}return{format:Ji,entries:r}}function Qi(e){return typeof e==="object"&&e!==null&&"__brand"in e&&e.__brand===Tr}var Ki="@hatch/space-sdk/action/v1";function Gi(){return function(t){return{__brand:Ki,request:t.request,response:t.response,...t.privileged!==void 0?{privileged:t.privileged}:{},handler:t.handler}}}var P=Gi();var _=Symbol.for("drizzle:entityKind");function H(e,t){if(!e||typeof e!=="object")return!1;if(e instanceof t)return!0;if(!Object.prototype.hasOwnProperty.call(t,_))throw Error(`Class "${t.name??"<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`);let r=Object.getPrototypeOf(e).constructor;if(r)while(r){if(_ in r&&r[_]===t[_])return!0;r=Object.getPrototypeOf(r)}return!1}class Re{constructor(e,t){this.table=e,this.config=t,this.name=t.name,this.keyAsName=t.keyAsName,this.notNull=t.notNull,this.default=t.default,this.defaultFn=t.defaultFn,this.onUpdateFn=t.onUpdateFn,this.hasDefault=t.hasDefault,this.primary=t.primaryKey,this.isUnique=t.isUnique,this.uniqueName=t.uniqueName,this.uniqueType=t.uniqueType,this.dataType=t.dataType,this.columnType=t.columnType,this.generated=t.generated,this.generatedIdentity=t.generatedIdentity}static[_]="Column";name;keyAsName;primary;notNull;default;defaultFn;onUpdateFn;hasDefault;isUnique;uniqueName;uniqueType;dataType;columnType;enumValues=void 0;generated=void 0;generatedIdentity=void 0;config;mapFromDriverValue(e){return e}mapToDriverValue(e){return e}shouldDisableInsert(){return this.config.generated!==void 0&&this.config.generated.type!=="byDefault"}}class Er{static[_]="ColumnBuilder";config;constructor(e,t,r){this.config={name:e,keyAsName:e==="",notNull:!1,default:void 0,hasDefault:!1,primaryKey:!1,isUnique:!1,uniqueName:void 0,uniqueType:void 0,dataType:t,columnType:r,generated:void 0}}$type(){return this}notNull(){return this.config.notNull=!0,this}default(e){return this.config.default=e,this.config.hasDefault=!0,this}$defaultFn(e){return this.config.defaultFn=e,this.config.hasDefault=!0,this}$default=this.$defaultFn;$onUpdateFn(e){return this.config.onUpdateFn=e,this.config.hasDefault=!0,this}$onUpdate=this.$onUpdateFn;primaryKey(){return this.config.primaryKey=!0,this.config.notNull=!0,this}setName(e){if(this.config.name!=="")return;this.config.name=e}}var Ze=Symbol.for("drizzle:Name");function Wi(e,...t){return e(...t)}var Hi=Symbol.for("drizzle:isPgEnum");function Yi(e){return!!e&&typeof e==="function"&&Hi in e&&e[Hi]===!0}class Bt{static[_]="Subquery";constructor(e,t,r,o=!1,n=[]){this._={brand:"Subquery",sql:e,selectedFields:t,alias:r,isWith:o,usedTables:n}}}var Xi="0.45.2";var jr,Dr,ea={startActiveSpan(e,t){if(!jr)return t();if(!Dr)Dr=jr.trace.getTracer("drizzle-orm",Xi);return Wi((r,o)=>o.startActiveSpan(e,(n)=>{try{return t(n)}catch(s){throw n.setStatus({code:r.SpanStatusCode.ERROR,message:s instanceof Error?s.message:"Unknown error"}),s}finally{n.end()}}),jr,Dr)}};var Ke=Symbol.for("drizzle:ViewBaseConfig");var Rr=Symbol.for("drizzle:Schema"),ta=Symbol.for("drizzle:Columns"),ra=Symbol.for("drizzle:ExtraConfigColumns"),Fr=Symbol.for("drizzle:OriginalName"),Lr=Symbol.for("drizzle:BaseName"),dt=Symbol.for("drizzle:IsAlias"),oa=Symbol.for("drizzle:ExtraConfigBuilder"),Zu=Symbol.for("drizzle:IsDrizzleTable");class K{static[_]="Table";static Symbol={Name:Ze,Schema:Rr,OriginalName:Fr,Columns:ta,ExtraConfigColumns:ra,BaseName:Lr,IsAlias:dt,ExtraConfigBuilder:oa};[Ze];[Fr];[Rr];[ta];[ra];[Lr];[dt]=!1;[Zu]=!0;[oa]=void 0;constructor(e,t,r){this[Ze]=this[Fr]=e,this[Rr]=t,this[Lr]=r}}function Ur(e){return e!==null&&e!==void 0&&typeof e.getSQL==="function"}function Nu(e){let t={sql:"",params:[]};for(let r of e)if(t.sql+=r.sql,t.params.push(...r.params),r.typings?.length){if(!t.typings)t.typings=[];t.typings.push(...r.typings)}return t}class ue{static[_]="StringChunk";value;constructor(e){this.value=Array.isArray(e)?e:[e]}getSQL(){return new J([this])}}class J{constructor(e){this.queryChunks=e;for(let t of e)if(H(t,K)){let r=t[K.Symbol.Schema];this.usedTables.push(r===void 0?t[K.Symbol.Name]:r+"."+t[K.Symbol.Name])}}static[_]="SQL";decoder=sa;shouldInlineParams=!1;usedTables=[];append(e){return this.queryChunks.push(...e.queryChunks),this}toQuery(e){return ea.startActiveSpan("drizzle.buildSQL",(t)=>{let r=this.buildQueryFromSourceParams(this.queryChunks,e);return t?.setAttributes({"drizzle.query.text":r.sql,"drizzle.query.params":JSON.stringify(r.params)}),r})}buildQueryFromSourceParams(e,t){let r=Object.assign({},t,{inlineParams:t.inlineParams||this.shouldInlineParams,paramStartIndex:t.paramStartIndex||{value:0}}),{casing:o,escapeName:n,escapeParam:s,prepareTyping:i,inlineParams:a,paramStartIndex:u}=r;return Nu(e.map((c)=>{if(H(c,ue))return{sql:c.value.join(""),params:[]};if(H(c,Vt))return{sql:n(c.value),params:[]};if(c===void 0)return{sql:"",params:[]};if(Array.isArray(c)){let d=[new ue("(")];for(let[h,y]of c.entries())if(d.push(y),h<c.length-1)d.push(new ue(", "));return d.push(new ue(")")),this.buildQueryFromSourceParams(d,r)}if(H(c,J))return this.buildQueryFromSourceParams(c.queryChunks,{...r,inlineParams:a||c.shouldInlineParams});if(H(c,K)){let d=c[K.Symbol.Schema],h=c[K.Symbol.Name];return{sql:d===void 0||c[dt]?n(h):n(d)+"."+n(h),params:[]}}if(H(c,Re)){let d=o.getColumnCasing(c);if(t.invokeSource==="indexes")return{sql:n(d),params:[]};let h=c.table[K.Symbol.Schema];return{sql:c.table[dt]||h===void 0?n(c.table[K.Symbol.Name])+"."+n(d):n(h)+"."+n(c.table[K.Symbol.Name])+"."+n(d),params:[]}}if(H(c,qt)){let d=c[Ke].schema,h=c[Ke].name;return{sql:d===void 0||c[Ke].isAlias?n(h):n(d)+"."+n(h),params:[]}}if(H(c,We)){if(H(c.value,Ge))return{sql:s(u.value++,c),params:[c],typings:["none"]};let d=c.value===null?null:c.encoder.mapToDriverValue(c.value);if(H(d,J))return this.buildQueryFromSourceParams([d],r);if(a)return{sql:this.mapInlineParam(d,r),params:[]};let h=["none"];if(i)h=[i(c.encoder)];return{sql:s(u.value++,d),params:[d],typings:h}}if(H(c,Ge))return{sql:s(u.value++,c),params:[c],typings:["none"]};if(H(c,J.Aliased)&&c.fieldAlias!==void 0)return{sql:n(c.fieldAlias),params:[]};if(H(c,Bt)){if(c._.isWith)return{sql:n(c._.alias),params:[]};return this.buildQueryFromSourceParams([new ue("("),c._.sql,new ue(") "),new Vt(c._.alias)],r)}if(Yi(c)){if(c.schema)return{sql:n(c.schema)+"."+n(c.enumName),params:[]};return{sql:n(c.enumName),params:[]}}if(Ur(c)){if(c.shouldOmitSQLParens?.())return this.buildQueryFromSourceParams([c.getSQL()],r);return this.buildQueryFromSourceParams([new ue("("),c.getSQL(),new ue(")")],r)}if(a)return{sql:this.mapInlineParam(c,r),params:[]};return{sql:s(u.value++,c),params:[c],typings:["none"]}}))}mapInlineParam(e,{escapeString:t}){if(e===null)return"null";if(typeof e==="number"||typeof e==="boolean")return e.toString();if(typeof e==="string")return t(e);if(typeof e==="object"){let r=e.toString();if(r==="[object Object]")return t(JSON.stringify(e));return t(r)}throw Error("Unexpected param value: "+e)}getSQL(){return this}as(e){if(e===void 0)return this;return new J.Aliased(this,e)}mapWith(e){return this.decoder=typeof e==="function"?{mapFromDriverValue:e}:e,this}inlineParams(){return this.shouldInlineParams=!0,this}if(e){return e?this:void 0}}class Vt{constructor(e){this.value=e}static[_]="Name";brand;getSQL(){return new J([this])}}function na(e){return typeof e==="object"&&e!==null&&"mapToDriverValue"in e&&typeof e.mapToDriverValue==="function"}var sa={mapFromDriverValue:(e)=>e},ia={mapToDriverValue:(e)=>e},Up={...sa,...ia};class We{constructor(e,t=ia){this.value=e,this.encoder=t}static[_]="Param";brand;getSQL(){return new J([this])}}function ae(e,...t){let r=[];if(t.length>0||e.length>0&&e[0]!=="")r.push(new ue(e[0]));for(let[o,n]of t.entries())r.push(n,new ue(e[o+1]));return new J(r)}((e)=>{function t(){return new J([])}e.empty=t;function r(u){return new J(u)}e.fromList=r;function o(u){return new J([new ue(u)])}e.raw=o;function n(u,c){let d=[];for(let[h,y]of u.entries()){if(h>0&&c!==void 0)d.push(c);d.push(y)}return new J(d)}e.join=n;function s(u){return new Vt(u)}e.identifier=s;function i(u){return new Ge(u)}e.placeholder=i;function a(u,c){return new We(u,c)}e.param=a})(ae||(ae={}));((e)=>{class t{constructor(r,o){this.sql=r,this.fieldAlias=o}static[_]="SQL.Aliased";isSelectionField=!1;getSQL(){return this.sql}clone(){return new t(this.sql,this.fieldAlias)}}e.Aliased=t})(J||(J={}));class Ge{constructor(e){this.name=e}static[_]="Placeholder";getSQL(){return new J([this])}}var Tu=Symbol.for("drizzle:IsDrizzleView");class qt{static[_]="View";[Ke];[Tu]=!0;constructor({name:e,schema:t,selectedFields:r,query:o}){this[Ke]={name:e,originalName:e,schema:t,selectedFields:r,query:o,isExisting:!o,isAlias:!1}}getSQL(){return new J([this])}}Re.prototype.getSQL=function(){return new J([this])};K.prototype.getSQL=function(){return new J([this])};Bt.prototype.getSQL=function(){return new J([this])};function ke(e,t){return{name:typeof e==="string"&&e.length>0?e:"",config:typeof e==="object"?e:t}}var Br=typeof TextDecoder>"u"?null:new TextDecoder;function He(e,t){if(na(t)&&!Ur(e)&&!H(e,We)&&!H(e,Ge)&&!H(e,Re)&&!H(e,K)&&!H(e,qt))return new We(e,t);return e}var l=(e,t)=>ae`${e} = ${He(t,e)}`,aa=(e,t)=>ae`${e} <> ${He(t,e)}`;function T(...e){let t=e.filter((r)=>r!==void 0);if(t.length===0)return;if(t.length===1)return new J(t);return new J([new ue("("),ae.join(t,new ue(" and ")),new ue(")")])}var Mt=(e,t)=>ae`${e} > ${He(t,e)}`;var ca=(e,t)=>ae`${e} < ${He(t,e)}`;function C(e,t){if(Array.isArray(t)){if(t.length===0)return ae`false`;return ae`${e} in ${t.map((r)=>He(r,e))}`}return ae`${e} in ${He(t,e)}`}function ua(e){return ae`${e} is null`}function _e(e){return ae`${e} asc`}function Ne(e){return ae`${e} desc`}class Vr{static[_]="SQLiteForeignKeyBuilder";reference;_onUpdate;_onDelete;constructor(e,t){if(this.reference=()=>{let{name:r,columns:o,foreignColumns:n}=e();return{name:r,columns:o,foreignTable:n[0].table,foreignColumns:n}},t)this._onUpdate=t.onUpdate,this._onDelete=t.onDelete}onUpdate(e){return this._onUpdate=e,this}onDelete(e){return this._onDelete=e,this}build(e){return new la(e,this)}}class la{constructor(e,t){this.table=e,this.reference=t.reference,this.onUpdate=t._onUpdate,this.onDelete=t._onDelete}static[_]="SQLiteForeignKey";reference;onUpdate;onDelete;getName(){let{name:e,columns:t,foreignColumns:r}=this.reference(),o=t.map((i)=>i.name),n=r.map((i)=>i.name),s=[this.table[Ze],...o,r[0].table[Ze],...n];return e??`${s.join("_")}_fk`}}function da(e,t){return`${e[Ze]}_${t.join("_")}_unique`}class oe extends Er{static[_]="SQLiteColumnBuilder";foreignKeyConfigs=[];references(e,t={}){return this.foreignKeyConfigs.push({ref:e,actions:t}),this}unique(e){return this.config.isUnique=!0,this.config.uniqueName=e,this}generatedAlwaysAs(e,t){return this.config.generated={as:e,type:"always",mode:t?.mode??"virtual"},this}buildForeignKeys(e,t){return this.foreignKeyConfigs.map(({ref:r,actions:o})=>((n,s)=>{let i=new Vr(()=>{let a=n();return{columns:[e],foreignColumns:[a]}});if(s.onUpdate)i.onUpdate(s.onUpdate);if(s.onDelete)i.onDelete(s.onDelete);return i.build(t)})(r,o))}}class ne extends Re{constructor(e,t){if(!t.uniqueName)t.uniqueName=da(e,[t.name]);super(e,t);this.table=e}static[_]="SQLiteColumn"}class pa extends oe{static[_]="SQLiteBigIntBuilder";constructor(e){super(e,"bigint","SQLiteBigInt")}build(e){return new ma(e,this.config)}}class ma extends ne{static[_]="SQLiteBigInt";getSQLType(){return"blob"}mapFromDriverValue(e){if(typeof Buffer<"u"&&Buffer.from){let t=Buffer.isBuffer(e)?e:e instanceof ArrayBuffer?Buffer.from(e):e.buffer?Buffer.from(e.buffer,e.byteOffset,e.byteLength):Buffer.from(e);return BigInt(t.toString("utf8"))}return BigInt(Br.decode(e))}mapToDriverValue(e){return Buffer.from(e.toString())}}class fa extends oe{static[_]="SQLiteBlobJsonBuilder";constructor(e){super(e,"json","SQLiteBlobJson")}build(e){return new ha(e,this.config)}}class ha extends ne{static[_]="SQLiteBlobJson";getSQLType(){return"blob"}mapFromDriverValue(e){if(typeof Buffer<"u"&&Buffer.from){let t=Buffer.isBuffer(e)?e:e instanceof ArrayBuffer?Buffer.from(e):e.buffer?Buffer.from(e.buffer,e.byteOffset,e.byteLength):Buffer.from(e);return JSON.parse(t.toString("utf8"))}return JSON.parse(Br.decode(e))}mapToDriverValue(e){return Buffer.from(JSON.stringify(e))}}class ga extends oe{static[_]="SQLiteBlobBufferBuilder";constructor(e){super(e,"buffer","SQLiteBlobBuffer")}build(e){return new wa(e,this.config)}}class wa extends ne{static[_]="SQLiteBlobBuffer";mapFromDriverValue(e){if(Buffer.isBuffer(e))return e;return Buffer.from(e)}getSQLType(){return"blob"}}function ya(e,t){let{name:r,config:o}=ke(e,t);if(o?.mode==="json")return new fa(r);if(o?.mode==="bigint")return new pa(r);return new ga(r)}class _a extends oe{static[_]="SQLiteCustomColumnBuilder";constructor(e,t,r){super(e,"custom","SQLiteCustomColumn");this.config.fieldConfig=t,this.config.customTypeParams=r}build(e){return new ba(e,this.config)}}class ba extends ne{static[_]="SQLiteCustomColumn";sqlName;mapTo;mapFrom;constructor(e,t){super(e,t);this.sqlName=t.customTypeParams.dataType(t.fieldConfig),this.mapTo=t.customTypeParams.toDriver,this.mapFrom=t.customTypeParams.fromDriver}getSQLType(){return this.sqlName}mapFromDriverValue(e){return typeof this.mapFrom==="function"?this.mapFrom(e):e}mapToDriverValue(e){return typeof this.mapTo==="function"?this.mapTo(e):e}}function va(e){return(t,r)=>{let{name:o,config:n}=ke(t,r);return new _a(o,n,e)}}class Jt extends oe{static[_]="SQLiteBaseIntegerBuilder";constructor(e,t,r){super(e,t,r);this.config.autoIncrement=!1}primaryKey(e){if(e?.autoIncrement)this.config.autoIncrement=!0;return this.config.hasDefault=!0,super.primaryKey()}}class Qt extends ne{static[_]="SQLiteBaseInteger";autoIncrement=this.config.autoIncrement;getSQLType(){return"integer"}}class xa extends Jt{static[_]="SQLiteIntegerBuilder";constructor(e){super(e,"number","SQLiteInteger")}build(e){return new za(e,this.config)}}class za extends Qt{static[_]="SQLiteInteger"}class ka extends Jt{static[_]="SQLiteTimestampBuilder";constructor(e,t){super(e,"date","SQLiteTimestamp");this.config.mode=t}defaultNow(){return this.default(ae`(cast((julianday('now') - 2440587.5)*86400000 as integer))`)}build(e){return new $a(e,this.config)}}class $a extends Qt{static[_]="SQLiteTimestamp";mode=this.config.mode;mapFromDriverValue(e){if(this.config.mode==="timestamp")return new Date(e*1000);return new Date(e)}mapToDriverValue(e){let t=e.getTime();if(this.config.mode==="timestamp")return Math.floor(t/1000);return t}}class Ia extends Jt{static[_]="SQLiteBooleanBuilder";constructor(e,t){super(e,"boolean","SQLiteBoolean");this.config.mode=t}build(e){return new Sa(e,this.config)}}class Sa extends Qt{static[_]="SQLiteBoolean";mode=this.config.mode;mapFromDriverValue(e){return Number(e)===1}mapToDriverValue(e){return e?1:0}}function w(e,t){let{name:r,config:o}=ke(e,t);if(o?.mode==="timestamp"||o?.mode==="timestamp_ms")return new ka(r,o.mode);if(o?.mode==="boolean")return new Ia(r,o.mode);return new xa(r)}class Pa extends oe{static[_]="SQLiteNumericBuilder";constructor(e){super(e,"string","SQLiteNumeric")}build(e){return new Aa(e,this.config)}}class Aa extends ne{static[_]="SQLiteNumeric";mapFromDriverValue(e){if(typeof e==="string")return e;return String(e)}getSQLType(){return"numeric"}}class Za extends oe{static[_]="SQLiteNumericNumberBuilder";constructor(e){super(e,"number","SQLiteNumericNumber")}build(e){return new Na(e,this.config)}}class Na extends ne{static[_]="SQLiteNumericNumber";mapFromDriverValue(e){if(typeof e==="number")return e;return Number(e)}mapToDriverValue=String;getSQLType(){return"numeric"}}class Ta extends oe{static[_]="SQLiteNumericBigIntBuilder";constructor(e){super(e,"bigint","SQLiteNumericBigInt")}build(e){return new Ca(e,this.config)}}class Ca extends ne{static[_]="SQLiteNumericBigInt";mapFromDriverValue=BigInt;mapToDriverValue=String;getSQLType(){return"numeric"}}function Oa(e,t){let{name:r,config:o}=ke(e,t),n=o?.mode;return n==="number"?new Za(r):n==="bigint"?new Ta(r):new Pa(r)}class Ea extends oe{static[_]="SQLiteRealBuilder";constructor(e){super(e,"number","SQLiteReal")}build(e){return new ja(e,this.config)}}class ja extends ne{static[_]="SQLiteReal";getSQLType(){return"real"}}function Da(e){return new Ea(e??"")}class Ra extends oe{static[_]="SQLiteTextBuilder";constructor(e,t){super(e,"string","SQLiteText");this.config.enumValues=t.enum,this.config.length=t.length}build(e){return new Fa(e,this.config)}}class Fa extends ne{static[_]="SQLiteText";enumValues=this.config.enumValues;length=this.config.length;constructor(e,t){super(e,t)}getSQLType(){return`text${this.config.length?`(${this.config.length})`:""}`}}class La extends oe{static[_]="SQLiteTextJsonBuilder";constructor(e){super(e,"json","SQLiteTextJson")}build(e){return new Ua(e,this.config)}}class Ua extends ne{static[_]="SQLiteTextJson";getSQLType(){return"text"}mapFromDriverValue(e){return JSON.parse(e)}mapToDriverValue(e){return JSON.stringify(e)}}function Z(e,t={}){let{name:r,config:o}=ke(e,t);if(o.mode==="json")return new La(r);return new Ra(r,o)}function Ba(){return{blob:ya,customType:va,integer:w,numeric:Oa,real:Da,text:Z}}var qr=Symbol.for("drizzle:SQLiteInlineForeignKeys");class pt extends K{static[_]="SQLiteTable";static Symbol=Object.assign({},K.Symbol,{InlineForeignKeys:qr});[K.Symbol.Columns];[qr]=[];[K.Symbol.ExtraConfigBuilder]=void 0}function Cu(e,t,r,o,n=e){let s=new pt(e,o,n),i=typeof t==="function"?t(Ba()):t,a=Object.fromEntries(Object.entries(i).map(([c,d])=>{let h=d;h.setName(c);let y=h.build(s);return s[qr].push(...h.buildForeignKeys(y,s)),[c,y]})),u=Object.assign(s,a);if(u[K.Symbol.Columns]=a,u[K.Symbol.ExtraConfigColumns]=a,r)u[pt.Symbol.ExtraConfigBuilder]=r;return u}var Y=(e,t,r)=>Cu(e,t,r);class Mr{constructor(e,t){this.name=e,this.unique=t}static[_]="SQLiteIndexBuilderOn";on(...e){return new Va(this.name,e,this.unique)}}class Va{static[_]="SQLiteIndexBuilder";config;constructor(e,t,r){this.config={name:e,columns:t,unique:r,where:void 0}}where(e){return this.config.where=e,this}build(e){return new qa(this.config,e)}}class qa{static[_]="SQLiteIndex";config;constructor(e,t){this.config={...e,table:t}}}function Ma(e){return new Mr(e,!1)}function Ye(e){return new Mr(e,!0)}function Fe(...e){if(e[0].columns)return new Jr(e[0].columns,e[0].name);return new Jr(e)}class Jr{static[_]="SQLitePrimaryKeyBuilder";columns;name;constructor(e,t){this.columns=e,this.name=t}build(e){return new Ja(e,this.columns,this.name)}}class Ja{constructor(e,t,r){this.table=e,this.columns=t,this.name=r}static[_]="SQLitePrimaryKey";columns;name;getName(){return this.name??`${this.table[pt.Symbol.Name]}_${this.columns.map((e)=>e.name).join("_")}_pk`}}var f=Y("profiles",{id:w("id").primaryKey({autoIncrement:!0}),displayName:Z("display_name").notNull(),handle:Z("handle").notNull(),email:Z("email"),passwordHash:Z("password_hash"),recoveryCodeHash:Z("recovery_code_hash"),bio:Z("bio"),avatarBlobKey:Z("avatar_blob_key"),isFounder:w("is_founder",{mode:"boolean"}).notNull().default(!1),badge:Z("badge",{enum:["none","community","official"]}).notNull().default("none"),isPrivate:w("is_private",{mode:"boolean"}).notNull().default(!1),themeColor:Z("theme_color",{enum:["teal","coral","amber","lime","emerald","sky","blue","indigo","violet","pink","rose","slate"]}).notNull().default("teal"),themeChangedAt:w("theme_changed_at",{mode:"timestamp_ms"}),language:Z("language",{enum:["en","bn","hi","es","fr","ar"]}).notNull().default("en"),continent:Z("region",{enum:["AF","AN","AS","EU","NA","SA","OC"]}).notNull().default("AS"),deactivatedUntil:w("deactivated_until",{mode:"timestamp_ms"}),lastDeactivatedAt:w("last_deactivated_at",{mode:"timestamp_ms"}),profileUpdatedAt:w("profile_updated_at",{mode:"timestamp_ms"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Ye("profiles_handle_unique").on(e.handle),Ye("profiles_email_unique").on(e.email)]),fe=Y("sessions",{id:w("id").primaryKey({autoIncrement:!0}),profileId:w("profile_id").notNull().references(()=>f.id,{onDelete:"cascade"}),tokenHash:Z("token_hash").notNull(),expiresAt:w("expires_at",{mode:"timestamp_ms"}).notNull(),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Ye("sessions_token_hash_unique").on(e.tokenHash)]),z=Y("posts",{id:w("id").primaryKey({autoIncrement:!0}),authorId:w("author_id").notNull().references(()=>f.id,{onDelete:"cascade"}),text:Z("text").notNull(),editedAt:w("edited_at",{mode:"timestamp_ms"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)}),$e=Y("post_images",{id:w("id").primaryKey({autoIncrement:!0}),postId:w("post_id").notNull().references(()=>z.id,{onDelete:"cascade"}),blobKey:Z("blob_key").notNull(),altText:Z("alt_text").notNull().default("Photo shared with this post"),position:w("position").notNull()}),R=Y("comments",{id:w("id").primaryKey({autoIncrement:!0}),postId:w("post_id").notNull().references(()=>z.id,{onDelete:"cascade"}),authorId:w("author_id").notNull().references(()=>f.id,{onDelete:"cascade"}),parentCommentId:w("parent_comment_id"),text:Z("text").notNull(),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)}),le=Y("likes",{profileId:w("profile_id").notNull().references(()=>f.id,{onDelete:"cascade"}),postId:w("post_id").notNull().references(()=>z.id,{onDelete:"cascade"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.profileId,e.postId]})]),he=Y("reposts",{profileId:w("profile_id").notNull().references(()=>f.id,{onDelete:"cascade"}),postId:w("post_id").notNull().references(()=>z.id,{onDelete:"cascade"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.profileId,e.postId]})]),A=Y("follows",{followerId:w("follower_id").notNull().references(()=>f.id,{onDelete:"cascade"}),followingId:w("following_id").notNull().references(()=>f.id,{onDelete:"cascade"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.followerId,e.followingId]})]),k=Y("notifications",{id:w("id").primaryKey({autoIncrement:!0}),recipientId:w("recipient_id").notNull().references(()=>f.id,{onDelete:"cascade"}),actorId:w("actor_id").notNull().references(()=>f.id,{onDelete:"cascade"}),type:Z("type",{enum:["like","comment","follow","repost","story_reaction","mention","reply","message"]}).notNull(),postId:w("post_id").references(()=>z.id,{onDelete:"cascade"}),commentId:w("comment_id").references(()=>R.id,{onDelete:"cascade"}),storyId:w("story_id"),conversationId:w("conversation_id"),readAt:w("read_at",{mode:"timestamp_ms"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)}),F=Y("stories",{id:w("id").primaryKey({autoIncrement:!0}),authorId:w("author_id").notNull().references(()=>f.id,{onDelete:"cascade"}),text:Z("text"),blobKey:Z("blob_key"),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date),expiresAt:w("expires_at",{mode:"timestamp_ms"}).notNull()}),G=Y("story_views",{storyId:w("story_id").notNull().references(()=>F.id,{onDelete:"cascade"}),viewerId:w("viewer_id").notNull().references(()=>f.id,{onDelete:"cascade"}),viewedAt:w("viewed_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.storyId,e.viewerId]})]),de=Y("story_reactions",{storyId:w("story_id").notNull().references(()=>F.id,{onDelete:"cascade"}),reactorId:w("reactor_id").notNull().references(()=>f.id,{onDelete:"cascade"}),emoji:Z("emoji",{enum:["\u2764\uFE0F","\uD83D\uDE02","\uD83D\uDE0D","\uD83D\uDE2E","\uD83D\uDE22","\uD83D\uDC4F"]}).notNull(),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.storyId,e.reactorId]})]),ce=Y("bookmarks",{profileId:w("profile_id").notNull().references(()=>f.id,{onDelete:"cascade"}),postId:w("post_id").notNull().references(()=>z.id,{onDelete:"cascade"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.profileId,e.postId]})]),pe=Y("reports",{id:w("id").primaryKey({autoIncrement:!0}),reporterId:w("reporter_id").notNull().references(()=>f.id,{onDelete:"cascade"}),targetType:Z("target_type",{enum:["post","comment"]}).notNull(),targetId:w("target_id").notNull(),reason:Z("reason").notNull(),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Ye("reports_reporter_target_unique").on(e.reporterId,e.targetType,e.targetId)]),Ou=Y("conversations",{id:w("id").primaryKey({autoIncrement:!0}),userLowId:w("user_low_id").notNull().references(()=>f.id,{onDelete:"cascade"}),userHighId:w("user_high_id").notNull().references(()=>f.id,{onDelete:"cascade"}),updatedAt:w("updated_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Ye("conversations_pair_unique").on(e.userLowId,e.userHighId)]),Gm=Y("messages",{id:w("id").primaryKey({autoIncrement:!0}),conversationId:w("conversation_id").notNull().references(()=>Ou.id,{onDelete:"cascade"}),senderId:w("sender_id").notNull().references(()=>f.id,{onDelete:"cascade"}),text:Z("text").notNull(),readAt:w("read_at",{mode:"timestamp_ms"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)}),ge=Y("blocks",{blockerId:w("blocker_id").notNull().references(()=>f.id,{onDelete:"cascade"}),blockedId:w("blocked_id").notNull().references(()=>f.id,{onDelete:"cascade"}),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)},(e)=>[Fe({columns:[e.blockerId,e.blockedId]})]),O=Y("google_integrations",{id:w("id").primaryKey(),sheetsEnabled:w("sheets_enabled",{mode:"boolean"}).notNull().default(!1),spreadsheetId:Z("spreadsheet_id"),spreadsheetUrl:Z("spreadsheet_url"),driveFileUrl:Z("drive_file_url"),connectedAt:w("connected_at",{mode:"timestamp_ms"}),lastSyncAt:w("last_sync_at",{mode:"timestamp_ms"}),lastError:Z("last_error"),updatedAt:w("updated_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date)}),q=Y("google_sync_queue",{id:w("id").primaryKey({autoIncrement:!0}),tab:Z("tab",{enum:["users","posts","comments","logins","follows","likes"]}).notNull(),recordKey:Z("record_key").notNull(),operation:Z("operation",{enum:["upsert","delete","login","signup"]}).notNull(),payload:Z("payload").notNull(),status:Z("status",{enum:["pending","synced","failed"]}).notNull().default("pending"),error:Z("error"),createdAt:w("created_at",{mode:"timestamp_ms"}).notNull().$defaultFn(()=>new Date),syncedAt:w("synced_at",{mode:"timestamp_ms"})},(e)=>[Ma("google_sync_queue_status_idx").on(e.status)]);import{mkdir as ju,rm as Du,writeFile as Ru}from"fs/promises";import{join as Fu}from"path";var W=Cr({googleConnectionStatus:{request:g({service:D(["drive","sheets"])}),response:g({connected:L(),message:m()}),capabilities:["google.workspace.status"],timeoutMs:8000},initializeGoogleSheets:{request:g({title:m(),tabs:te(g({tab:D(["users","posts","comments","logins","follows","likes"]),rows:te(te(Lt([m(),S(),L(),Nr()])))}))}),response:g({ok:L(),spreadsheetId:m().nullable(),spreadsheetUrl:m().nullable(),error:m().nullable()}),capabilities:["google.sheets.write"],timeoutMs:45000},appendGoogleSheetRow:{request:g({spreadsheetId:m(),tab:D(["users","posts","comments","logins","follows","likes"]),values:te(Lt([m(),S(),L(),Nr()]))}),response:g({ok:L(),error:m().nullable()}),capabilities:["google.sheets.write"],timeoutMs:1e4},uploadSourceToDrive:{request:g({filename:m(),dataBase64:m().min(1)}),response:g({ok:L(),fileUrl:m().nullable(),error:m().nullable()}),capabilities:["google.drive.write","filesystem.write"],timeoutMs:45000}});async function Ie(e){try{let t=Bun.spawn(["hatch_gws_cli",...e],{stdout:"pipe",stderr:"pipe"}),[r,o,n]=await Promise.all([new Response(t.stdout).text(),new Response(t.stderr).text(),t.exited]),s=r.trim(),i=null;if(s)try{i=JSON.parse(s)}catch{i=null}if(n!==0)return{ok:!1,data:i,error:o.trim()||"Google Workspace could not complete the request."};return{ok:!0,data:i,error:null}}catch{return{ok:!1,data:null,error:"Google Workspace is unavailable right now."}}}function mt(e){return typeof e==="string"&&e?e:null}var Xm=Or(W,{async googleConnectionStatus({service:e}){let t=await Ie([e,"status"]),r=t.ok&&t.data?.status==="connected";return{connected:r,message:r?`${e==="drive"?"Google Drive":"Google Sheets"} is connected.`:`${e==="drive"?"Google Drive":"Google Sheets"} needs to be connected in Muse first.`}},async initializeGoogleSheets({title:e,tabs:t}){let r=await Ie(["sheets","status"]);if(!r.ok||r.data?.status!=="connected")return{ok:!1,spreadsheetId:null,spreadsheetUrl:null,error:"Connect Google Sheets to Muse, then try again."};let o={propertie
+n = result.schema;
+      const processor = ctx.processors[def.type];
+      if (!processor) {
+        throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
+      }
+      processor(schema, ctx, _json, params);
+    }
+    const parent = schema._zod.parent;
+    if (parent) {
+      if (!result.ref)
+        result.ref = parent;
+      process(parent, ctx, params);
+      ctx.seen.get(parent).isParent = true;
+    }
+  }
+  const meta = ctx.metadataRegistry.get(schema);
+  if (meta)
+    Object.assign(result.schema, meta);
+  if (ctx.io === "input" && isTransforming(schema)) {
+    delete result.schema.examples;
+    delete result.schema.default;
+  }
+  if (ctx.io === "input" && "_prefault" in result.schema)
+    (_a = result.schema).default ?? (_a.default = result.schema._prefault);
+  delete result.schema._prefault;
+  const _result = ctx.seen.get(schema);
+  return _result.schema;
+}
+function extractDefs(ctx, schema) {
+  const root = ctx.seen.get(schema);
+  if (!root)
+    throw new Error("Unprocessed schema. This is a bug in Zod.");
+  const idToSchema = new Map;
+  for (const entry of ctx.seen.entries()) {
+    const id = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id) {
+      const existing = idToSchema.get(id);
+      if (existing && existing !== entry[0]) {
+        throw new Error(`Duplicate schema id "${id}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+      }
+      idToSchema.set(id, entry[0]);
+    }
+  }
+  const makeURI = (entry) => {
+    const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
+    if (ctx.external) {
+      const externalId = ctx.external.registry.get(entry[0])?.id;
+      const uriGenerator = ctx.external.uri ?? ((id) => id);
+      if (externalId) {
+        return { ref: uriGenerator(externalId) };
+      }
+      const id = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+      entry[1].defId = id;
+      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
+    }
+    if (entry[1] === root) {
+      return { ref: "#" };
+    }
+    const uriPrefix = `#`;
+    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+    const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
+    return { defId, ref: defUriPrefix + defId };
+  };
+  const extractToDef = (entry) => {
+    if (entry[1].schema.$ref) {
+      return;
+    }
+    const seen = entry[1];
+    const { ref, defId } = makeURI(entry);
+    seen.def = { ...seen.schema };
+    if (defId)
+      seen.defId = defId;
+    const schema = seen.schema;
+    for (const key in schema) {
+      delete schema[key];
+    }
+    schema.$ref = ref;
+  };
+  if (ctx.cycles === "throw") {
+    for (const entry of ctx.seen.entries()) {
+      const seen = entry[1];
+      if (seen.cycle) {
+        throw new Error("Cycle detected: " + `#/${seen.cycle?.join("/")}/<root>` + '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.');
+      }
+    }
+  }
+  for (const entry of ctx.seen.entries()) {
+    const seen = entry[1];
+    if (schema === entry[0]) {
+      extractToDef(entry);
+      continue;
+    }
+    if (ctx.external) {
+      const ext = ctx.external.registry.get(entry[0])?.id;
+      if (schema !== entry[0] && ext) {
+        extractToDef(entry);
+        continue;
+      }
+    }
+    const id = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id) {
+      extractToDef(entry);
+      continue;
+    }
+    if (seen.cycle) {
+      extractToDef(entry);
+      continue;
+    }
+    if (seen.count > 1) {
+      if (ctx.reused === "ref") {
+        extractToDef(entry);
+        continue;
+      }
+    }
+  }
+}
+function finalize(ctx, schema) {
+  const root = ctx.seen.get(schema);
+  if (!root)
+    throw new Error("Unprocessed schema. This is a bug in Zod.");
+  const flattenRef = (zodSchema) => {
+    const seen = ctx.seen.get(zodSchema);
+    if (seen.ref === null)
+      return;
+    const schema = seen.def ?? seen.schema;
+    const _cached = { ...schema };
+    const ref = seen.ref;
+    seen.ref = null;
+    if (ref) {
+      flattenRef(ref);
+      const refSeen = ctx.seen.get(ref);
+      const refSchema = refSeen.schema;
+      if (refSchema.$ref && (ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0")) {
+        schema.allOf = schema.allOf ?? [];
+        schema.allOf.push(refSchema);
+      } else {
+        Object.assign(schema, refSchema);
+      }
+      Object.assign(schema, _cached);
+      const isParentRef = zodSchema._zod.parent === ref;
+      if (isParentRef) {
+        for (const key in schema) {
+          if (key === "$ref" || key === "allOf")
+            continue;
+          if (!(key in _cached)) {
+            delete schema[key];
+          }
+        }
+      }
+      if (refSchema.$ref && refSeen.def) {
+        for (const key in schema) {
+          if (key === "$ref" || key === "allOf")
+            continue;
+          if (key in refSeen.def && JSON.stringify(schema[key]) === JSON.stringify(refSeen.def[key])) {
+            delete schema[key];
+          }
+        }
+      }
+    }
+    const parent = zodSchema._zod.parent;
+    if (parent && parent !== ref) {
+      flattenRef(parent);
+      const parentSeen = ctx.seen.get(parent);
+      if (parentSeen?.schema.$ref) {
+        schema.$ref = parentSeen.schema.$ref;
+        if (parentSeen.def) {
+          for (const key in schema) {
+            if (key === "$ref" || key === "allOf")
+              continue;
+            if (key in parentSeen.def && JSON.stringify(schema[key]) === JSON.stringify(parentSeen.def[key])) {
+              delete schema[key];
+            }
+          }
+        }
+      }
+    }
+    ctx.override({
+      zodSchema,
+      jsonSchema: schema,
+      path: seen.path ?? []
+    });
+  };
+  for (const entry of [...ctx.seen.entries()].reverse()) {
+    flattenRef(entry[0]);
+  }
+  const result = {};
+  if (ctx.target === "draft-2020-12") {
+    result.$schema = "https://json-schema.org/draft/2020-12/schema";
+  } else if (ctx.target === "draft-07") {
+    result.$schema = "http://json-schema.org/draft-07/schema#";
+  } else if (ctx.target === "draft-04") {
+    result.$schema = "http://json-schema.org/draft-04/schema#";
+  } else if (ctx.target === "openapi-3.0") {}
+  if (ctx.external?.uri) {
+    const id = ctx.external.registry.get(schema)?.id;
+    if (!id)
+      throw new Error("Schema is missing an `id` property");
+    result.$id = ctx.external.uri(id);
+  }
+  Object.assign(result, root.def ?? root.schema);
+  const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
+  if (rootMetaId !== undefined && result.id === rootMetaId)
+    delete result.id;
+  const defs = ctx.external?.defs ?? {};
+  for (const entry of ctx.seen.entries()) {
+    const seen = entry[1];
+    if (seen.def && seen.defId) {
+      if (seen.def.id === seen.defId)
+        delete seen.def.id;
+      defs[seen.defId] = seen.def;
+    }
+  }
+  if (ctx.external) {} else {
+    if (Object.keys(defs).length > 0) {
+      if (ctx.target === "draft-2020-12") {
+        result.$defs = defs;
+      } else {
+        result.definitions = defs;
+      }
+    }
+  }
+  try {
+    const finalized = JSON.parse(JSON.stringify(result));
+    Object.defineProperty(finalized, "~standard", {
+      value: {
+        ...schema["~standard"],
+        jsonSchema: {
+          input: createStandardJSONSchemaMethod(schema, "input", ctx.processors),
+          output: createStandardJSONSchemaMethod(schema, "output", ctx.processors)
+        }
+      },
+      enumerable: false,
+      writable: false
+    });
+    return finalized;
+  } catch (_err) {
+    throw new Error("Error converting schema to JSON.");
+  }
+}
+function isTransforming(_schema, _ctx) {
+  const ctx = _ctx ?? { seen: new Set };
+  if (ctx.seen.has(_schema))
+    return false;
+  ctx.seen.add(_schema);
+  const def = _schema._zod.def;
+  if (def.type === "transform")
+    return true;
+  if (def.type === "array")
+    return isTransforming(def.element, ctx);
+  if (def.type === "set")
+    return isTransforming(def.valueType, ctx);
+  if (def.type === "lazy")
+    return isTransforming(def.getter(), ctx);
+  if (def.type === "promise" || def.type === "optional" || def.type === "nonoptional" || def.type === "nullable" || def.type === "readonly" || def.type === "default" || def.type === "prefault") {
+    return isTransforming(def.innerType, ctx);
+  }
+  if (def.type === "intersection") {
+    return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
+  }
+  if (def.type === "record" || def.type === "map") {
+    return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
+  }
+  if (def.type === "pipe") {
+    if (_schema._zod.traits.has("$ZodCodec"))
+      return true;
+    return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
+  }
+  if (def.type === "object") {
+    for (const key in def.shape) {
+      if (isTransforming(def.shape[key], ctx))
+        return true;
+    }
+    return false;
+  }
+  if (def.type === "union") {
+    for (const option of def.options) {
+      if (isTransforming(option, ctx))
+        return true;
+    }
+    return false;
+  }
+  if (def.type === "tuple") {
+    for (const item of def.items) {
+      if (isTransforming(item, ctx))
+        return true;
+    }
+    if (def.rest && isTransforming(def.rest, ctx))
+      return true;
+    return false;
+  }
+  return false;
+}
+var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
+  const ctx = initializeContext({ ...params, processors });
+  process(schema, ctx);
+  extractDefs(ctx, schema);
+  return finalize(ctx, schema);
+};
+var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) => {
+  const { libraryOptions, target } = params ?? {};
+  const ctx = initializeContext({ ...libraryOptions ?? {}, target, io, processors });
+  process(schema, ctx);
+  extractDefs(ctx, schema);
+  return finalize(ctx, schema);
+};
+// ../gola-source/node_modules/zod/v4/core/json-schema-processors.js
+var formatMap = {
+  guid: "uuid",
+  url: "uri",
+  datetime: "date-time",
+  json_string: "json-string",
+  regex: ""
+};
+var stringProcessor = (schema, ctx, _json, _params) => {
+  const json = _json;
+  json.type = "string";
+  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod.bag;
+  if (typeof minimum === "number")
+    json.minLength = minimum;
+  if (typeof maximum === "number")
+    json.maxLength = maximum;
+  if (format) {
+    json.format = formatMap[format] ?? format;
+    if (json.format === "")
+      delete json.format;
+    if (format === "time") {
+      delete json.format;
+    }
+  }
+  if (contentEncoding)
+    json.contentEncoding = contentEncoding;
+  if (patterns && patterns.size > 0) {
+    const regexes = [...patterns];
+    if (regexes.length === 1)
+      json.pattern = regexes[0].source;
+    else if (regexes.length > 1) {
+      json.allOf = [
+        ...regexes.map((regex) => ({
+          ...ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0" ? { type: "string" } : {},
+          pattern: regex.source
+        }))
+      ];
+    }
+  }
+};
+var numberProcessor = (schema, ctx, _json, _params) => {
+  const json = _json;
+  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
+  if (typeof format === "string" && format.includes("int"))
+    json.type = "integer";
+  else
+    json.type = "number";
+  const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
+  const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
+  const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
+  if (exMin) {
+    if (legacy) {
+      json.minimum = exclusiveMinimum;
+      json.exclusiveMinimum = true;
+    } else {
+      json.exclusiveMinimum = exclusiveMinimum;
+    }
+  } else if (typeof minimum === "number") {
+    json.minimum = minimum;
+  }
+  if (exMax) {
+    if (legacy) {
+      json.maximum = exclusiveMaximum;
+      json.exclusiveMaximum = true;
+    } else {
+      json.exclusiveMaximum = exclusiveMaximum;
+    }
+  } else if (typeof maximum === "number") {
+    json.maximum = maximum;
+  }
+  if (typeof multipleOf === "number")
+    json.multipleOf = multipleOf;
+};
+var booleanProcessor = (_schema, _ctx, json, _params) => {
+  json.type = "boolean";
+};
+var nullProcessor = (_schema, ctx, json, _params) => {
+  if (ctx.target === "openapi-3.0") {
+    json.type = "string";
+    json.nullable = true;
+    json.enum = [null];
+  } else {
+    json.type = "null";
+  }
+};
+var neverProcessor = (_schema, _ctx, json, _params) => {
+  json.not = {};
+};
+var unknownProcessor = (_schema, _ctx, _json, _params) => {};
+var enumProcessor = (schema, _ctx, json, _params) => {
+  const def = schema._zod.def;
+  const values = getEnumValues(def.entries);
+  if (values.every((v) => typeof v === "number"))
+    json.type = "number";
+  if (values.every((v) => typeof v === "string"))
+    json.type = "string";
+  json.enum = values;
+};
+var literalProcessor = (schema, ctx, json, _params) => {
+  const def = schema._zod.def;
+  const vals = [];
+  for (const val of def.values) {
+    if (val === undefined) {
+      if (ctx.unrepresentable === "throw") {
+        throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+      }
+    } else if (typeof val === "bigint") {
+      if (ctx.unrepresentable === "throw") {
+        throw new Error("BigInt literals cannot be represented in JSON Schema");
+      } else {
+        vals.push(Number(val));
+      }
+    } else {
+      vals.push(val);
+    }
+  }
+  if (vals.length === 0) {} else if (vals.length === 1) {
+    const val = vals[0];
+    json.type = val === null ? "null" : typeof val;
+    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+      json.enum = [val];
+    } else {
+      json.const = val;
+    }
+  } else {
+    if (vals.every((v) => typeof v === "number"))
+      json.type = "number";
+    if (vals.every((v) => typeof v === "string"))
+      json.type = "string";
+    if (vals.every((v) => typeof v === "boolean"))
+      json.type = "boolean";
+    if (vals.every((v) => v === null))
+      json.type = "null";
+    json.enum = vals;
+  }
+};
+var customProcessor = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Custom types cannot be represented in JSON Schema");
+  }
+};
+var transformProcessor = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Transforms cannot be represented in JSON Schema");
+  }
+};
+var arrayProcessor = (schema, ctx, _json, params) => {
+  const json = _json;
+  const def = schema._zod.def;
+  const { minimum, maximum } = schema._zod.bag;
+  if (typeof minimum === "number")
+    json.minItems = minimum;
+  if (typeof maximum === "number")
+    json.maxItems = maximum;
+  json.type = "array";
+  json.items = process(def.element, ctx, {
+    ...params,
+    path: [...params.path, "items"]
+  });
+};
+var objectProcessor = (schema, ctx, _json, params) => {
+  const json = _json;
+  const def = schema._zod.def;
+  json.type = "object";
+  json.properties = {};
+  const shape = def.shape;
+  for (const key in shape) {
+    json.properties[key] = process(shape[key], ctx, {
+      ...params,
+      path: [...params.path, "properties", key]
+    });
+  }
+  const allKeys = new Set(Object.keys(shape));
+  const requiredKeys = new Set([...allKeys].filter((key) => {
+    const v = def.shape[key]._zod;
+    if (ctx.io === "input") {
+      return v.optin === undefined;
+    } else {
+      return v.optout === undefined;
+    }
+  }));
+  if (requiredKeys.size > 0) {
+    json.required = Array.from(requiredKeys);
+  }
+  if (def.catchall?._zod.def.type === "never") {
+    json.additionalProperties = false;
+  } else if (!def.catchall) {
+    if (ctx.io === "output")
+      json.additionalProperties = false;
+  } else if (def.catchall) {
+    json.additionalProperties = process(def.catchall, ctx, {
+      ...params,
+      path: [...params.path, "additionalProperties"]
+    });
+  }
+};
+var unionProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  const isExclusive = def.inclusive === false;
+  const options = def.options.map((x, i) => process(x, ctx, {
+    ...params,
+    path: [...params.path, isExclusive ? "oneOf" : "anyOf", i]
+  }));
+  if (isExclusive) {
+    json.oneOf = options;
+  } else {
+    json.anyOf = options;
+  }
+};
+var intersectionProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  const a = process(def.left, ctx, {
+    ...params,
+    path: [...params.path, "allOf", 0]
+  });
+  const b = process(def.right, ctx, {
+    ...params,
+    path: [...params.path, "allOf", 1]
+  });
+  const isSimpleIntersection = (val) => ("allOf" in val) && Object.keys(val).length === 1;
+  const allOf = [
+    ...isSimpleIntersection(a) ? a.allOf : [a],
+    ...isSimpleIntersection(b) ? b.allOf : [b]
+  ];
+  json.allOf = allOf;
+};
+var nullableProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  const inner = process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  if (ctx.target === "openapi-3.0") {
+    seen.ref = def.innerType;
+    json.nullable = true;
+  } else {
+    json.anyOf = [inner, { type: "null" }];
+  }
+};
+var nonoptionalProcessor = (schema, ctx, _json, params) => {
+  const def = schema._zod.def;
+  process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = def.innerType;
+};
+var defaultProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = def.innerType;
+  json.default = JSON.parse(JSON.stringify(def.defaultValue));
+};
+var prefaultProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = def.innerType;
+  if (ctx.io === "input")
+    json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
+};
+var catchProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = def.innerType;
+  let catchValue;
+  try {
+    catchValue = def.catchValue(undefined);
+  } catch {
+    throw new Error("Dynamic catch values are not supported in JSON Schema");
+  }
+  json.default = catchValue;
+};
+var pipeProcessor = (schema, ctx, _json, params) => {
+  const def = schema._zod.def;
+  const inIsTransform = def.in._zod.traits.has("$ZodTransform");
+  const innerType = ctx.io === "input" ? inIsTransform ? def.out : def.in : def.out;
+  process(innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = innerType;
+};
+var readonlyProcessor = (schema, ctx, json, params) => {
+  const def = schema._zod.def;
+  process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = def.innerType;
+  json.readOnly = true;
+};
+var optionalProcessor = (schema, ctx, _json, params) => {
+  const def = schema._zod.def;
+  process(def.innerType, ctx, params);
+  const seen = ctx.seen.get(schema);
+  seen.ref = def.innerType;
+};
+// ../gola-source/node_modules/zod/v4/classic/iso.js
+var ZodISODateTime = /* @__PURE__ */ $constructor("ZodISODateTime", (inst, def) => {
+  $ZodISODateTime.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+function datetime2(params) {
+  return _isoDateTime(ZodISODateTime, params);
+}
+var ZodISODate = /* @__PURE__ */ $constructor("ZodISODate", (inst, def) => {
+  $ZodISODate.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+function date2(params) {
+  return _isoDate(ZodISODate, params);
+}
+var ZodISOTime = /* @__PURE__ */ $constructor("ZodISOTime", (inst, def) => {
+  $ZodISOTime.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+function time2(params) {
+  return _isoTime(ZodISOTime, params);
+}
+var ZodISODuration = /* @__PURE__ */ $constructor("ZodISODuration", (inst, def) => {
+  $ZodISODuration.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+function duration2(params) {
+  return _isoDuration(ZodISODuration, params);
+}
+
+// ../gola-source/node_modules/zod/v4/classic/errors.js
+var initializer2 = (inst, issues) => {
+  $ZodError.init(inst, issues);
+  inst.name = "ZodError";
+  Object.defineProperties(inst, {
+    format: {
+      value: (mapper) => formatError(inst, mapper)
+    },
+    flatten: {
+      value: (mapper) => flattenError(inst, mapper)
+    },
+    addIssue: {
+      value: (issue) => {
+        inst.issues.push(issue);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
+      }
+    },
+    addIssues: {
+      value: (issues) => {
+        inst.issues.push(...issues);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
+      }
+    },
+    isEmpty: {
+      get() {
+        return inst.issues.length === 0;
+      }
+    }
+  });
+};
+var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
+  Parent: Error
+});
+
+// ../gola-source/node_modules/zod/v4/classic/parse.js
+var parse3 = /* @__PURE__ */ _parse(ZodRealError);
+var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
+var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
+var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
+var encode = /* @__PURE__ */ _encode(ZodRealError);
+var decode = /* @__PURE__ */ _decode(ZodRealError);
+var encodeAsync = /* @__PURE__ */ _encodeAsync(ZodRealError);
+var decodeAsync = /* @__PURE__ */ _decodeAsync(ZodRealError);
+var safeEncode = /* @__PURE__ */ _safeEncode(ZodRealError);
+var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
+var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
+var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
+
+// ../gola-source/node_modules/zod/v4/classic/schemas.js
+var _installedGroups = /* @__PURE__ */ new WeakMap;
+function _installLazyMethods(inst, group, methods) {
+  const proto = Object.getPrototypeOf(inst);
+  let installed = _installedGroups.get(proto);
+  if (!installed) {
+    installed = new Set;
+    _installedGroups.set(proto, installed);
+  }
+  if (installed.has(group))
+    return;
+  installed.add(group);
+  for (const key in methods) {
+    const fn = methods[key];
+    Object.defineProperty(proto, key, {
+      configurable: true,
+      enumerable: false,
+      get() {
+        const bound = fn.bind(this);
+        Object.defineProperty(this, key, {
+          configurable: true,
+          writable: true,
+          enumerable: true,
+          value: bound
+        });
+        return bound;
+      },
+      set(v) {
+        Object.defineProperty(this, key, {
+          configurable: true,
+          writable: true,
+          enumerable: true,
+          value: v
+        });
+      }
+    });
+  }
+}
+var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
+  $ZodType.init(inst, def);
+  Object.assign(inst["~standard"], {
+    jsonSchema: {
+      input: createStandardJSONSchemaMethod(inst, "input"),
+      output: createStandardJSONSchemaMethod(inst, "output")
+    }
+  });
+  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
+  inst.def = def;
+  inst.type = def.type;
+  Object.defineProperty(inst, "_def", { value: def });
+  inst.parse = (data, params) => parse3(inst, data, params, { callee: inst.parse });
+  inst.safeParse = (data, params) => safeParse2(inst, data, params);
+  inst.parseAsync = async (data, params) => parseAsync2(inst, data, params, { callee: inst.parseAsync });
+  inst.safeParseAsync = async (data, params) => safeParseAsync2(inst, data, params);
+  inst.spa = inst.safeParseAsync;
+  inst.encode = (data, params) => encode(inst, data, params);
+  inst.decode = (data, params) => decode(inst, data, params);
+  inst.encodeAsync = async (data, params) => encodeAsync(inst, data, params);
+  inst.decodeAsync = async (data, params) => decodeAsync(inst, data, params);
+  inst.safeEncode = (data, params) => safeEncode(inst, data, params);
+  inst.safeDecode = (data, params) => safeDecode(inst, data, params);
+  inst.safeEncodeAsync = async (data, params) => safeEncodeAsync(inst, data, params);
+  inst.safeDecodeAsync = async (data, params) => safeDecodeAsync(inst, data, params);
+  _installLazyMethods(inst, "ZodType", {
+    check(...chks) {
+      const def = this.def;
+      return this.clone(mergeDefs(def, {
+        checks: [
+          ...def.checks ?? [],
+          ...chks.map((ch) => typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch)
+        ]
+      }), { parent: true });
+    },
+    with(...chks) {
+      return this.check(...chks);
+    },
+    clone(def, params) {
+      return clone(this, def, params);
+    },
+    brand() {
+      return this;
+    },
+    register(reg, meta) {
+      reg.add(this, meta);
+      return this;
+    },
+    refine(check, params) {
+      return this.check(refine(check, params));
+    },
+    superRefine(refinement, params) {
+      return this.check(superRefine(refinement, params));
+    },
+    overwrite(fn) {
+      return this.check(_overwrite(fn));
+    },
+    optional() {
+      return optional(this);
+    },
+    exactOptional() {
+      return exactOptional(this);
+    },
+    nullable() {
+      return nullable(this);
+    },
+    nullish() {
+      return optional(nullable(this));
+    },
+    nonoptional(params) {
+      return nonoptional(this, params);
+    },
+    array() {
+      return array(this);
+    },
+    or(arg) {
+      return union([this, arg]);
+    },
+    and(arg) {
+      return intersection(this, arg);
+    },
+    transform(tx) {
+      return pipe(this, transform(tx));
+    },
+    default(d) {
+      return _default(this, d);
+    },
+    prefault(d) {
+      return prefault(this, d);
+    },
+    catch(params) {
+      return _catch(this, params);
+    },
+    pipe(target) {
+      return pipe(this, target);
+    },
+    readonly() {
+      return readonly(this);
+    },
+    describe(description) {
+      const cl = this.clone();
+      globalRegistry.add(cl, { description });
+      return cl;
+    },
+    meta(...args) {
+      if (args.length === 0)
+        return globalRegistry.get(this);
+      const cl = this.clone();
+      globalRegistry.add(cl, args[0]);
+      return cl;
+    },
+    isOptional() {
+      return this.safeParse(undefined).success;
+    },
+    isNullable() {
+      return this.safeParse(null).success;
+    },
+    apply(fn) {
+      return fn(this);
+    }
+  });
+  Object.defineProperty(inst, "description", {
+    get() {
+      return globalRegistry.get(inst)?.description;
+    },
+    configurable: true
+  });
+  return inst;
+});
+var _ZodString = /* @__PURE__ */ $constructor("_ZodString", (inst, def) => {
+  $ZodString.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => stringProcessor(inst, ctx, json, params);
+  const bag = inst._zod.bag;
+  inst.format = bag.format ?? null;
+  inst.minLength = bag.minimum ?? null;
+  inst.maxLength = bag.maximum ?? null;
+  _installLazyMethods(inst, "_ZodString", {
+    regex(...args) {
+      return this.check(_regex(...args));
+    },
+    includes(...args) {
+      return this.check(_includes(...args));
+    },
+    startsWith(...args) {
+      return this.check(_startsWith(...args));
+    },
+    endsWith(...args) {
+      return this.check(_endsWith(...args));
+    },
+    min(...args) {
+      return this.check(_minLength(...args));
+    },
+    max(...args) {
+      return this.check(_maxLength(...args));
+    },
+    length(...args) {
+      return this.check(_length(...args));
+    },
+    nonempty(...args) {
+      return this.check(_minLength(1, ...args));
+    },
+    lowercase(params) {
+      return this.check(_lowercase(params));
+    },
+    uppercase(params) {
+      return this.check(_uppercase(params));
+    },
+    trim() {
+      return this.check(_trim());
+    },
+    normalize(...args) {
+      return this.check(_normalize(...args));
+    },
+    toLowerCase() {
+      return this.check(_toLowerCase());
+    },
+    toUpperCase() {
+      return this.check(_toUpperCase());
+    },
+    slugify() {
+      return this.check(_slugify());
+    }
+  });
+});
+var ZodString = /* @__PURE__ */ $constructor("ZodString", (inst, def) => {
+  $ZodString.init(inst, def);
+  _ZodString.init(inst, def);
+  inst.email = (params) => inst.check(_email(ZodEmail, params));
+  inst.url = (params) => inst.check(_url(ZodURL, params));
+  inst.jwt = (params) => inst.check(_jwt(ZodJWT, params));
+  inst.emoji = (params) => inst.check(_emoji2(ZodEmoji, params));
+  inst.guid = (params) => inst.check(_guid(ZodGUID, params));
+  inst.uuid = (params) => inst.check(_uuid(ZodUUID, params));
+  inst.uuidv4 = (params) => inst.check(_uuidv4(ZodUUID, params));
+  inst.uuidv6 = (params) => inst.check(_uuidv6(ZodUUID, params));
+  inst.uuidv7 = (params) => inst.check(_uuidv7(ZodUUID, params));
+  inst.nanoid = (params) => inst.check(_nanoid(ZodNanoID, params));
+  inst.guid = (params) => inst.check(_guid(ZodGUID, params));
+  inst.cuid = (params) => inst.check(_cuid(ZodCUID, params));
+  inst.cuid2 = (params) => inst.check(_cuid2(ZodCUID2, params));
+  inst.ulid = (params) => inst.check(_ulid(ZodULID, params));
+  inst.base64 = (params) => inst.check(_base64(ZodBase64, params));
+  inst.base64url = (params) => inst.check(_base64url(ZodBase64URL, params));
+  inst.xid = (params) => inst.check(_xid(ZodXID, params));
+  inst.ksuid = (params) => inst.check(_ksuid(ZodKSUID, params));
+  inst.ipv4 = (params) => inst.check(_ipv4(ZodIPv4, params));
+  inst.ipv6 = (params) => inst.check(_ipv6(ZodIPv6, params));
+  inst.cidrv4 = (params) => inst.check(_cidrv4(ZodCIDRv4, params));
+  inst.cidrv6 = (params) => inst.check(_cidrv6(ZodCIDRv6, params));
+  inst.e164 = (params) => inst.check(_e164(ZodE164, params));
+  inst.datetime = (params) => inst.check(datetime2(params));
+  inst.date = (params) => inst.check(date2(params));
+  inst.time = (params) => inst.check(time2(params));
+  inst.duration = (params) => inst.check(duration2(params));
+});
+function string2(params) {
+  return _string(ZodString, params);
+}
+var ZodStringFormat = /* @__PURE__ */ $constructor("ZodStringFormat", (inst, def) => {
+  $ZodStringFormat.init(inst, def);
+  _ZodString.init(inst, def);
+});
+var ZodEmail = /* @__PURE__ */ $constructor("ZodEmail", (inst, def) => {
+  $ZodEmail.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodGUID = /* @__PURE__ */ $constructor("ZodGUID", (inst, def) => {
+  $ZodGUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodUUID = /* @__PURE__ */ $constructor("ZodUUID", (inst, def) => {
+  $ZodUUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodURL = /* @__PURE__ */ $constructor("ZodURL", (inst, def) => {
+  $ZodURL.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodEmoji = /* @__PURE__ */ $constructor("ZodEmoji", (inst, def) => {
+  $ZodEmoji.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodNanoID = /* @__PURE__ */ $constructor("ZodNanoID", (inst, def) => {
+  $ZodNanoID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodCUID = /* @__PURE__ */ $constructor("ZodCUID", (inst, def) => {
+  $ZodCUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodCUID2 = /* @__PURE__ */ $constructor("ZodCUID2", (inst, def) => {
+  $ZodCUID2.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodULID = /* @__PURE__ */ $constructor("ZodULID", (inst, def) => {
+  $ZodULID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodXID = /* @__PURE__ */ $constructor("ZodXID", (inst, def) => {
+  $ZodXID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodKSUID = /* @__PURE__ */ $constructor("ZodKSUID", (inst, def) => {
+  $ZodKSUID.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodIPv4 = /* @__PURE__ */ $constructor("ZodIPv4", (inst, def) => {
+  $ZodIPv4.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodIPv6 = /* @__PURE__ */ $constructor("ZodIPv6", (inst, def) => {
+  $ZodIPv6.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodCIDRv4 = /* @__PURE__ */ $constructor("ZodCIDRv4", (inst, def) => {
+  $ZodCIDRv4.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodCIDRv6 = /* @__PURE__ */ $constructor("ZodCIDRv6", (inst, def) => {
+  $ZodCIDRv6.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodBase64 = /* @__PURE__ */ $constructor("ZodBase64", (inst, def) => {
+  $ZodBase64.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodBase64URL = /* @__PURE__ */ $constructor("ZodBase64URL", (inst, def) => {
+  $ZodBase64URL.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodE164 = /* @__PURE__ */ $constructor("ZodE164", (inst, def) => {
+  $ZodE164.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodJWT = /* @__PURE__ */ $constructor("ZodJWT", (inst, def) => {
+  $ZodJWT.init(inst, def);
+  ZodStringFormat.init(inst, def);
+});
+var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
+  $ZodNumber.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => numberProcessor(inst, ctx, json, params);
+  _installLazyMethods(inst, "ZodNumber", {
+    gt(value, params) {
+      return this.check(_gt(value, params));
+    },
+    gte(value, params) {
+      return this.check(_gte(value, params));
+    },
+    min(value, params) {
+      return this.check(_gte(value, params));
+    },
+    lt(value, params) {
+      return this.check(_lt(value, params));
+    },
+    lte(value, params) {
+      return this.check(_lte(value, params));
+    },
+    max(value, params) {
+      return this.check(_lte(value, params));
+    },
+    int(params) {
+      return this.check(int(params));
+    },
+    safe(params) {
+      return this.check(int(params));
+    },
+    positive(params) {
+      return this.check(_gt(0, params));
+    },
+    nonnegative(params) {
+      return this.check(_gte(0, params));
+    },
+    negative(params) {
+      return this.check(_lt(0, params));
+    },
+    nonpositive(params) {
+      return this.check(_lte(0, params));
+    },
+    multipleOf(value, params) {
+      return this.check(_multipleOf(value, params));
+    },
+    step(value, params) {
+      return this.check(_multipleOf(value, params));
+    },
+    finite() {
+      return this;
+    }
+  });
+  const bag = inst._zod.bag;
+  inst.minValue = Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
+  inst.maxValue = Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
+  inst.isInt = (bag.format ?? "").includes("int") || Number.isSafeInteger(bag.multipleOf ?? 0.5);
+  inst.isFinite = true;
+  inst.format = bag.format ?? null;
+});
+function number2(params) {
+  return _number(ZodNumber, params);
+}
+var ZodNumberFormat = /* @__PURE__ */ $constructor("ZodNumberFormat", (inst, def) => {
+  $ZodNumberFormat.init(inst, def);
+  ZodNumber.init(inst, def);
+});
+function int(params) {
+  return _int(ZodNumberFormat, params);
+}
+var ZodBoolean = /* @__PURE__ */ $constructor("ZodBoolean", (inst, def) => {
+  $ZodBoolean.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => booleanProcessor(inst, ctx, json, params);
+});
+function boolean2(params) {
+  return _boolean(ZodBoolean, params);
+}
+var ZodNull = /* @__PURE__ */ $constructor("ZodNull", (inst, def) => {
+  $ZodNull.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => nullProcessor(inst, ctx, json, params);
+});
+function _null3(params) {
+  return _null2(ZodNull, params);
+}
+var ZodUnknown = /* @__PURE__ */ $constructor("ZodUnknown", (inst, def) => {
+  $ZodUnknown.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => unknownProcessor(inst, ctx, json, params);
+});
+function unknown() {
+  return _unknown(ZodUnknown);
+}
+var ZodNever = /* @__PURE__ */ $constructor("ZodNever", (inst, def) => {
+  $ZodNever.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => neverProcessor(inst, ctx, json, params);
+});
+function never(params) {
+  return _never(ZodNever, params);
+}
+var ZodArray = /* @__PURE__ */ $constructor("ZodArray", (inst, def) => {
+  $ZodArray.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => arrayProcessor(inst, ctx, json, params);
+  inst.element = def.element;
+  _installLazyMethods(inst, "ZodArray", {
+    min(n, params) {
+      return this.check(_minLength(n, params));
+    },
+    nonempty(params) {
+      return this.check(_minLength(1, params));
+    },
+    max(n, params) {
+      return this.check(_maxLength(n, params));
+    },
+    length(n, params) {
+      return this.check(_length(n, params));
+    },
+    unwrap() {
+      return this.element;
+    }
+  });
+});
+function array(element, params) {
+  return _array(ZodArray, element, params);
+}
+var ZodObject = /* @__PURE__ */ $constructor("ZodObject", (inst, def) => {
+  $ZodObjectJIT.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => objectProcessor(inst, ctx, json, params);
+  defineLazy(inst, "shape", () => {
+    return def.shape;
+  });
+  _installLazyMethods(inst, "ZodObject", {
+    keyof() {
+      return _enum(Object.keys(this._zod.def.shape));
+    },
+    catchall(catchall) {
+      return this.clone({ ...this._zod.def, catchall });
+    },
+    passthrough() {
+      return this.clone({ ...this._zod.def, catchall: unknown() });
+    },
+    loose() {
+      return this.clone({ ...this._zod.def, catchall: unknown() });
+    },
+    strict() {
+      return this.clone({ ...this._zod.def, catchall: never() });
+    },
+    strip() {
+      return this.clone({ ...this._zod.def, catchall: undefined });
+    },
+    extend(incoming) {
+      return extend(this, incoming);
+    },
+    safeExtend(incoming) {
+      return safeExtend(this, incoming);
+    },
+    merge(other) {
+      return merge(this, other);
+    },
+    pick(mask) {
+      return pick(this, mask);
+    },
+    omit(mask) {
+      return omit(this, mask);
+    },
+    partial(...args) {
+      return partial(ZodOptional, this, args[0]);
+    },
+    required(...args) {
+      return required(ZodNonOptional, this, args[0]);
+    }
+  });
+});
+function object(shape, params) {
+  const def = {
+    type: "object",
+    shape: shape ?? {},
+    ...normalizeParams(params)
+  };
+  return new ZodObject(def);
+}
+var ZodUnion = /* @__PURE__ */ $constructor("ZodUnion", (inst, def) => {
+  $ZodUnion.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => unionProcessor(inst, ctx, json, params);
+  inst.options = def.options;
+});
+function union(options, params) {
+  return new ZodUnion({
+    type: "union",
+    options,
+    ...normalizeParams(params)
+  });
+}
+var ZodIntersection = /* @__PURE__ */ $constructor("ZodIntersection", (inst, def) => {
+  $ZodIntersection.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => intersectionProcessor(inst, ctx, json, params);
+});
+function intersection(left, right) {
+  return new ZodIntersection({
+    type: "intersection",
+    left,
+    right
+  });
+}
+var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
+  $ZodEnum.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => enumProcessor(inst, ctx, json, params);
+  inst.enum = def.entries;
+  inst.options = Object.values(def.entries);
+  const keys = new Set(Object.keys(def.entries));
+  inst.extract = (values, params) => {
+    const newEntries = {};
+    for (const value of values) {
+      if (keys.has(value)) {
+        newEntries[value] = def.entries[value];
+      } else
+        throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum({
+      ...def,
+      checks: [],
+      ...normalizeParams(params),
+      entries: newEntries
+    });
+  };
+  inst.exclude = (values, params) => {
+    const newEntries = { ...def.entries };
+    for (const value of values) {
+      if (keys.has(value)) {
+        delete newEntries[value];
+      } else
+        throw new Error(`Key ${value} not found in enum`);
+    }
+    return new ZodEnum({
+      ...def,
+      checks: [],
+      ...normalizeParams(params),
+      entries: newEntries
+    });
+  };
+});
+function _enum(values, params) {
+  const entries = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+  return new ZodEnum({
+    type: "enum",
+    entries,
+    ...normalizeParams(params)
+  });
+}
+var ZodLiteral = /* @__PURE__ */ $constructor("ZodLiteral", (inst, def) => {
+  $ZodLiteral.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => literalProcessor(inst, ctx, json, params);
+  inst.values = new Set(def.values);
+  Object.defineProperty(inst, "value", {
+    get() {
+      if (def.values.length > 1) {
+        throw new Error("This schema contains multiple valid literal values. Use `.values` instead.");
+      }
+      return def.values[0];
+    }
+  });
+});
+function literal(value, params) {
+  return new ZodLiteral({
+    type: "literal",
+    values: Array.isArray(value) ? value : [value],
+    ...normalizeParams(params)
+  });
+}
+var ZodTransform = /* @__PURE__ */ $constructor("ZodTransform", (inst, def) => {
+  $ZodTransform.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => transformProcessor(inst, ctx, json, params);
+  inst._zod.parse = (payload, _ctx) => {
+    if (_ctx.direction === "backward") {
+      throw new $ZodEncodeError(inst.constructor.name);
+    }
+    payload.addIssue = (issue2) => {
+      if (typeof issue2 === "string") {
+        payload.issues.push(issue(issue2, payload.value, def));
+      } else {
+        const _issue = issue2;
+        if (_issue.fatal)
+          _issue.continue = false;
+        _issue.code ?? (_issue.code = "custom");
+        _issue.input ?? (_issue.input = payload.value);
+        _issue.inst ?? (_issue.inst = inst);
+        payload.issues.push(issue(_issue));
+      }
+    };
+    const output = def.transform(payload.value, payload);
+    if (output instanceof Promise) {
+      return output.then((output) => {
+        payload.value = output;
+        payload.fallback = true;
+        return payload;
+      });
+    }
+    payload.value = output;
+    payload.fallback = true;
+    return payload;
+  };
+});
+function transform(fn) {
+  return new ZodTransform({
+    type: "transform",
+    transform: fn
+  });
+}
+var ZodOptional = /* @__PURE__ */ $constructor("ZodOptional", (inst, def) => {
+  $ZodOptional.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => optionalProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function optional(innerType) {
+  return new ZodOptional({
+    type: "optional",
+    innerType
+  });
+}
+var ZodExactOptional = /* @__PURE__ */ $constructor("ZodExactOptional", (inst, def) => {
+  $ZodExactOptional.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => optionalProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function exactOptional(innerType) {
+  return new ZodExactOptional({
+    type: "optional",
+    innerType
+  });
+}
+var ZodNullable = /* @__PURE__ */ $constructor("ZodNullable", (inst, def) => {
+  $ZodNullable.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => nullableProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function nullable(innerType) {
+  return new ZodNullable({
+    type: "nullable",
+    innerType
+  });
+}
+var ZodDefault = /* @__PURE__ */ $constructor("ZodDefault", (inst, def) => {
+  $ZodDefault.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => defaultProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+  inst.removeDefault = inst.unwrap;
+});
+function _default(innerType, defaultValue) {
+  return new ZodDefault({
+    type: "default",
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? defaultValue() : shallowClone(defaultValue);
+    }
+  });
+}
+var ZodPrefault = /* @__PURE__ */ $constructor("ZodPrefault", (inst, def) => {
+  $ZodPrefault.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => prefaultProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function prefault(innerType, defaultValue) {
+  return new ZodPrefault({
+    type: "prefault",
+    innerType,
+    get defaultValue() {
+      return typeof defaultValue === "function" ? defaultValue() : shallowClone(defaultValue);
+    }
+  });
+}
+var ZodNonOptional = /* @__PURE__ */ $constructor("ZodNonOptional", (inst, def) => {
+  $ZodNonOptional.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => nonoptionalProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function nonoptional(innerType, params) {
+  return new ZodNonOptional({
+    type: "nonoptional",
+    innerType,
+    ...normalizeParams(params)
+  });
+}
+var ZodCatch = /* @__PURE__ */ $constructor("ZodCatch", (inst, def) => {
+  $ZodCatch.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => catchProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+  inst.removeCatch = inst.unwrap;
+});
+function _catch(innerType, catchValue) {
+  return new ZodCatch({
+    type: "catch",
+    innerType,
+    catchValue: typeof catchValue === "function" ? catchValue : () => catchValue
+  });
+}
+var ZodPipe = /* @__PURE__ */ $constructor("ZodPipe", (inst, def) => {
+  $ZodPipe.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => pipeProcessor(inst, ctx, json, params);
+  inst.in = def.in;
+  inst.out = def.out;
+});
+function pipe(in_, out) {
+  return new ZodPipe({
+    type: "pipe",
+    in: in_,
+    out
+  });
+}
+var ZodReadonly = /* @__PURE__ */ $constructor("ZodReadonly", (inst, def) => {
+  $ZodReadonly.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => readonlyProcessor(inst, ctx, json, params);
+  inst.unwrap = () => inst._zod.def.innerType;
+});
+function readonly(innerType) {
+  return new ZodReadonly({
+    type: "readonly",
+    innerType
+  });
+}
+var ZodCustom = /* @__PURE__ */ $constructor("ZodCustom", (inst, def) => {
+  $ZodCustom.init(inst, def);
+  ZodType.init(inst, def);
+  inst._zod.processJSONSchema = (ctx, json, params) => customProcessor(inst, ctx, json, params);
+});
+function refine(fn, _params = {}) {
+  return _refine(ZodCustom, fn, _params);
+}
+function superRefine(fn, params) {
+  return _superRefine(fn, params);
+}
+// ../gola-source/node_modules/@hatch/space-sdk/dist/server-contract.js
+var PRIVILEGED_CONTRACT_BRAND = "@hatch/space-sdk/privileged-contract/v1";
+var PRIVILEGED_HANDLERS_FORMAT = "hatch-space-privileged-handlers-v1";
+function definePrivilegedContracts(specs) {
+  const contracts = {};
+  for (const [name, spec] of Object.entries(specs)) {
+    contracts[name] = {
+      __brand: PRIVILEGED_CONTRACT_BRAND,
+      name,
+      request: spec.request,
+      response: spec.response,
+      ...spec.capabilities !== undefined ? { capabilities: spec.capabilities } : {},
+      ...spec.timeoutMs !== undefined ? { timeoutMs: spec.timeoutMs } : {}
+    };
+  }
+  return contracts;
+}
+function definePrivilegedHandlers(contracts, handlers) {
+  const entries = [];
+  for (const [key, handler] of Object.entries(handlers)) {
+    if (handler === undefined) {
+      continue;
+    }
+    const contract = contracts[key];
+    if (!isPrivilegedContract(contract)) {
+      throw new Error(`privileged handler '${key}' does not have a contract descriptor`);
+    }
+    entries.push({
+      contract,
+      handler
+    });
+  }
+  return {
+    format: PRIVILEGED_HANDLERS_FORMAT,
+    entries
+  };
+}
+function isPrivilegedContract(value) {
+  return typeof value === "object" && value !== null && "__brand" in value && value.__brand === PRIVILEGED_CONTRACT_BRAND;
+}
+var ACTION_BRAND = "@hatch/space-sdk/action/v1";
+var LEGACY_ACTION_BRAND = Symbol.for("@hatch/space-sdk/action");
+function createDefineAction() {
+  return function defineAction(spec) {
+    return {
+      __brand: ACTION_BRAND,
+      request: spec.request,
+      response: spec.response,
+      ...spec.privileged !== undefined ? { privileged: spec.privileged } : {},
+      handler: spec.handler
+    };
+  };
+}
+// ../gola-source/node_modules/@hatch/space-sdk/dist/index.js
+var defineAction = createDefineAction();
+
+// ../gola-source/node_modules/drizzle-orm/entity.js
+var entityKind = Symbol.for("drizzle:entityKind");
+var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
+function is(value, type) {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  if (value instanceof type) {
+    return true;
+  }
+  if (!Object.prototype.hasOwnProperty.call(type, entityKind)) {
+    throw new Error(`Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`);
+  }
+  let cls = Object.getPrototypeOf(value).constructor;
+  if (cls) {
+    while (cls) {
+      if (entityKind in cls && cls[entityKind] === type[entityKind]) {
+        return true;
+      }
+      cls = Object.getPrototypeOf(cls);
+    }
+  }
+  return false;
+}
+
+// ../gola-source/node_modules/drizzle-orm/column.js
+class Column {
+  constructor(table, config) {
+    this.table = table;
+    this.config = config;
+    this.name = config.name;
+    this.keyAsName = config.keyAsName;
+    this.notNull = config.notNull;
+    this.default = config.default;
+    this.defaultFn = config.defaultFn;
+    this.onUpdateFn = config.onUpdateFn;
+    this.hasDefault = config.hasDefault;
+    this.primary = config.primaryKey;
+    this.isUnique = config.isUnique;
+    this.uniqueName = config.uniqueName;
+    this.uniqueType = config.uniqueType;
+    this.dataType = config.dataType;
+    this.columnType = config.columnType;
+    this.generated = config.generated;
+    this.generatedIdentity = config.generatedIdentity;
+  }
+  static [entityKind] = "Column";
+  name;
+  keyAsName;
+  primary;
+  notNull;
+  default;
+  defaultFn;
+  onUpdateFn;
+  hasDefault;
+  isUnique;
+  uniqueName;
+  uniqueType;
+  dataType;
+  columnType;
+  enumValues = undefined;
+  generated = undefined;
+  generatedIdentity = undefined;
+  config;
+  mapFromDriverValue(value) {
+    return value;
+  }
+  mapToDriverValue(value) {
+    return value;
+  }
+  shouldDisableInsert() {
+    return this.config.generated !== undefined && this.config.generated.type !== "byDefault";
+  }
+}
+
+// ../gola-source/node_modules/drizzle-orm/column-builder.js
+class ColumnBuilder {
+  static [entityKind] = "ColumnBuilder";
+  config;
+  constructor(name, dataType, columnType) {
+    this.config = {
+      name,
+      keyAsName: name === "",
+      notNull: false,
+      default: undefined,
+      hasDefault: false,
+      primaryKey: false,
+      isUnique: false,
+      uniqueName: undefined,
+      uniqueType: undefined,
+      dataType,
+      columnType,
+      generated: undefined
+    };
+  }
+  $type() {
+    return this;
+  }
+  notNull() {
+    this.config.notNull = true;
+    return this;
+  }
+  default(value) {
+    this.config.default = value;
+    this.config.hasDefault = true;
+    return this;
+  }
+  $defaultFn(fn) {
+    this.config.defaultFn = fn;
+    this.config.hasDefault = true;
+    return this;
+  }
+  $default = this.$defaultFn;
+  $onUpdateFn(fn) {
+    this.config.onUpdateFn = fn;
+    this.config.hasDefault = true;
+    return this;
+  }
+  $onUpdate = this.$onUpdateFn;
+  primaryKey() {
+    this.config.primaryKey = true;
+    this.config.notNull = true;
+    return this;
+  }
+  setName(name) {
+    if (this.config.name !== "")
+      return;
+    this.config.name = name;
+  }
+}
+
+// ../gola-source/node_modules/drizzle-orm/table.utils.js
+var TableName = Symbol.for("drizzle:Name");
+
+// ../gola-source/node_modules/drizzle-orm/tracing-utils.js
+function iife(fn, ...args) {
+  return fn(...args);
+}
+
+// ../gola-source/node_modules/drizzle-orm/pg-core/columns/enum.js
+var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
+function isPgEnum(obj) {
+  return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
+}
+
+// ../gola-source/node_modules/drizzle-orm/subquery.js
+class Subquery {
+  static [entityKind] = "Subquery";
+  constructor(sql, fields, alias, isWith = false, usedTables = []) {
+    this._ = {
+      brand: "Subquery",
+      sql,
+      selectedFields: fields,
+      alias,
+      isWith,
+      usedTables
+    };
+  }
+}
+
+// ../gola-source/node_modules/drizzle-orm/version.js
+var version2 = "0.45.2";
+
+// ../gola-source/node_modules/drizzle-orm/tracing.js
+var otel;
+var rawTracer;
+var tracer = {
+  startActiveSpan(name, fn) {
+    if (!otel) {
+      return fn();
+    }
+    if (!rawTracer) {
+      rawTracer = otel.trace.getTracer("drizzle-orm", version2);
+    }
+    return iife((otel2, rawTracer2) => rawTracer2.startActiveSpan(name, (span) => {
+      try {
+        return fn(span);
+      } catch (e) {
+        span.setStatus({
+          code: otel2.SpanStatusCode.ERROR,
+          message: e instanceof Error ? e.message : "Unknown error"
+        });
+        throw e;
+      } finally {
+        span.end();
+      }
+    }), otel, rawTracer);
+  }
+};
+
+// ../gola-source/node_modules/drizzle-orm/view-common.js
+var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
+
+// ../gola-source/node_modules/drizzle-orm/table.js
+var Schema = Symbol.for("drizzle:Schema");
+var Columns = Symbol.for("drizzle:Columns");
+var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
+var OriginalName = Symbol.for("drizzle:OriginalName");
+var BaseName = Symbol.for("drizzle:BaseName");
+var IsAlias = Symbol.for("drizzle:IsAlias");
+var ExtraConfigBuilder = Symbol.for("drizzle:ExtraConfigBuilder");
+var IsDrizzleTable = Symbol.for("drizzle:IsDrizzleTable");
+
+class Table {
+  static [entityKind] = "Table";
+  static Symbol = {
+    Name: TableName,
+    Schema,
+    OriginalName,
+    Columns,
+    ExtraConfigColumns,
+    BaseName,
+    IsAlias,
+    ExtraConfigBuilder
+  };
+  [TableName];
+  [OriginalName];
+  [Schema];
+  [Columns];
+  [ExtraConfigColumns];
+  [BaseName];
+  [IsAlias] = false;
+  [IsDrizzleTable] = true;
+  [ExtraConfigBuilder] = undefined;
+  constructor(name, schema, baseName) {
+    this[TableName] = this[OriginalName] = name;
+    this[Schema] = schema;
+    this[BaseName] = baseName;
+  }
+}
+
+// ../gola-source/node_modules/drizzle-orm/sql/sql.js
+function isSQLWrapper(value) {
+  return value !== null && value !== undefined && typeof value.getSQL === "function";
+}
+function mergeQueries(queries) {
+  const result = { sql: "", params: [] };
+  for (const query of queries) {
+    result.sql += query.sql;
+    result.params.push(...query.params);
+    if (query.typings?.length) {
+      if (!result.typings) {
+        result.typings = [];
+      }
+      result.typings.push(...query.typings);
+    }
+  }
+  return result;
+}
+
+class StringChunk {
+  static [entityKind] = "StringChunk";
+  value;
+  constructor(value) {
+    this.value = Array.isArray(value) ? value : [value];
+  }
+  getSQL() {
+    return new SQL([this]);
+  }
+}
+
+class SQL {
+  constructor(queryChunks) {
+    this.queryChunks = queryChunks;
+    for (const chunk of queryChunks) {
+      if (is(chunk, Table)) {
+        const schemaName = chunk[Table.Symbol.Schema];
+        this.usedTables.push(schemaName === undefined ? chunk[Table.Symbol.Name] : schemaName + "." + chunk[Table.Symbol.Name]);
+      }
+    }
+  }
+  static [entityKind] = "SQL";
+  decoder = noopDecoder;
+  shouldInlineParams = false;
+  usedTables = [];
+  append(query) {
+    this.queryChunks.push(...query.queryChunks);
+    return this;
+  }
+  toQuery(config) {
+    return tracer.startActiveSpan("drizzle.buildSQL", (span) => {
+      const query = this.buildQueryFromSourceParams(this.queryChunks, config);
+      span?.setAttributes({
+        "drizzle.query.text": query.sql,
+        "drizzle.query.params": JSON.stringify(query.params)
+      });
+      return query;
+    });
+  }
+  buildQueryFromSourceParams(chunks, _config) {
+    const config = Object.assign({}, _config, {
+      inlineParams: _config.inlineParams || this.shouldInlineParams,
+      paramStartIndex: _config.paramStartIndex || { value: 0 }
+    });
+    const {
+      casing,
+      escapeName,
+      escapeParam,
+      prepareTyping,
+      inlineParams,
+      paramStartIndex
+    } = config;
+    return mergeQueries(chunks.map((chunk) => {
+      if (is(chunk, StringChunk)) {
+        return { sql: chunk.value.join(""), params: [] };
+      }
+      if (is(chunk, Name)) {
+        return { sql: escapeName(chunk.value), params: [] };
+      }
+      if (chunk === undefined) {
+        return { sql: "", params: [] };
+      }
+      if (Array.isArray(chunk)) {
+        const result = [new StringChunk("(")];
+        for (const [i, p] of chunk.entries()) {
+          result.push(p);
+          if (i < chunk.length - 1) {
+            result.push(new StringChunk(", "));
+          }
+        }
+        result.push(new StringChunk(")"));
+        return this.buildQueryFromSourceParams(result, config);
+      }
+      if (is(chunk, SQL)) {
+        return this.buildQueryFromSourceParams(chunk.queryChunks, {
+          ...config,
+          inlineParams: inlineParams || chunk.shouldInlineParams
+        });
+      }
+      if (is(chunk, Table)) {
+        const schemaName = chunk[Table.Symbol.Schema];
+        const tableName = chunk[Table.Symbol.Name];
+        return {
+          sql: schemaName === undefined || chunk[IsAlias] ? escapeName(tableName) : escapeName(schemaName) + "." + escapeName(tableName),
+          params: []
+        };
+      }
+      if (is(chunk, Column)) {
+        const columnName = casing.getColumnCasing(chunk);
+        if (_config.invokeSource === "indexes") {
+          return { sql: escapeName(columnName), params: [] };
+        }
+        const schemaName = chunk.table[Table.Symbol.Schema];
+        return {
+          sql: chunk.table[IsAlias] || schemaName === undefined ? escapeName(chunk.table[Table.Symbol.Name]) + "." + escapeName(columnName) : escapeName(schemaName) + "." + escapeName(chunk.table[Table.Symbol.Name]) + "." + escapeName(columnName),
+          params: []
+        };
+      }
+      if (is(chunk, View)) {
+        const schemaName = chunk[ViewBaseConfig].schema;
+        const viewName = chunk[ViewBaseConfig].name;
+        return {
+          sql: schemaName === undefined || chunk[ViewBaseConfig].isAlias ? escapeName(viewName) : escapeName(schemaName) + "." + escapeName(viewName),
+          params: []
+        };
+      }
+      if (is(chunk, Param)) {
+        if (is(chunk.value, Placeholder)) {
+          return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+        }
+        const mappedValue = chunk.value === null ? null : chunk.encoder.mapToDriverValue(chunk.value);
+        if (is(mappedValue, SQL)) {
+          return this.buildQueryFromSourceParams([mappedValue], config);
+        }
+        if (inlineParams) {
+          return { sql: this.mapInlineParam(mappedValue, config), params: [] };
+        }
+        let typings = ["none"];
+        if (prepareTyping) {
+          typings = [prepareTyping(chunk.encoder)];
+        }
+        return { sql: escapeParam(paramStartIndex.value++, mappedValue), params: [mappedValue], typings };
+      }
+      if (is(chunk, Placeholder)) {
+        return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+      }
+      if (is(chunk, SQL.Aliased) && chunk.fieldAlias !== undefined) {
+        return { sql: escapeName(chunk.fieldAlias), params: [] };
+      }
+      if (is(chunk, Subquery)) {
+        if (chunk._.isWith) {
+          return { sql: escapeName(chunk._.alias), params: [] };
+        }
+        return this.buildQueryFromSourceParams([
+          new StringChunk("("),
+          chunk._.sql,
+          new StringChunk(") "),
+          new Name(chunk._.alias)
+        ], config);
+      }
+      if (isPgEnum(chunk)) {
+        if (chunk.schema) {
+          return { sql: escapeName(chunk.schema) + "." + escapeName(chunk.enumName), params: [] };
+        }
+        return { sql: escapeName(chunk.enumName), params: [] };
+      }
+      if (isSQLWrapper(chunk)) {
+        if (chunk.shouldOmitSQLParens?.()) {
+          return this.buildQueryFromSourceParams([chunk.getSQL()], config);
+        }
+        return this.buildQueryFromSourceParams([
+          new StringChunk("("),
+          chunk.getSQL(),
+          new StringChunk(")")
+        ], config);
+      }
+      if (inlineParams) {
+        return { sql: this.mapInlineParam(chunk, config), params: [] };
+      }
+      return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+    }));
+  }
+  mapInlineParam(chunk, { escapeString }) {
+    if (chunk === null) {
+      return "null";
+    }
+    if (typeof chunk === "number" || typeof chunk === "boolean") {
+      return chunk.toString();
+    }
+    if (typeof chunk === "string") {
+      return escapeString(chunk);
+    }
+    if (typeof chunk === "object") {
+      const mappedValueAsString = chunk.toString();
+      if (mappedValueAsString === "[object Object]") {
+        return escapeString(JSON.stringify(chunk));
+      }
+      return escapeString(mappedValueAsString);
+    }
+    throw new Error("Unexpected param value: " + chunk);
+  }
+  getSQL() {
+    return this;
+  }
+  as(alias) {
+    if (alias === undefined) {
+      return this;
+    }
+    return new SQL.Aliased(this, alias);
+  }
+  mapWith(decoder) {
+    this.decoder = typeof decoder === "function" ? { mapFromDriverValue: decoder } : decoder;
+    return this;
+  }
+  inlineParams() {
+    this.shouldInlineParams = true;
+    return this;
+  }
+  if(condition) {
+    return condition ? this : undefined;
+  }
+}
+
+class Name {
+  constructor(value) {
+    this.value = value;
+  }
+  static [entityKind] = "Name";
+  brand;
+  getSQL() {
+    return new SQL([this]);
+  }
+}
+function isDriverValueEncoder(value) {
+  return typeof value === "object" && value !== null && "mapToDriverValue" in value && typeof value.mapToDriverValue === "function";
+}
+var noopDecoder = {
+  mapFromDriverValue: (value) => value
+};
+var noopEncoder = {
+  mapToDriverValue: (value) => value
+};
+var noopMapper = {
+  ...noopDecoder,
+  ...noopEncoder
+};
+
+class Param {
+  constructor(value, encoder = noopEncoder) {
+    this.value = value;
+    this.encoder = encoder;
+  }
+  static [entityKind] = "Param";
+  brand;
+  getSQL() {
+    return new SQL([this]);
+  }
+}
+function sql(strings, ...params) {
+  const queryChunks = [];
+  if (params.length > 0 || strings.length > 0 && strings[0] !== "") {
+    queryChunks.push(new StringChunk(strings[0]));
+  }
+  for (const [paramIndex, param2] of params.entries()) {
+    queryChunks.push(param2, new StringChunk(strings[paramIndex + 1]));
+  }
+  return new SQL(queryChunks);
+}
+((sql2) => {
+  function empty() {
+    return new SQL([]);
+  }
+  sql2.empty = empty;
+  function fromList(list) {
+    return new SQL(list);
+  }
+  sql2.fromList = fromList;
+  function raw(str) {
+    return new SQL([new StringChunk(str)]);
+  }
+  sql2.raw = raw;
+  function join(chunks, separator) {
+    const result = [];
+    for (const [i, chunk] of chunks.entries()) {
+      if (i > 0 && separator !== undefined) {
+        result.push(separator);
+      }
+      result.push(chunk);
+    }
+    return new SQL(result);
+  }
+  sql2.join = join;
+  function identifier(value) {
+    return new Name(value);
+  }
+  sql2.identifier = identifier;
+  function placeholder2(name2) {
+    return new Placeholder(name2);
+  }
+  sql2.placeholder = placeholder2;
+  function param2(value, encoder) {
+    return new Param(value, encoder);
+  }
+  sql2.param = param2;
+})(sql || (sql = {}));
+((SQL2) => {
+
+  class Aliased {
+    constructor(sql2, fieldAlias) {
+      this.sql = sql2;
+      this.fieldAlias = fieldAlias;
+    }
+    static [entityKind] = "SQL.Aliased";
+    isSelectionField = false;
+    getSQL() {
+      return this.sql;
+    }
+    clone() {
+      return new Aliased(this.sql, this.fieldAlias);
+    }
+  }
+  SQL2.Aliased = Aliased;
+})(SQL || (SQL = {}));
+
+class Placeholder {
+  constructor(name2) {
+    this.name = name2;
+  }
+  static [entityKind] = "Placeholder";
+  getSQL() {
+    return new SQL([this]);
+  }
+}
+var IsDrizzleView = Symbol.for("drizzle:IsDrizzleView");
+
+class View {
+  static [entityKind] = "View";
+  [ViewBaseConfig];
+  [IsDrizzleView] = true;
+  constructor({ name: name2, schema, selectedFields, query }) {
+    this[ViewBaseConfig] = {
+      name: name2,
+      originalName: name2,
+      schema,
+      selectedFields,
+      query,
+      isExisting: !query,
+      isAlias: false
+    };
+  }
+  getSQL() {
+    return new SQL([this]);
+  }
+}
+Column.prototype.getSQL = function() {
+  return new SQL([this]);
+};
+Table.prototype.getSQL = function() {
+  return new SQL([this]);
+};
+Subquery.prototype.getSQL = function() {
+  return new SQL([this]);
+};
+
+// ../gola-source/node_modules/drizzle-orm/utils.js
+function getColumnNameAndConfig(a, b) {
+  return {
+    name: typeof a === "string" && a.length > 0 ? a : "",
+    config: typeof a === "object" ? a : b
+  };
+}
+var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder;
+
+// ../gola-source/node_modules/drizzle-orm/sql/expressions/conditions.js
+function bindIfParam(value, column) {
+  if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
+    return new Param(value, column);
+  }
+  return value;
+}
+var eq = (left, right) => {
+  return sql`${left} = ${bindIfParam(right, left)}`;
+};
+var ne = (left, right) => {
+  return sql`${left} <> ${bindIfParam(right, left)}`;
+};
+function and(...unfilteredConditions) {
+  const conditions = unfilteredConditions.filter((c) => c !== undefined);
+  if (conditions.length === 0) {
+    return;
+  }
+  if (conditions.length === 1) {
+    return new SQL(conditions);
+  }
+  return new SQL([
+    new StringChunk("("),
+    sql.join(conditions, new StringChunk(" and ")),
+    new StringChunk(")")
+  ]);
+}
+var gt = (left, right) => {
+  return sql`${left} > ${bindIfParam(right, left)}`;
+};
+var lt = (left, right) => {
+  return sql`${left} < ${bindIfParam(right, left)}`;
+};
+function inArray(column, values) {
+  if (Array.isArray(values)) {
+    if (values.length === 0) {
+      return sql`false`;
+    }
+    return sql`${column} in ${values.map((v) => bindIfParam(v, column))}`;
+  }
+  return sql`${column} in ${bindIfParam(values, column)}`;
+}
+function isNull(value) {
+  return sql`${value} is null`;
+}
+
+// ../gola-source/node_modules/drizzle-orm/sql/expressions/select.js
+function asc(column) {
+  return sql`${column} asc`;
+}
+function desc(column) {
+  return sql`${column} desc`;
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/foreign-keys.js
+class ForeignKeyBuilder {
+  static [entityKind] = "SQLiteForeignKeyBuilder";
+  reference;
+  _onUpdate;
+  _onDelete;
+  constructor(config, actions) {
+    this.reference = () => {
+      const { name, columns, foreignColumns } = config();
+      return { name, columns, foreignTable: foreignColumns[0].table, foreignColumns };
+    };
+    if (actions) {
+      this._onUpdate = actions.onUpdate;
+      this._onDelete = actions.onDelete;
+    }
+  }
+  onUpdate(action) {
+    this._onUpdate = action;
+    return this;
+  }
+  onDelete(action) {
+    this._onDelete = action;
+    return this;
+  }
+  build(table) {
+    return new ForeignKey(table, this);
+  }
+}
+
+class ForeignKey {
+  constructor(table, builder) {
+    this.table = table;
+    this.reference = builder.reference;
+    this.onUpdate = builder._onUpdate;
+    this.onDelete = builder._onDelete;
+  }
+  static [entityKind] = "SQLiteForeignKey";
+  reference;
+  onUpdate;
+  onDelete;
+  getName() {
+    const { name, columns, foreignColumns } = this.reference();
+    const columnNames = columns.map((column) => column.name);
+    const foreignColumnNames = foreignColumns.map((column) => column.name);
+    const chunks = [
+      this.table[TableName],
+      ...columnNames,
+      foreignColumns[0].table[TableName],
+      ...foreignColumnNames
+    ];
+    return name ?? `${chunks.join("_")}_fk`;
+  }
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/unique-constraint.js
+function uniqueKeyName(table, columns) {
+  return `${table[TableName]}_${columns.join("_")}_unique`;
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/common.js
+class SQLiteColumnBuilder extends ColumnBuilder {
+  static [entityKind] = "SQLiteColumnBuilder";
+  foreignKeyConfigs = [];
+  references(ref, actions = {}) {
+    this.foreignKeyConfigs.push({ ref, actions });
+    return this;
+  }
+  unique(name) {
+    this.config.isUnique = true;
+    this.config.uniqueName = name;
+    return this;
+  }
+  generatedAlwaysAs(as, config) {
+    this.config.generated = {
+      as,
+      type: "always",
+      mode: config?.mode ?? "virtual"
+    };
+    return this;
+  }
+  buildForeignKeys(column, table) {
+    return this.foreignKeyConfigs.map(({ ref, actions }) => {
+      return ((ref2, actions2) => {
+        const builder = new ForeignKeyBuilder(() => {
+          const foreignColumn = ref2();
+          return { columns: [column], foreignColumns: [foreignColumn] };
+        });
+        if (actions2.onUpdate) {
+          builder.onUpdate(actions2.onUpdate);
+        }
+        if (actions2.onDelete) {
+          builder.onDelete(actions2.onDelete);
+        }
+        return builder.build(table);
+      })(ref, actions);
+    });
+  }
+}
+
+class SQLiteColumn extends Column {
+  constructor(table, config) {
+    if (!config.uniqueName) {
+      config.uniqueName = uniqueKeyName(table, [config.name]);
+    }
+    super(table, config);
+    this.table = table;
+  }
+  static [entityKind] = "SQLiteColumn";
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/blob.js
+class SQLiteBigIntBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteBigIntBuilder";
+  constructor(name) {
+    super(name, "bigint", "SQLiteBigInt");
+  }
+  build(table) {
+    return new SQLiteBigInt(table, this.config);
+  }
+}
+
+class SQLiteBigInt extends SQLiteColumn {
+  static [entityKind] = "SQLiteBigInt";
+  getSQLType() {
+    return "blob";
+  }
+  mapFromDriverValue(value) {
+    if (typeof Buffer !== "undefined" && Buffer.from) {
+      const buf = Buffer.isBuffer(value) ? value : value instanceof ArrayBuffer ? Buffer.from(value) : value.buffer ? Buffer.from(value.buffer, value.byteOffset, value.byteLength) : Buffer.from(value);
+      return BigInt(buf.toString("utf8"));
+    }
+    return BigInt(textDecoder.decode(value));
+  }
+  mapToDriverValue(value) {
+    return Buffer.from(value.toString());
+  }
+}
+
+class SQLiteBlobJsonBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteBlobJsonBuilder";
+  constructor(name) {
+    super(name, "json", "SQLiteBlobJson");
+  }
+  build(table) {
+    return new SQLiteBlobJson(table, this.config);
+  }
+}
+
+class SQLiteBlobJson extends SQLiteColumn {
+  static [entityKind] = "SQLiteBlobJson";
+  getSQLType() {
+    return "blob";
+  }
+  mapFromDriverValue(value) {
+    if (typeof Buffer !== "undefined" && Buffer.from) {
+      const buf = Buffer.isBuffer(value) ? value : value instanceof ArrayBuffer ? Buffer.from(value) : value.buffer ? Buffer.from(value.buffer, value.byteOffset, value.byteLength) : Buffer.from(value);
+      return JSON.parse(buf.toString("utf8"));
+    }
+    return JSON.parse(textDecoder.decode(value));
+  }
+  mapToDriverValue(value) {
+    return Buffer.from(JSON.stringify(value));
+  }
+}
+
+class SQLiteBlobBufferBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteBlobBufferBuilder";
+  constructor(name) {
+    super(name, "buffer", "SQLiteBlobBuffer");
+  }
+  build(table) {
+    return new SQLiteBlobBuffer(table, this.config);
+  }
+}
+
+class SQLiteBlobBuffer extends SQLiteColumn {
+  static [entityKind] = "SQLiteBlobBuffer";
+  mapFromDriverValue(value) {
+    if (Buffer.isBuffer(value)) {
+      return value;
+    }
+    return Buffer.from(value);
+  }
+  getSQLType() {
+    return "blob";
+  }
+}
+function blob(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config?.mode === "json") {
+    return new SQLiteBlobJsonBuilder(name);
+  }
+  if (config?.mode === "bigint") {
+    return new SQLiteBigIntBuilder(name);
+  }
+  return new SQLiteBlobBufferBuilder(name);
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/custom.js
+class SQLiteCustomColumnBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteCustomColumnBuilder";
+  constructor(name, fieldConfig, customTypeParams) {
+    super(name, "custom", "SQLiteCustomColumn");
+    this.config.fieldConfig = fieldConfig;
+    this.config.customTypeParams = customTypeParams;
+  }
+  build(table) {
+    return new SQLiteCustomColumn(table, this.config);
+  }
+}
+
+class SQLiteCustomColumn extends SQLiteColumn {
+  static [entityKind] = "SQLiteCustomColumn";
+  sqlName;
+  mapTo;
+  mapFrom;
+  constructor(table, config) {
+    super(table, config);
+    this.sqlName = config.customTypeParams.dataType(config.fieldConfig);
+    this.mapTo = config.customTypeParams.toDriver;
+    this.mapFrom = config.customTypeParams.fromDriver;
+  }
+  getSQLType() {
+    return this.sqlName;
+  }
+  mapFromDriverValue(value) {
+    return typeof this.mapFrom === "function" ? this.mapFrom(value) : value;
+  }
+  mapToDriverValue(value) {
+    return typeof this.mapTo === "function" ? this.mapTo(value) : value;
+  }
+}
+function customType(customTypeParams) {
+  return (a, b) => {
+    const { name, config } = getColumnNameAndConfig(a, b);
+    return new SQLiteCustomColumnBuilder(name, config, customTypeParams);
+  };
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/integer.js
+class SQLiteBaseIntegerBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteBaseIntegerBuilder";
+  constructor(name, dataType, columnType) {
+    super(name, dataType, columnType);
+    this.config.autoIncrement = false;
+  }
+  primaryKey(config) {
+    if (config?.autoIncrement) {
+      this.config.autoIncrement = true;
+    }
+    this.config.hasDefault = true;
+    return super.primaryKey();
+  }
+}
+
+class SQLiteBaseInteger extends SQLiteColumn {
+  static [entityKind] = "SQLiteBaseInteger";
+  autoIncrement = this.config.autoIncrement;
+  getSQLType() {
+    return "integer";
+  }
+}
+
+class SQLiteIntegerBuilder extends SQLiteBaseIntegerBuilder {
+  static [entityKind] = "SQLiteIntegerBuilder";
+  constructor(name) {
+    super(name, "number", "SQLiteInteger");
+  }
+  build(table) {
+    return new SQLiteInteger(table, this.config);
+  }
+}
+
+class SQLiteInteger extends SQLiteBaseInteger {
+  static [entityKind] = "SQLiteInteger";
+}
+
+class SQLiteTimestampBuilder extends SQLiteBaseIntegerBuilder {
+  static [entityKind] = "SQLiteTimestampBuilder";
+  constructor(name, mode) {
+    super(name, "date", "SQLiteTimestamp");
+    this.config.mode = mode;
+  }
+  defaultNow() {
+    return this.default(sql`(cast((julianday('now') - 2440587.5)*86400000 as integer))`);
+  }
+  build(table) {
+    return new SQLiteTimestamp(table, this.config);
+  }
+}
+
+class SQLiteTimestamp extends SQLiteBaseInteger {
+  static [entityKind] = "SQLiteTimestamp";
+  mode = this.config.mode;
+  mapFromDriverValue(value) {
+    if (this.config.mode === "timestamp") {
+      return new Date(value * 1000);
+    }
+    return new Date(value);
+  }
+  mapToDriverValue(value) {
+    const unix = value.getTime();
+    if (this.config.mode === "timestamp") {
+      return Math.floor(unix / 1000);
+    }
+    return unix;
+  }
+}
+
+class SQLiteBooleanBuilder extends SQLiteBaseIntegerBuilder {
+  static [entityKind] = "SQLiteBooleanBuilder";
+  constructor(name, mode) {
+    super(name, "boolean", "SQLiteBoolean");
+    this.config.mode = mode;
+  }
+  build(table) {
+    return new SQLiteBoolean(table, this.config);
+  }
+}
+
+class SQLiteBoolean extends SQLiteBaseInteger {
+  static [entityKind] = "SQLiteBoolean";
+  mode = this.config.mode;
+  mapFromDriverValue(value) {
+    return Number(value) === 1;
+  }
+  mapToDriverValue(value) {
+    return value ? 1 : 0;
+  }
+}
+function integer2(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config?.mode === "timestamp" || config?.mode === "timestamp_ms") {
+    return new SQLiteTimestampBuilder(name, config.mode);
+  }
+  if (config?.mode === "boolean") {
+    return new SQLiteBooleanBuilder(name, config.mode);
+  }
+  return new SQLiteIntegerBuilder(name);
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/numeric.js
+class SQLiteNumericBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteNumericBuilder";
+  constructor(name) {
+    super(name, "string", "SQLiteNumeric");
+  }
+  build(table) {
+    return new SQLiteNumeric(table, this.config);
+  }
+}
+
+class SQLiteNumeric extends SQLiteColumn {
+  static [entityKind] = "SQLiteNumeric";
+  mapFromDriverValue(value) {
+    if (typeof value === "string")
+      return value;
+    return String(value);
+  }
+  getSQLType() {
+    return "numeric";
+  }
+}
+
+class SQLiteNumericNumberBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteNumericNumberBuilder";
+  constructor(name) {
+    super(name, "number", "SQLiteNumericNumber");
+  }
+  build(table) {
+    return new SQLiteNumericNumber(table, this.config);
+  }
+}
+
+class SQLiteNumericNumber extends SQLiteColumn {
+  static [entityKind] = "SQLiteNumericNumber";
+  mapFromDriverValue(value) {
+    if (typeof value === "number")
+      return value;
+    return Number(value);
+  }
+  mapToDriverValue = String;
+  getSQLType() {
+    return "numeric";
+  }
+}
+
+class SQLiteNumericBigIntBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteNumericBigIntBuilder";
+  constructor(name) {
+    super(name, "bigint", "SQLiteNumericBigInt");
+  }
+  build(table) {
+    return new SQLiteNumericBigInt(table, this.config);
+  }
+}
+
+class SQLiteNumericBigInt extends SQLiteColumn {
+  static [entityKind] = "SQLiteNumericBigInt";
+  mapFromDriverValue = BigInt;
+  mapToDriverValue = String;
+  getSQLType() {
+    return "numeric";
+  }
+}
+function numeric(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  const mode = config?.mode;
+  return mode === "number" ? new SQLiteNumericNumberBuilder(name) : mode === "bigint" ? new SQLiteNumericBigIntBuilder(name) : new SQLiteNumericBuilder(name);
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/real.js
+class SQLiteRealBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteRealBuilder";
+  constructor(name) {
+    super(name, "number", "SQLiteReal");
+  }
+  build(table) {
+    return new SQLiteReal(table, this.config);
+  }
+}
+
+class SQLiteReal extends SQLiteColumn {
+  static [entityKind] = "SQLiteReal";
+  getSQLType() {
+    return "real";
+  }
+}
+function real(name) {
+  return new SQLiteRealBuilder(name ?? "");
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/text.js
+class SQLiteTextBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteTextBuilder";
+  constructor(name, config) {
+    super(name, "string", "SQLiteText");
+    this.config.enumValues = config.enum;
+    this.config.length = config.length;
+  }
+  build(table) {
+    return new SQLiteText(table, this.config);
+  }
+}
+
+class SQLiteText extends SQLiteColumn {
+  static [entityKind] = "SQLiteText";
+  enumValues = this.config.enumValues;
+  length = this.config.length;
+  constructor(table, config) {
+    super(table, config);
+  }
+  getSQLType() {
+    return `text${this.config.length ? `(${this.config.length})` : ""}`;
+  }
+}
+
+class SQLiteTextJsonBuilder extends SQLiteColumnBuilder {
+  static [entityKind] = "SQLiteTextJsonBuilder";
+  constructor(name) {
+    super(name, "json", "SQLiteTextJson");
+  }
+  build(table) {
+    return new SQLiteTextJson(table, this.config);
+  }
+}
+
+class SQLiteTextJson extends SQLiteColumn {
+  static [entityKind] = "SQLiteTextJson";
+  getSQLType() {
+    return "text";
+  }
+  mapFromDriverValue(value) {
+    return JSON.parse(value);
+  }
+  mapToDriverValue(value) {
+    return JSON.stringify(value);
+  }
+}
+function text(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config.mode === "json") {
+    return new SQLiteTextJsonBuilder(name);
+  }
+  return new SQLiteTextBuilder(name, config);
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/columns/all.js
+function getSQLiteColumnBuilders() {
+  return {
+    blob,
+    customType,
+    integer: integer2,
+    numeric,
+    real,
+    text
+  };
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/table.js
+var InlineForeignKeys = Symbol.for("drizzle:SQLiteInlineForeignKeys");
+
+class SQLiteTable extends Table {
+  static [entityKind] = "SQLiteTable";
+  static Symbol = Object.assign({}, Table.Symbol, {
+    InlineForeignKeys
+  });
+  [Table.Symbol.Columns];
+  [InlineForeignKeys] = [];
+  [Table.Symbol.ExtraConfigBuilder] = undefined;
+}
+function sqliteTableBase(name, columns, extraConfig, schema, baseName = name) {
+  const rawTable = new SQLiteTable(name, schema, baseName);
+  const parsedColumns = typeof columns === "function" ? columns(getSQLiteColumnBuilders()) : columns;
+  const builtColumns = Object.fromEntries(Object.entries(parsedColumns).map(([name2, colBuilderBase]) => {
+    const colBuilder = colBuilderBase;
+    colBuilder.setName(name2);
+    const column = colBuilder.build(rawTable);
+    rawTable[InlineForeignKeys].push(...colBuilder.buildForeignKeys(column, rawTable));
+    return [name2, column];
+  }));
+  const table = Object.assign(rawTable, builtColumns);
+  table[Table.Symbol.Columns] = builtColumns;
+  table[Table.Symbol.ExtraConfigColumns] = builtColumns;
+  if (extraConfig) {
+    table[SQLiteTable.Symbol.ExtraConfigBuilder] = extraConfig;
+  }
+  return table;
+}
+var sqliteTable = (name, columns, extraConfig) => {
+  return sqliteTableBase(name, columns, extraConfig);
+};
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/indexes.js
+class IndexBuilderOn {
+  constructor(name, unique) {
+    this.name = name;
+    this.unique = unique;
+  }
+  static [entityKind] = "SQLiteIndexBuilderOn";
+  on(...columns) {
+    return new IndexBuilder(this.name, columns, this.unique);
+  }
+}
+
+class IndexBuilder {
+  static [entityKind] = "SQLiteIndexBuilder";
+  config;
+  constructor(name, columns, unique) {
+    this.config = {
+      name,
+      columns,
+      unique,
+      where: undefined
+    };
+  }
+  where(condition) {
+    this.config.where = condition;
+    return this;
+  }
+  build(table) {
+    return new Index(this.config, table);
+  }
+}
+
+class Index {
+  static [entityKind] = "SQLiteIndex";
+  config;
+  constructor(config, table) {
+    this.config = { ...config, table };
+  }
+}
+function index(name) {
+  return new IndexBuilderOn(name, false);
+}
+function uniqueIndex(name) {
+  return new IndexBuilderOn(name, true);
+}
+
+// ../gola-source/node_modules/drizzle-orm/sqlite-core/primary-keys.js
+function primaryKey(...config) {
+  if (config[0].columns) {
+    return new PrimaryKeyBuilder(config[0].columns, config[0].name);
+  }
+  return new PrimaryKeyBuilder(config);
+}
+
+class PrimaryKeyBuilder {
+  static [entityKind] = "SQLitePrimaryKeyBuilder";
+  columns;
+  name;
+  constructor(columns, name) {
+    this.columns = columns;
+    this.name = name;
+  }
+  build(table) {
+    return new PrimaryKey(table, this.columns, this.name);
+  }
+}
+
+class PrimaryKey {
+  constructor(table, columns, name) {
+    this.table = table;
+    this.columns = columns;
+    this.name = name;
+  }
+  static [entityKind] = "SQLitePrimaryKey";
+  columns;
+  name;
+  getName() {
+    return this.name ?? `${this.table[SQLiteTable.Symbol.Name]}_${this.columns.map((column) => column.name).join("_")}_pk`;
+  }
+}
+
+// ../gola-source/server/src/schema.ts
+var profiles = sqliteTable("profiles", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  displayName: text("display_name").notNull(),
+  handle: text("handle").notNull(),
+  email: text("email"),
+  passwordHash: text("password_hash"),
+  recoveryCodeHash: text("recovery_code_hash"),
+  bio: text("bio"),
+  avatarBlobKey: text("avatar_blob_key"),
+  isFounder: integer2("is_founder", { mode: "boolean" }).notNull().default(false),
+  badge: text("badge", { enum: ["none", "community", "official"] }).notNull().default("none"),
+  isPrivate: integer2("is_private", { mode: "boolean" }).notNull().default(false),
+  themeColor: text("theme_color", { enum: ["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"] }).notNull().default("teal"),
+  themeChangedAt: integer2("theme_changed_at", { mode: "timestamp_ms" }),
+  language: text("language", { enum: ["en", "bn", "hi", "es", "fr", "ar"] }).notNull().default("en"),
+  continent: text("region", { enum: ["AF", "AN", "AS", "EU", "NA", "SA", "OC"] }).notNull().default("AS"),
+  deactivatedUntil: integer2("deactivated_until", { mode: "timestamp_ms" }),
+  lastDeactivatedAt: integer2("last_deactivated_at", { mode: "timestamp_ms" }),
+  profileUpdatedAt: integer2("profile_updated_at", { mode: "timestamp_ms" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [
+  uniqueIndex("profiles_handle_unique").on(table.handle),
+  uniqueIndex("profiles_email_unique").on(table.email)
+]);
+var sessions = sqliteTable("sessions", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: integer2("expires_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [uniqueIndex("sessions_token_hash_unique").on(table.tokenHash)]);
+var posts = sqliteTable("posts", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  authorId: integer2("author_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  editedAt: integer2("edited_at", { mode: "timestamp_ms" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+});
+var postImages = sqliteTable("post_images", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  blobKey: text("blob_key").notNull(),
+  altText: text("alt_text").notNull().default("Photo shared with this post"),
+  position: integer2("position").notNull()
+});
+var comments = sqliteTable("comments", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  authorId: integer2("author_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  parentCommentId: integer2("parent_comment_id"),
+  text: text("text").notNull(),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+});
+var likes = sqliteTable("likes", {
+  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
+var reposts = sqliteTable("reposts", {
+  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  create
