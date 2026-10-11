@@ -1,4 +1,4 @@
-.schema;
+
       const processor = ctx.processors[def.type];
       if (!processor) {
         throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
@@ -2845,4 +2845,4 @@ var likes = sqliteTable("likes", {
 var reposts = sqliteTable("reposts", {
   profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
-  createdAt: integer2("creat
+  createdAt: integer2("created_at", { mode: 
