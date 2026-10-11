@@ -1,0 +1,13 @@
+{
+  "name": "gola-standalone-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:actions": "bun build ../gola-source/server/src/actions.ts --target=bun --outfile=./dist/actions.js",
+    "start": "bun src/server.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "zod": "4.4.3"
+  }
+}
