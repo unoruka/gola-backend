@@ -2942,4 +2942,4 @@ function process(schema, ctx, _params = { path: [], schemaPath: [] }) {
     if (schema._zod.processJSONSchema) {
       schema._zod.processJSONSchema(ctx, result.schema, params);
     } else {
-      const _json = result
+      const _json = result.schema;
