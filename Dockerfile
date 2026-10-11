@@ -1,6 +1,8 @@
 # Gola standalone backend — Docker image for Render (free tier) or any host.
 # Uses the official Bun image; no paid services required.
-FROM oven/bun:1.4 AS runtime
+# Pinned to 1.4.2: Bun 1.4.3's parser rejects the bundled actions.js
+# (variable shadowing false positive); 1.4.2 runs it correctly.
+FROM oven/bun:1.4.2 AS runtime
 
 WORKDIR /app
 
