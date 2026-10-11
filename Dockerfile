@@ -1,6 +1,6 @@
 # Gola standalone backend — Docker image for Render (free tier) or any host.
 # Uses the official Bun image; no paid services required.
-FROM oven/bun:1.3 AS runtime
+FROM oven/bun:1.4 AS runtime
 
 WORKDIR /app
 
