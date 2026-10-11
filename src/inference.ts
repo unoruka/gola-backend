@@ -1,15 +1,77 @@
 // Kindness-moderation backend (replaces the Muse artifact runtime inference).
-// Routes ctx.inference.complete() to the Google AI Studio Gemini free tier.
+// Routes ctx.inference.complete() to the Google AI Studio Gemini free tier,
+// with a local fallback filter if Gemini is unreachable or too slow.
 //
-// FAIL-CLOSED: if GEMINI_API_KEY is not set, this throws a clear error and the
-// calling write action (post/comment/story) fails instead of publishing
-// unmoderated content. Moderation is NEVER silently skipped.
+// If GEMINI_API_KEY is not set, this throws and writing is disabled.
+// If Gemini fails at request time, a conservative local filter applies instead
+// of blocking the user: obvious severe abuse is still caught, everything else
+// is allowed through until Gemini recovers.
 import { z } from "zod";
 
 export interface CompleteOptions<T extends z.ZodType> {
   schema: T;
   system?: string;
   timeout_secs?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Local fallback kindness filter.
+//
+// If Gemini is unreachable or too slow, posts must not be blocked by a broken
+// AI service. This fallback applies a conservative local check: it blocks only
+// obvious severe abuse (slurs, direct threats, targeted harassment patterns)
+// and allows everything else through. It is intentionally narrow — Gemini
+// remains the primary moderator whenever it answers.
+// ---------------------------------------------------------------------------
+
+/** Extract the user's text from a moderation prompt ("... Text: \"...\""). */
+function extractUserText(prompt: string): string {
+  const m = prompt.match(/Text:\s*("(?:[^"\\]|\\.)*")\s*$/s);
+  if (m?.[1]) {
+    try {
+      return JSON.parse(m[1]) as string;
+    } catch {
+      return m[1];
+    }
+  }
+  return prompt;
+}
+
+// Severe slurs and direct-threat patterns. Kept intentionally short to avoid
+// false positives; Gemini handles nuance when it is available.
+const BLOCK_PATTERNS: RegExp[] = [
+  /\bkys\b/i,
+  /\bkill\s+(yourself|urself|u)\b/i,
+  /\bi\s+will\s+kill\s+you\b/i,
+  /\bdeath\s+threat\b/i,
+  // Racial / protected-group slurs (a minimal, high-confidence set)
+  /\bn[i1!]gg[ae3]r/i,
+  /\bf[a@]gg[o0]t/i,
+  /\bch[i1!]nk\b/i,
+  /\bsp[i1!]c\b/i,
+  /\bk[i1!]ke\b/i,
+  /\btowel\s*head/i,
+  /\btr[a@]nn[y|ie]\b/i,
+  /\br[e3]tard\b/i,
+];
+
+function localModerate<T extends z.ZodType>(
+  prompt: string,
+  schema: T
+): z.infer<T> {
+  const text = extractUserText(prompt);
+  const blocked = BLOCK_PATTERNS.some((re) => re.test(text));
+  const verdict = blocked
+    ? {
+        allowed: false,
+        feedback:
+          "Please rewrite this around your own experience or a positive request.",
+      }
+    : { allowed: true, feedback: "" };
+  console.warn(
+    `[gola][moderation] Gemini unavailable — local fallback filter ${blocked ? "BLOCKED" : "allowed"} a post`
+  );
+  return schema.parse(verdict);
 }
 
 export async function complete<T extends z.ZodType>(
@@ -90,9 +152,15 @@ export async function complete<T extends z.ZodType>(
     return options.schema.parse(parsed);
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
-      throw new Error("Content moderation timed out. Please try again.");
+      console.warn("[gola][moderation] Gemini timed out — using local fallback filter");
+      return localModerate(prompt, options.schema);
     }
-    throw e;
+    // Any other Gemini failure (HTTP error, bad response): fall back locally
+    // instead of blocking the user. The local filter still catches severe abuse.
+    console.warn(
+      `[gola][moderation] Gemini failed (${e instanceof Error ? e.message.slice(0, 120) : e}) — using local fallback filter`
+    );
+    return localModerate(prompt, options.schema);
   } finally {
     clearTimeout(timer);
   }
