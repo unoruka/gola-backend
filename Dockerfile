@@ -12,11 +12,11 @@ RUN bun install --production --frozen-lockfile
 
 # Copy server source, compiled actions, and migrations.
 # (dist/actions.js is split into parts because GitHub's file API is text-only
-# with per-call size limits; reassemble it here.)
+# with per-call size limits; reassemble it here in explicit order.)
 COPY src/ ./src/
 COPY dist/ ./dist/
 COPY drizzle/ ./drizzle/
-RUN cat dist/actions.js.part-* > dist/actions.js && rm dist/actions.js.part-*
+RUN cat dist/actions.js.part-1 dist/actions.js.part-2 dist/actions.js.part-3 > dist/actions.js && rm dist/actions.js.part-* && wc -c dist/actions.js && bun --version
 
 # Data lives here (SQLite app.db + uploaded blobs).
 # On Render's free tier the filesystem is ephemeral: data resets on restart.
