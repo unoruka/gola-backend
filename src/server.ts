@@ -19,7 +19,7 @@ import { createCtx } from "./ctx";
 import { runMigrations } from "./db";
 import { blobStore } from "./blobs";
 
-runMigrations();
+await runMigrations();
 
 type ActionDef = {
   request: { parseAsync: (v: unknown) => Promise<unknown> };
