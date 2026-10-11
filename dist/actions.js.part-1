@@ -1,65 +1,2945 @@
 // @bun
-var Xr;function p(e,t,r){function o(a,u){if(!a._zod)Object.defineProperty(a,"_zod",{value:{def:u,constr:i,traits:new Set},enumerable:!1});if(a._zod.traits.has(e))return;a._zod.traits.add(e),t(a,u);let c=i.prototype,d=Object.keys(c);for(let h=0;h<d.length;h++){let y=d[h];if(!(y in a))a[y]=c[y].bind(a)}}let n=r?.Parent??Object;class s extends n{}Object.defineProperty(s,"name",{value:e});function i(a){var u;let c=r?.Parent?new s:this;o(c,a),(u=c._zod).deferred??(u.deferred=[]);for(let d of c._zod.deferred)d();return c}return Object.defineProperty(i,"init",{value:o}),Object.defineProperty(i,Symbol.hasInstance,{value:(a)=>{if(r?.Parent&&a instanceof r.Parent)return!0;return a?._zod?.traits?.has(e)}}),Object.defineProperty(i,"name",{value:e}),i}var Hu=Symbol("zod_brand");class Se extends Error{constructor(){super("Encountered Promise during synchronous parse. Use .parseAsync() instead.")}}class et extends Error{constructor(e){super(`Encountered unidirectional transform during encode: ${e}`);this.name="ZodEncodeError"}}(Xr=globalThis).__zod_globalConfig??(Xr.__zod_globalConfig={});var Me=globalThis.__zod_globalConfig;function Pe(e){if(e)Object.assign(Me,e);return Me}function bt(e){let t=Object.values(e).filter((o)=>typeof o==="number");return Object.entries(e).filter(([o,n])=>t.indexOf(+o)===-1).map(([o,n])=>n)}function rt(e,t){if(typeof t==="bigint")return t.toString();return t}function vt(e){return{get value(){{let r=e();return Object.defineProperty(this,"value",{value:r}),r}throw Error("cached value already set")}}}function xt(e){return e===null||e===void 0}function zt(e){let t=e.startsWith("^")?1:0,r=e.endsWith("$")?e.length-1:e.length;return e.slice(t,r)}function to(e,t){let r=e/t,o=Math.round(r),n=Number.EPSILON*Math.max(Math.abs(r),1);if(Math.abs(r-o)<n)return 0;return r-o}var eo=Symbol("evaluating");function E(e,t,r){let o=void 0;Object.defineProperty(e,t,{get(){if(o===eo)return;if(o===void 0)o=eo,o=r();return o},set(n){Object.defineProperty(e,t,{value:n})},configurable:!0})}function Le(e,t,r){Object.defineProperty(e,t,{value:r,writable:!0,enumerable:!0,configurable:!0})}function Oe(...e){let t={};for(let r of e){let o=Object.getOwnPropertyDescriptors(r);Object.assign(t,o)}return Object.defineProperties({},t)}function rr(e){return JSON.stringify(e)}function ro(e){return e.toLowerCase().trim().replace(/[^\w\s-]/g,"").replace(/[\s_-]+/g,"-").replace(/^-+|-+$/g,"")}var or="captureStackTrace"in Error?Error.captureStackTrace:(...e)=>{};function tt(e){return typeof e==="object"&&e!==null&&!Array.isArray(e)}var oo=vt(()=>{if(Me.jitless)return!1;if(typeof navigator<"u"&&navigator?.userAgent?.includes("Cloudflare"))return!1;try{return new Function(""),!0}catch(e){return!1}});function Je(e){if(tt(e)===!1)return!1;let t=e.constructor;if(t===void 0)return!0;if(typeof t!=="function")return!0;let r=t.prototype;if(tt(r)===!1)return!1;if(Object.prototype.hasOwnProperty.call(r,"isPrototypeOf")===!1)return!1;return!0}function nr(e){if(Je(e))return{...e};if(Array.isArray(e))return[...e];if(e instanceof Map)return new Map(e);if(e instanceof Set)return new Set(e);return e}var no=new Set(["string","number","symbol"]);function Ee(e){return e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}function ze(e,t,r){let o=new e._zod.constr(t??e._zod.def);if(!t||r?.parent)o._zod.parent=e;return o}function v(e){let t=e;if(!t)return{};if(typeof t==="string")return{error:()=>t};if(t?.message!==void 0){if(t?.error!==void 0)throw Error("Cannot specify both `message` and `error` params");t.error=t.message}if(delete t.message,typeof t.error==="string")return{...t,error:()=>t.error};return t}function so(e){return Object.keys(e).filter((t)=>e[t]._zod.optin==="optional"&&e[t]._zod.optout==="optional")}var io={safeint:[Number.MIN_SAFE_INTEGER,Number.MAX_SAFE_INTEGER],int32:[-2147483648,2147483647],uint32:[0,4294967295],float32:[-340282346638528860000000000000000000000,340282346638528860000000000000000000000],float64:[-Number.MAX_VALUE,Number.MAX_VALUE]};function ac(e,t){let r=e._zod.def,o=r.checks;if(o&&o.length>0)throw Error(".pick() cannot be used on object schemas containing refinements");let s=Oe(e._zod.def,{get shape(){let i={};for(let a in t){if(!(a in r.shape))throw Error(`Unrecognized key: "${a}"`);if(!t[a])continue;i[a]=r.shape[a]}return Le(this,"shape",i),i},checks:[]});return ze(e,s)}function cc(e,t){let r=e._zod.def,o=r.checks;if(o&&o.length>0)throw Error(".omit() cannot be used on object schemas containing refinements");let s=Oe(e._zod.def,{get shape(){let i={...e._zod.def.shape};for(let a in t){if(!(a in r.shape))throw Error(`Unrecognized key: "${a}"`);if(!t[a])continue;delete i[a]}return Le(this,"shape",i),i},checks:[]});return ze(e,s)}function uc(e,t){if(!Je(t))throw Error("Invalid input to extend: expected a plain object");let r=e._zod.def.checks;if(r&&r.length>0){let s=e._zod.def.shape;for(let i in t)if(Object.getOwnPropertyDescriptor(s,i)!==void 0)throw Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.")}let n=Oe(e._zod.def,{get shape(){let s={...e._zod.def.shape,...t};return Le(this,"shape",s),s}});return ze(e,n)}function lc(e,t){if(!Je(t))throw Error("Invalid input to safeExtend: expected a plain object");let r=Oe(e._zod.def,{get shape(){let o={...e._zod.def.shape,...t};return Le(this,"shape",o),o}});return ze(e,r)}function dc(e,t){if(e._zod.def.checks?.length)throw Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");let r=Oe(e._zod.def,{get shape(){let o={...e._zod.def.shape,...t._zod.def.shape};return Le(this,"shape",o),o},get catchall(){return t._zod.def.catchall},checks:t._zod.def.checks??[]});return ze(e,r)}function pc(e,t,r){let n=t._zod.def.checks;if(n&&n.length>0)throw Error(".partial() cannot be used on object schemas containing refinements");let i=Oe(t._zod.def,{get shape(){let a=t._zod.def.shape,u={...a};if(r)for(let c in r){if(!(c in a))throw Error(`Unrecognized key: "${c}"`);if(!r[c])continue;u[c]=e?new e({type:"optional",innerType:a[c]}):a[c]}else for(let c in a)u[c]=e?new e({type:"optional",innerType:a[c]}):a[c];return Le(this,"shape",u),u},checks:[]});return ze(t,i)}function mc(e,t,r){let o=Oe(t._zod.def,{get shape(){let n=t._zod.def.shape,s={...n};if(r)for(let i in r){if(!(i in s))throw Error(`Unrecognized key: "${i}"`);if(!r[i])continue;s[i]=new e({type:"nonoptional",innerType:n[i]})}else for(let i in n)s[i]=new e({type:"nonoptional",innerType:n[i]});return Le(this,"shape",s),s}});return ze(t,o)}function Ue(e,t=0){if(e.aborted===!0)return!0;for(let r=t;r<e.issues.length;r++)if(e.issues[r]?.continue!==!0)return!0;return!1}function ao(e,t=0){if(e.aborted===!0)return!0;for(let r=t;r<e.issues.length;r++)if(e.issues[r]?.continue===!1)return!0;return!1}function kt(e,t){return t.map((r)=>{var o;return(o=r).path??(o.path=[]),r.path.unshift(e),r})}function _t(e){return typeof e==="string"?e:e?.message}function Ae(e,t,r){let o=e.message?e.message:_t(e.inst?._zod.def?.error?.(e))??_t(t?.error?.(e))??_t(r.customError?.(e))??_t(r.localeError?.(e))??"Invalid input",{inst:n,continue:s,input:i,...a}=e;if(a.path??(a.path=[]),a.message=o,t?.reportInput)a.input=i;return a}function $t(e){if(Array.isArray(e))return"array";if(typeof e==="string")return"string";return"unknown"}function Be(...e){let[t,r,o]=e;if(typeof t==="string")return{message:t,code:"custom",input:r,inst:o};return{...t}}var co=(e,t)=>{e.name="$ZodError",Object.defineProperty(e,"_zod",{value:e._zod,enumerable:!1}),Object.defineProperty(e,"issues",{value:t,enumerable:!1}),e.message=JSON.stringify(t,rt,2),Object.defineProperty(e,"toString",{value:()=>e.message,enumerable:!1})},It=p("$ZodError",co),sr=p("$ZodError",co,{Parent:Error});function uo(e,t=(r)=>r.message){let r={},o=[];for(let n of e.issues)if(n.path.length>0)r[n.path[0]]=r[n.path[0]]||[],r[n.path[0]].push(t(n));else o.push(t(n));return{formErrors:o,fieldErrors:r}}function lo(e,t=(r)=>r.message){let r={_errors:[]},o=(n,s=[])=>{for(let i of n.issues)if(i.code==="invalid_union"&&i.errors.length)i.errors.map((a)=>o({issues:a},[...s,...i.path]));else if(i.code==="invalid_key")o({issues:i.issues},[...s,...i.path]);else if(i.code==="invalid_element")o({issues:i.issues},[...s,...i.path]);else{let a=[...s,...i.path];if(a.length===0)r._errors.push(t(i));else{let u=r,c=0;while(c<a.length){let d=a[c];if(c!==a.length-1)u[d]=u[d]||{_errors:[]};else u[d]=u[d]||{_errors:[]},u[d]._errors.push(t(i));u=u[d],c++}}}};return o(e),r}var St=(e)=>(t,r,o,n)=>{let s=o?{...o,async:!1}:{async:!1},i=t._zod.run({value:r,issues:[]},s);if(i instanceof Promise)throw new Se;if(i.issues.length){let a=new(n?.Err??e)(i.issues.map((u)=>Ae(u,s,Pe())));throw or(a,n?.callee),a}return i.value};var Pt=(e)=>async(t,r,o,n)=>{let s=o?{...o,async:!0}:{async:!0},i=t._zod.run({value:r,issues:[]},s);if(i instanceof Promise)i=await i;if(i.issues.length){let a=new(n?.Err??e)(i.issues.map((u)=>Ae(u,s,Pe())));throw or(a,n?.callee),a}return i.value};var ot=(e)=>(t,r,o)=>{let n=o?{...o,async:!1}:{async:!1},s=t._zod.run({value:r,issues:[]},n);if(s instanceof Promise)throw new Se;return s.issues.length?{success:!1,error:new(e??It)(s.issues.map((i)=>Ae(i,n,Pe())))}:{success:!0,data:s.value}},po=ot(sr),nt=(e)=>async(t,r,o)=>{let n=o?{...o,async:!0}:{async:!0},s=t._zod.run({value:r,issues:[]},n);if(s instanceof Promise)s=await s;return s.issues.length?{success:!1,error:new e(s.issues.map((i)=>Ae(i,n,Pe())))}:{success:!0,data:s.value}},mo=nt(sr),fo=(e)=>(t,r,o)=>{let n=o?{...o,direction:"backward"}:{direction:"backward"};return St(e)(t,r,n)};var ho=(e)=>(t,r,o)=>St(e)(t,r,o);var go=(e)=>async(t,r,o)=>{let n=o?{...o,direction:"backward"}:{direction:"backward"};return Pt(e)(t,r,n)};var wo=(e)=>async(t,r,o)=>Pt(e)(t,r,o);var yo=(e)=>(t,r,o)=>{let n=o?{...o,direction:"backward"}:{direction:"backward"};return ot(e)(t,r,n)};var _o=(e)=>(t,r,o)=>ot(e)(t,r,o);var bo=(e)=>async(t,r,o)=>{let n=o?{...o,direction:"backward"}:{direction:"backward"};return nt(e)(t,r,n)};var vo=(e)=>async(t,r,o)=>nt(e)(t,r,o);var xo=/^[cC][0-9a-z]{6,}$/,zo=/^[0-9a-z]+$/,ko=/^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/,$o=/^[0-9a-vA-V]{20}$/,Io=/^[A-Za-z0-9]{27}$/,So=/^[a-zA-Z0-9_-]{21}$/,Po=/^P(?:(\d+W)|(?!.*W)(?=\d|T\d)(\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+([.,]\d+)?S)?)?)$/;var Ao=/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/,ir=(e)=>{if(!e)return/^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/;return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${e}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`)};var Zo=/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;var hc="^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$";function No(){return new RegExp(hc,"u")}var To=/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/,Co=/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;var Oo=/^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/,Eo=/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/,jo=/^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/,ar=/^[A-Za-z0-9_-]*$/;var Do=/^https?$/,Ro=/^\+[1-9]\d{6,14}$/,Fo="(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))",Lo=new RegExp(`^${Fo}$`);function Uo(e){return typeof e.precision==="number"?e.precision===-1?"(?:[01]\\d|2[0-3]):[0-5]\\d":e.precision===0?"(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d":`(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{${e.precision}}`:"(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?"}function Bo(e){return new RegExp(`^${Uo(e)}$`)}function Vo(e){let t=Uo({precision:e.precision}),r=["Z"];if(e.local)r.push("");if(e.offset)r.push("([+-](?:[01]\\d|2[0-3]):[0-5]\\d)");let o=`${t}(?:${r.join("|")})`;return new RegExp(`^${Fo}T(?:${o})$`)}var qo=(e)=>{let t=e?`[\\s\\S]{${e?.minimum??0},${e?.maximum??""}}`:"[\\s\\S]*";return new RegExp(`^${t}$`)};var Mo=/^-?\d+$/,Jo=/^-?\d+(?:\.\d+)?$/,Qo=/^(?:true|false)$/i,Ko=/^null$/i;var Go=/^[^A-Z]*$/,Wo=/^[^a-z]*$/;var ie=p("$ZodCheck",(e,t)=>{var r;e._zod??(e._zod={}),e._zod.def=t,(r=e._zod).onattach??(r.onattach=[])}),Ho={number:"number",bigint:"bigint",object:"date"},cr=p("$ZodCheckLessThan",(e,t)=>{ie.init(e,t);let r=Ho[typeof t.value];e._zod.onattach.push((o)=>{let n=o._zod.bag,s=(t.inclusive?n.maximum:n.exclusiveMaximum)??Number.POSITIVE_INFINITY;if(t.value<s)if(t.inclusive)n.maximum=t.value;else n.exclusiveMaximum=t.value}),e._zod.check=(o)=>{if(t.inclusive?o.value<=t.value:o.value<t.value)return;o.issues.push({origin:r,code:"too_big",maximum:typeof t.value==="object"?t.value.getTime():t.value,input:o.value,inclusive:t.inclusive,inst:e,continue:!t.abort})}}),ur=p("$ZodCheckGreaterThan",(e,t)=>{ie.init(e,t);let r=Ho[typeof t.value];e._zod.onattach.push((o)=>{let n=o._zod.bag,s=(t.inclusive?n.minimum:n.exclusiveMinimum)??Number.NEGATIVE_INFINITY;if(t.value>s)if(t.inclusive)n.minimum=t.value;else n.exclusiveMinimum=t.value}),e._zod.check=(o)=>{if(t.inclusive?o.value>=t.value:o.value>t.value)return;o.issues.push({origin:r,code:"too_small",minimum:typeof t.value==="object"?t.value.getTime():t.value,input:o.value,inclusive:t.inclusive,inst:e,continue:!t.abort})}}),Yo=p("$ZodCheckMultipleOf",(e,t)=>{ie.init(e,t),e._zod.onattach.push((r)=>{var o;(o=r._zod.bag).multipleOf??(o.multipleOf=t.value)}),e._zod.check=(r)=>{if(typeof r.value!==typeof t.value)throw Error("Cannot mix number and bigint in multiple_of check.");if(typeof r.value==="bigint"?r.value%t.value===BigInt(0):to(r.value,t.value)===0)return;r.issues.push({origin:typeof r.value,code:"not_multiple_of",divisor:t.value,input:r.value,inst:e,continue:!t.abort})}}),Xo=p("$ZodCheckNumberFormat",(e,t)=>{ie.init(e,t),t.format=t.format||"float64";let r=t.format?.includes("int"),o=r?"int":"number",[n,s]=io[t.format];e._zod.onattach.push((i)=>{let a=i._zod.bag;if(a.format=t.format,a.minimum=n,a.maximum=s,r)a.pattern=Mo}),e._zod.check=(i)=>{let a=i.value;if(r){if(!Number.isInteger(a)){i.issues.push({expected:o,format:t.format,code:"invalid_type",continue:!1,input:a,inst:e});return}if(!Number.isSafeInteger(a)){if(a>0)i.issues.push({input:a,code:"too_big",maximum:Number.MAX_SAFE_INTEGER,note:"Integers must be within the safe integer range.",inst:e,origin:o,inclusive:!0,continue:!t.abort});else i.issues.push({input:a,code:"too_small",minimum:Number.MIN_SAFE_INTEGER,note:"Integers must be within the safe integer range.",inst:e,origin:o,inclusive:!0,continue:!t.abort});return}}if(a<n)i.issues.push({origin:"number",input:a,code:"too_small",minimum:n,inclusive:!0,inst:e,continue:!t.abort});if(a>s)i.issues.push({origin:"number",input:a,code:"too_big",maximum:s,inclusive:!0,inst:e,continue:!t.abort})}});var en=p("$ZodCheckMaxLength",(e,t)=>{var r;ie.init(e,t),(r=e._zod.def).when??(r.when=(o)=>{let n=o.value;return!xt(n)&&n.length!==void 0}),e._zod.onattach.push((o)=>{let n=o._zod.bag.maximum??Number.POSITIVE_INFINITY;if(t.maximum<n)o._zod.bag.maximum=t.maximum}),e._zod.check=(o)=>{let n=o.value;if(n.length<=t.maximum)return;let i=$t(n);o.issues.push({origin:i,code:"too_big",maximum:t.maximum,inclusive:!0,input:n,inst:e,continue:!t.abort})}}),tn=p("$ZodCheckMinLength",(e,t)=>{var r;ie.init(e,t),(r=e._zod.def).when??(r.when=(o)=>{let n=o.value;return!xt(n)&&n.length!==void 0}),e._zod.onattach.push((o)=>{let n=o._zod.bag.minimum??Number.NEGATIVE_INFINITY;if(t.minimum>n)o._zod.bag.minimum=t.minimum}),e._zod.check=(o)=>{let n=o.value;if(n.length>=t.minimum)return;let i=$t(n);o.issues.push({origin:i,code:"too_small",minimum:t.minimum,inclusive:!0,input:n,inst:e,continue:!t.abort})}}),rn=p("$ZodCheckLengthEquals",(e,t)=>{var r;ie.init(e,t),(r=e._zod.def).when??(r.when=(o)=>{let n=o.value;return!xt(n)&&n.length!==void 0}),e._zod.onattach.push((o)=>{let n=o._zod.bag;n.minimum=t.length,n.maximum=t.length,n.length=t.length}),e._zod.check=(o)=>{let n=o.value,s=n.length;if(s===t.length)return;let i=$t(n),a=s>t.length;o.issues.push({origin:i,...a?{code:"too_big",maximum:t.length}:{code:"too_small",minimum:t.length},inclusive:!0,exact:!0,input:o.value,inst:e,continue:!t.abort})}}),st=p("$ZodCheckStringFormat",(e,t)=>{var r,o;if(ie.init(e,t),e._zod.onattach.push((n)=>{let s=n._zod.bag;if(s.format=t.format,t.pattern)s.patterns??(s.patterns=new Set),s.patterns.add(t.pattern)}),t.pattern)(r=e._zod).check??(r.check=(n)=>{if(t.pattern.lastIndex=0,t.pattern.test(n.value))return;n.issues.push({origin:"string",code:"invalid_format",format:t.format,input:n.value,...t.pattern?{pattern:t.pattern.toString()}:{},inst:e,continue:!t.abort})});else(o=e._zod).check??(o.check=()=>{})}),on=p("$ZodCheckRegex",(e,t)=>{st.init(e,t),e._zod.check=(r)=>{if(t.pattern.lastIndex=0,t.pattern.test(r.value))return;r.issues.push({origin:"string",code:"invalid_format",format:"regex",input:r.value,pattern:t.pattern.toString(),inst:e,continue:!t.abort})}}),nn=p("$ZodCheckLowerCase",(e,t)=>{t.pattern??(t.pattern=Go),st.init(e,t)}),sn=p("$ZodCheckUpperCase",(e,t)=>{t.pattern??(t.pattern=Wo),st.init(e,t)}),an=p("$ZodCheckIncludes",(e,t)=>{ie.init(e,t);let r=Ee(t.includes),o=new RegExp(typeof t.position==="number"?`^.{${t.position}}${r}`:r);t.pattern=o,e._zod.onattach.push((n)=>{let s=n._zod.bag;s.patterns??(s.patterns=new Set),s.patterns.add(o)}),e._zod.check=(n)=>{if(n.value.includes(t.includes,t.position))return;n.issues.push({origin:"string",code:"invalid_format",format:"includes",includes:t.includes,input:n.value,inst:e,continue:!t.abort})}}),cn=p("$ZodCheckStartsWith",(e,t)=>{ie.init(e,t);let r=new RegExp(`^${Ee(t.prefix)}.*`);t.pattern??(t.pattern=r),e._zod.onattach.push((o)=>{let n=o._zod.bag;n.patterns??(n.patterns=new Set),n.patterns.add(r)}),e._zod.check=(o)=>{if(o.value.startsWith(t.prefix))return;o.issues.push({origin:"string",code:"invalid_format",format:"starts_with",prefix:t.prefix,input:o.value,inst:e,continue:!t.abort})}}),un=p("$ZodCheckEndsWith",(e,t)=>{ie.init(e,t);let r=new RegExp(`.*${Ee(t.suffix)}$`);t.pattern??(t.pattern=r),e._zod.onattach.push((o)=>{let n=o._zod.bag;n.patterns??(n.patterns=new Set),n.patterns.add(r)}),e._zod.check=(o)=>{if(o.value.endsWith(t.suffix))return;o.issues.push({origin:"string",code:"invalid_format",format:"ends_with",suffix:t.suffix,input:o.value,inst:e,continue:!t.abort})}});var ln=p("$ZodCheckOverwrite",(e,t)=>{ie.init(e,t),e._zod.check=(r)=>{r.value=t.tx(r.value)}});class lr{constructor(e=[]){if(this.content=[],this.indent=0,this)this.args=e}indented(e){this.indent+=1,e(this),this.indent-=1}write(e){if(typeof e==="function"){e(this,{execution:"sync"}),e(this,{execution:"async"});return}let r=e.split(`
-`).filter((s)=>s),o=Math.min(...r.map((s)=>s.length-s.trimStart().length)),n=r.map((s)=>s.slice(o)).map((s)=>" ".repeat(this.indent*2)+s);for(let s of n)this.content.push(s)}compile(){let e=Function,t=this?.args,o=[...(this?.content??[""]).map((n)=>`  ${n}`)];return new e(...t,o.join(`
-`))}}var pn={major:4,minor:4,patch:3};var B=p("$ZodType",(e,t)=>{var r;e??(e={}),e._zod.def=t,e._zod.bag=e._zod.bag||{},e._zod.version=pn;let o=[...e._zod.def.checks??[]];if(e._zod.traits.has("$ZodCheck"))o.unshift(e);for(let n of o)for(let s of n._zod.onattach)s(e);if(o.length===0)(r=e._zod).deferred??(r.deferred=[]),e._zod.deferred?.push(()=>{e._zod.run=e._zod.parse});else{let n=(i,a,u)=>{let c=Ue(i),d;for(let h of a){if(h._zod.def.when){if(ao(i))continue;if(!h._zod.def.when(i))continue}else if(c)continue;let y=i.issues.length,b=h._zod.check(i);if(b instanceof Promise&&u?.async===!1)throw new Se;if(d||b instanceof Promise)d=(d??Promise.resolve()).then(async()=>{if(await b,i.issues.length===y)return;if(!c)c=Ue(i,y)});else{if(i.issues.length===y)continue;if(!c)c=Ue(i,y)}}if(d)return d.then(()=>i);return i},s=(i,a,u)=>{if(Ue(i))return i.aborted=!0,i;let c=n(a,o,u);if(c instanceof Promise){if(u.async===!1)throw new Se;return c.then((d)=>e._zod.parse(d,u))}return e._zod.parse(c,u)};e._zod.run=(i,a)=>{if(a.skipChecks)return e._zod.parse(i,a);if(a.direction==="backward"){let c=e._zod.parse({value:i.value,issues:[]},{...a,skipChecks:!0});if(c instanceof Promise)return c.then((d)=>s(d,i,a));return s(c,i,a)}let u=e._zod.parse(i,a);if(u instanceof Promise){if(a.async===!1)throw new Se;return u.then((c)=>n(c,o,a))}return n(u,o,a)}}E(e,"~standard",()=>({validate:(n)=>{try{let s=po(e,n);return s.success?{value:s.data}:{issues:s.error?.issues}}catch(s){return mo(e,n).then((i)=>i.success?{value:i.data}:{issues:i.error?.issues})}},vendor:"zod",version:1}))}),Tt=p("$ZodString",(e,t)=>{B.init(e,t),e._zod.pattern=[...e?._zod.bag?.patterns??[]].pop()??qo(e._zod.bag),e._zod.parse=(r,o)=>{if(t.coerce)try{r.value=String(r.value)}catch(n){}if(typeof r.value==="string")return r;return r.issues.push({expected:"string",code:"invalid_type",input:r.value,inst:e}),r}}),U=p("$ZodStringFormat",(e,t)=>{st.init(e,t),Tt.init(e,t)}),vn=p("$ZodGUID",(e,t)=>{t.pattern??(t.pattern=Ao),U.init(e,t)}),xn=p("$ZodUUID",(e,t)=>{if(t.version){let o={v1:1,v2:2,v3:3,v4:4,v5:5,v6:6,v7:7,v8:8}[t.version];if(o===void 0)throw Error(`Invalid UUID version: "${t.version}"`);t.pattern??(t.pattern=ir(o))}else t.pattern??(t.pattern=ir());U.init(e,t)}),zn=p("$ZodEmail",(e,t)=>{t.pattern??(t.pattern=Zo),U.init(e,t)}),kn=p("$ZodURL",(e,t)=>{U.init(e,t),e._zod.check=(r)=>{try{let o=r.value.trim();if(!t.normalize&&t.protocol?.source===Do.source){if(!/^https?:\/\//i.test(o)){r.issues.push({code:"invalid_format",format:"url",note:"Invalid URL format",input:r.value,inst:e,continue:!t.abort});return}}let n=new URL(o);if(t.hostname){if(t.hostname.lastIndex=0,!t.hostname.test(n.hostname))r.issues.push({code:"invalid_format",format:"url",note:"Invalid hostname",pattern:t.hostname.source,input:r.value,inst:e,continue:!t.abort})}if(t.protocol){if(t.protocol.lastIndex=0,!t.protocol.test(n.protocol.endsWith(":")?n.protocol.slice(0,-1):n.protocol))r.issues.push({code:"invalid_format",format:"url",note:"Invalid protocol",pattern:t.protocol.source,input:r.value,inst:e,continue:!t.abort})}if(t.normalize)r.value=n.href;else r.value=o;return}catch(o){r.issues.push({code:"invalid_format",format:"url",input:r.value,inst:e,continue:!t.abort})}}}),$n=p("$ZodEmoji",(e,t)=>{t.pattern??(t.pattern=No()),U.init(e,t)}),In=p("$ZodNanoID",(e,t)=>{t.pattern??(t.pattern=So),U.init(e,t)}),Sn=p("$ZodCUID",(e,t)=>{t.pattern??(t.pattern=xo),U.init(e,t)}),Pn=p("$ZodCUID2",(e,t)=>{t.pattern??(t.pattern=zo),U.init(e,t)}),An=p("$ZodULID",(e,t)=>{t.pattern??(t.pattern=ko),U.init(e,t)}),Zn=p("$ZodXID",(e,t)=>{t.pattern??(t.pattern=$o),U.init(e,t)}),Nn=p("$ZodKSUID",(e,t)=>{t.pattern??(t.pattern=Io),U.init(e,t)}),Tn=p("$ZodISODateTime",(e,t)=>{t.pattern??(t.pattern=Vo(t)),U.init(e,t)}),Cn=p("$ZodISODate",(e,t)=>{t.pattern??(t.pattern=Lo),U.init(e,t)}),On=p("$ZodISOTime",(e,t)=>{t.pattern??(t.pattern=Bo(t)),U.init(e,t)}),En=p("$ZodISODuration",(e,t)=>{t.pattern??(t.pattern=Po),U.init(e,t)}),jn=p("$ZodIPv4",(e,t)=>{t.pattern??(t.pattern=To),U.init(e,t),e._zod.bag.format="ipv4"}),Dn=p("$ZodIPv6",(e,t)=>{t.pattern??(t.pattern=Co),U.init(e,t),e._zod.bag.format="ipv6",e._zod.check=(r)=>{try{new URL(`http://[${r.value}]`)}catch{r.issues.push({code:"invalid_format",format:"ipv6",input:r.value,inst:e,continue:!t.abort})}}});var Rn=p("$ZodCIDRv4",(e,t)=>{t.pattern??(t.pattern=Oo),U.init(e,t)}),Fn=p("$ZodCIDRv6",(e,t)=>{t.pattern??(t.pattern=Eo),U.init(e,t),e._zod.check=(r)=>{let o=r.value.split("/");try{if(o.length!==2)throw Error();let[n,s]=o;if(!s)throw Error();let i=Number(s);if(`${i}`!==s)throw Error();if(i<0||i>128)throw Error();new URL(`http://[${n}]`)}catch{r.issues.push({code:"invalid_format",format:"cidrv6",input:r.value,inst:e,continue:!t.abort})}}});function Ln(e){if(e==="")return!0;if(/\s/.test(e))return!1;if(e.length%4!==0)return!1;try{return atob(e),!0}catch{return!1}}var Un=p("$ZodBase64",(e,t)=>{t.pattern??(t.pattern=jo),U.init(e,t),e._zod.bag.contentEncoding="base64",e._zod.check=(r)=>{if(Ln(r.value))return;r.issues.push({code:"invalid_format",format:"base64",input:r.value,inst:e,continue:!t.abort})}});function gc(e){if(!ar.test(e))return!1;let t=e.replace(/[-_]/g,(o)=>o==="-"?"+":"/"),r=t.padEnd(Math.ceil(t.length/4)*4,"=");return Ln(r)}var Bn=p("$ZodBase64URL",(e,t)=>{t.pattern??(t.pattern=ar),U.init(e,t),e._zod.bag.contentEncoding="base64url",e._zod.check=(r)=>{if(gc(r.value))return;r.issues.push({code:"invalid_format",format:"base64url",input:r.value,inst:e,continue:!t.abort})}}),Vn=p("$ZodE164",(e,t)=>{t.pattern??(t.pattern=Ro),U.init(e,t)});function wc(e,t=null){try{let r=e.split(".");if(r.length!==3)return!1;let[o]=r;if(!o)return!1;let n=JSON.parse(atob(o));if("typ"in n&&n?.typ!=="JWT")return!1;if(!n.alg)return!1;if(t&&(!("alg"in n)||n.alg!==t))return!1;return!0}catch{return!1}}var qn=p("$ZodJWT",(e,t)=>{U.init(e,t),e._zod.check=(r)=>{if(wc(r.value,t.alg))return;r.issues.push({code:"invalid_format",format:"jwt",input:r.value,inst:e,continue:!t.abort})}});var pr=p("$ZodNumber",(e,t)=>{B.init(e,t),e._zod.pattern=e._zod.bag.pattern??Jo,e._zod.parse=(r,o)=>{if(t.coerce)try{r.value=Number(r.value)}catch(i){}let n=r.value;if(typeof n==="number"&&!Number.isNaN(n)&&Number.isFinite(n))return r;let s=typeof n==="number"?Number.isNaN(n)?"NaN":!Number.isFinite(n)?"Infinity":void 0:void 0;return r.issues.push({expected:"number",code:"invalid_type",input:n,inst:e,...s?{received:s}:{}}),r}}),Mn=p("$ZodNumberFormat",(e,t)=>{Xo.init(e,t),pr.init(e,t)}),Jn=p("$ZodBoolean",(e,t)=>{B.init(e,t),e._zod.pattern=Qo,e._zod.parse=(r,o)=>{if(t.coerce)try{r.value=Boolean(r.value)}catch(s){}let n=r.value;if(typeof n==="boolean")return r;return r.issues.push({expected:"boolean",code:"invalid_type",input:n,inst:e}),r}});var Qn=p("$ZodNull",(e,t)=>{B.init(e,t),e._zod.pattern=Ko,e._zod.values=new Set([null]),e._zod.parse=(r,o)=>{let n=r.value;if(n===null)return r;return r.issues.push({expected:"null",code:"invalid_type",input:n,inst:e}),r}});var Kn=p("$ZodUnknown",(e,t)=>{B.init(e,t),e._zod.parse=(r)=>r}),Gn=p("$ZodNever",(e,t)=>{B.init(e,t),e._zod.parse=(r,o)=>(r.issues.push({expected:"never",code:"invalid_type",input:r.value,inst:e}),r)});function mn(e,t,r){if(e.issues.length)t.issues.push(...kt(r,e.issues));t.value[r]=e.value}var Wn=p("$ZodArray",(e,t)=>{B.init(e,t),e._zod.parse=(r,o)=>{let n=r.value;if(!Array.isArray(n))return r.issues.push({expected:"array",code:"invalid_type",input:n,inst:e}),r;r.value=Array(n.length);let s=[];for(let i=0;i<n.length;i++){let a=n[i],u=t.element._zod.run({value:a,issues:[]},o);if(u instanceof Promise)s.push(u.then((c)=>mn(c,r,i)));else mn(u,r,i)}if(s.length)return Promise.all(s).then(()=>r);return r}});function Nt(e,t,r,o,n,s){let i=r in o;if(e.issues.length){if(n&&s&&!i)return;t.issues.push(...kt(r,e.issues))}if(!i&&!n){if(!e.issues.length)t.issues.push({code:"invalid_type",expected:"nonoptional",input:void 0,path:[r]});return}if(e.value===void 0){if(i)t.value[r]=void 0}else t.value[r]=e.value}function Hn(e){let t=Object.keys(e.shape);for(let o of t)if(!e.shape?.[o]?._zod?.traits?.has("$ZodType"))throw Error(`Invalid element at key "${o}": expected a Zod schema`);let r=so(e.shape);return{...e,keys:t,keySet:new Set(t),numKeys:t.length,optionalKeys:new Set(r)}}function Yn(e,t,r,o,n,s){let i=[],a=n.keySet,u=n.catchall._zod,c=u.def.type,d=u.optin==="optional",h=u.optout==="optional";for(let y in t){if(y==="__proto__")continue;if(a.has(y))continue;if(c==="never"){i.push(y);continue}let b=u.run({value:t[y],issues:[]},o);if(b instanceof Promise)e.push(b.then((x)=>Nt(x,r,y,t,d,h)));else Nt(b,r,y,t,d,h)}if(i.length)r.issues.push({code:"unrecognized_keys",keys:i,input:t,inst:s});if(!e.length)return r;return Promise.all(e).then(()=>r)}var yc=p("$ZodObject",(e,t)=>{if(B.init(e,t),!Object.getOwnPropertyDescriptor(t,"shape")?.get){let a=t.shape;Object.defineProperty(t,"shape",{get:()=>{let u={...a};return Object.defineProperty(t,"shape",{value:u}),u}})}let o=vt(()=>Hn(t));E(e._zod,"propValues",()=>{let a=t.shape,u={};for(let c in a){let d=a[c]._zod;if(d.values){u[c]??(u[c]=new Set);for(let h of d.values)u[c].add(h)}}return u});let n=tt,s=t.catchall,i;e._zod.parse=(a,u)=>{i??(i=o.value);let c=a.value;if(!n(c))return a.issues.push({expected:"object",code:"invalid_type",input:c,inst:e}),a;a.value={};let d=[],h=i.shape;for(let y of i.keys){let b=h[y],x=b._zod.optin==="optional",be=b._zod.optout==="optional",I=b._zod.run({value:c[y],issues:[]},u);if(I instanceof Promise)d.push(I.then((ee)=>Nt(ee,a,y,c,x,be)));else Nt(I,a,y,c,x,be)}if(!s)return d.length?Promise.all(d).then(()=>a):a;return Yn(d,c,a,u,o.value,e)}}),Xn=p("$ZodObjectJIT",(e,t)=>{yc.init(e,t);let r=e._zod.parse,o=vt(()=>Hn(t)),n=(y)=>{let b=new lr(["shape","payload","ctx"]),x=o.value,be=(ve)=>{let Q=rr(ve);return`shape[${Q}]._zod.run({ value: input[${Q}], issues: [] }, ctx)`};b.write("const input = payload.value;");let I=Object.create(null),ee=0;for(let ve of x.keys)I[ve]=`key_${ee++}`;b.write("const newResult = {};");for(let ve of x.keys){let Q=I[ve],se=rr(ve),Hr=y[ve],Yr=Hr?._zod?.optin==="optional",ic=Hr?._zod?.optout==="optional";if(b.write(`const ${Q} = ${be(ve)};`),Yr&&ic)b.write(`
-        if (${Q}.issues.length) {
-          if (${se} in input) {
-            payload.issues = payload.issues.concat(${Q}.issues.map(iss => ({
+// ../gola-source/node_modules/zod/v4/core/core.js
+var _a;
+function $constructor(name, initializer, params) {
+  function init(inst, def) {
+    if (!inst._zod) {
+      Object.defineProperty(inst, "_zod", {
+        value: {
+          def,
+          constr: _,
+          traits: new Set
+        },
+        enumerable: false
+      });
+    }
+    if (inst._zod.traits.has(name)) {
+      return;
+    }
+    inst._zod.traits.add(name);
+    initializer(inst, def);
+    const proto = _.prototype;
+    const keys = Object.keys(proto);
+    for (let i = 0;i < keys.length; i++) {
+      const k = keys[i];
+      if (!(k in inst)) {
+        inst[k] = proto[k].bind(inst);
+      }
+    }
+  }
+  const Parent = params?.Parent ?? Object;
+
+  class Definition extends Parent {
+  }
+  Object.defineProperty(Definition, "name", { value: name });
+  function _(def) {
+    var _a;
+    const inst = params?.Parent ? new Definition : this;
+    init(inst, def);
+    (_a = inst._zod).deferred ?? (_a.deferred = []);
+    for (const fn of inst._zod.deferred) {
+      fn();
+    }
+    return inst;
+  }
+  Object.defineProperty(_, "init", { value: init });
+  Object.defineProperty(_, Symbol.hasInstance, {
+    value: (inst) => {
+      if (params?.Parent && inst instanceof params.Parent)
+        return true;
+      return inst?._zod?.traits?.has(name);
+    }
+  });
+  Object.defineProperty(_, "name", { value: name });
+  return _;
+}
+var $brand = Symbol("zod_brand");
+
+class $ZodAsyncError extends Error {
+  constructor() {
+    super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
+  }
+}
+
+class $ZodEncodeError extends Error {
+  constructor(name) {
+    super(`Encountered unidirectional transform during encode: ${name}`);
+    this.name = "ZodEncodeError";
+  }
+}
+(_a = globalThis).__zod_globalConfig ?? (_a.__zod_globalConfig = {});
+var globalConfig = globalThis.__zod_globalConfig;
+function config(newConfig) {
+  if (newConfig)
+    Object.assign(globalConfig, newConfig);
+  return globalConfig;
+}
+// ../gola-source/node_modules/zod/v4/core/util.js
+function getEnumValues(entries) {
+  const numericValues = Object.values(entries).filter((v) => typeof v === "number");
+  const values = Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
+  return values;
+}
+function jsonStringifyReplacer(_, value) {
+  if (typeof value === "bigint")
+    return value.toString();
+  return value;
+}
+function cached(getter) {
+  const set = false;
+  return {
+    get value() {
+      if (!set) {
+        const value = getter();
+        Object.defineProperty(this, "value", { value });
+        return value;
+      }
+      throw new Error("cached value already set");
+    }
+  };
+}
+function nullish(input) {
+  return input === null || input === undefined;
+}
+function cleanRegex(source) {
+  const start = source.startsWith("^") ? 1 : 0;
+  const end = source.endsWith("$") ? source.length - 1 : source.length;
+  return source.slice(start, end);
+}
+function floatSafeRemainder(val, step) {
+  const ratio = val / step;
+  const roundedRatio = Math.round(ratio);
+  const tolerance = Number.EPSILON * Math.max(Math.abs(ratio), 1);
+  if (Math.abs(ratio - roundedRatio) < tolerance)
+    return 0;
+  return ratio - roundedRatio;
+}
+var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
+function defineLazy(object, key, getter) {
+  let value = undefined;
+  Object.defineProperty(object, key, {
+    get() {
+      if (value === EVALUATING) {
+        return;
+      }
+      if (value === undefined) {
+        value = EVALUATING;
+        value = getter();
+      }
+      return value;
+    },
+    set(v) {
+      Object.defineProperty(object, key, {
+        value: v
+      });
+    },
+    configurable: true
+  });
+}
+function assignProp(target, prop, value) {
+  Object.defineProperty(target, prop, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true
+  });
+}
+function mergeDefs(...defs) {
+  const mergedDescriptors = {};
+  for (const def of defs) {
+    const descriptors = Object.getOwnPropertyDescriptors(def);
+    Object.assign(mergedDescriptors, descriptors);
+  }
+  return Object.defineProperties({}, mergedDescriptors);
+}
+function esc(str) {
+  return JSON.stringify(str);
+}
+function slugify(input) {
+  return input.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
+}
+var captureStackTrace = "captureStackTrace" in Error ? Error.captureStackTrace : (..._args) => {};
+function isObject(data) {
+  return typeof data === "object" && data !== null && !Array.isArray(data);
+}
+var allowsEval = /* @__PURE__ */ cached(() => {
+  if (globalConfig.jitless) {
+    return false;
+  }
+  if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
+    return false;
+  }
+  try {
+    const F = Function;
+    new F("");
+    return true;
+  } catch (_) {
+    return false;
+  }
+});
+function isPlainObject(o) {
+  if (isObject(o) === false)
+    return false;
+  const ctor = o.constructor;
+  if (ctor === undefined)
+    return true;
+  if (typeof ctor !== "function")
+    return true;
+  const prot = ctor.prototype;
+  if (isObject(prot) === false)
+    return false;
+  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+    return false;
+  }
+  return true;
+}
+function shallowClone(o) {
+  if (isPlainObject(o))
+    return { ...o };
+  if (Array.isArray(o))
+    return [...o];
+  if (o instanceof Map)
+    return new Map(o);
+  if (o instanceof Set)
+    return new Set(o);
+  return o;
+}
+var propertyKeyTypes = /* @__PURE__ */ new Set(["string", "number", "symbol"]);
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function clone(inst, def, params) {
+  const cl = new inst._zod.constr(def ?? inst._zod.def);
+  if (!def || params?.parent)
+    cl._zod.parent = inst;
+  return cl;
+}
+function normalizeParams(_params) {
+  const params = _params;
+  if (!params)
+    return {};
+  if (typeof params === "string")
+    return { error: () => params };
+  if (params?.message !== undefined) {
+    if (params?.error !== undefined)
+      throw new Error("Cannot specify both `message` and `error` params");
+    params.error = params.message;
+  }
+  delete params.message;
+  if (typeof params.error === "string")
+    return { ...params, error: () => params.error };
+  return params;
+}
+function optionalKeys(shape) {
+  return Object.keys(shape).filter((k) => {
+    return shape[k]._zod.optin === "optional" && shape[k]._zod.optout === "optional";
+  });
+}
+var NUMBER_FORMAT_RANGES = {
+  safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
+  int32: [-2147483648, 2147483647],
+  uint32: [0, 4294967295],
+  float32: [-340282346638528860000000000000000000000, 340282346638528860000000000000000000000],
+  float64: [-Number.MAX_VALUE, Number.MAX_VALUE]
+};
+function pick(schema, mask) {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".pick() cannot be used on object schemas containing refinements");
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const newShape = {};
+      for (const key in mask) {
+        if (!(key in currDef.shape)) {
+          throw new Error(`Unrecognized key: "${key}"`);
+        }
+        if (!mask[key])
+          continue;
+        newShape[key] = currDef.shape[key];
+      }
+      assignProp(this, "shape", newShape);
+      return newShape;
+    },
+    checks: []
+  });
+  return clone(schema, def);
+}
+function omit(schema, mask) {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".omit() cannot be used on object schemas containing refinements");
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const newShape = { ...schema._zod.def.shape };
+      for (const key in mask) {
+        if (!(key in currDef.shape)) {
+          throw new Error(`Unrecognized key: "${key}"`);
+        }
+        if (!mask[key])
+          continue;
+        delete newShape[key];
+      }
+      assignProp(this, "shape", newShape);
+      return newShape;
+    },
+    checks: []
+  });
+  return clone(schema, def);
+}
+function extend(schema, shape) {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to extend: expected a plain object");
+  }
+  const checks = schema._zod.def.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    const existingShape = schema._zod.def.shape;
+    for (const key in shape) {
+      if (Object.getOwnPropertyDescriptor(existingShape, key) !== undefined) {
+        throw new Error("Cannot overwrite keys on object schemas containing refinements. Use `.safeExtend()` instead.");
+      }
+    }
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape);
+      return _shape;
+    }
+  });
+  return clone(schema, def);
+}
+function safeExtend(schema, shape) {
+  if (!isPlainObject(shape)) {
+    throw new Error("Invalid input to safeExtend: expected a plain object");
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      assignProp(this, "shape", _shape);
+      return _shape;
+    }
+  });
+  return clone(schema, def);
+}
+function merge(a, b) {
+  if (a._zod.def.checks?.length) {
+    throw new Error(".merge() cannot be used on object schemas containing refinements. Use .safeExtend() instead.");
+  }
+  const def = mergeDefs(a._zod.def, {
+    get shape() {
+      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
+      assignProp(this, "shape", _shape);
+      return _shape;
+    },
+    get catchall() {
+      return b._zod.def.catchall;
+    },
+    checks: b._zod.def.checks ?? []
+  });
+  return clone(a, def);
+}
+function partial(Class, schema, mask) {
+  const currDef = schema._zod.def;
+  const checks = currDef.checks;
+  const hasChecks = checks && checks.length > 0;
+  if (hasChecks) {
+    throw new Error(".partial() cannot be used on object schemas containing refinements");
+  }
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const oldShape = schema._zod.def.shape;
+      const shape = { ...oldShape };
+      if (mask) {
+        for (const key in mask) {
+          if (!(key in oldShape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!mask[key])
+            continue;
+          shape[key] = Class ? new Class({
+            type: "optional",
+            innerType: oldShape[key]
+          }) : oldShape[key];
+        }
+      } else {
+        for (const key in oldShape) {
+          shape[key] = Class ? new Class({
+            type: "optional",
+            innerType: oldShape[key]
+          }) : oldShape[key];
+        }
+      }
+      assignProp(this, "shape", shape);
+      return shape;
+    },
+    checks: []
+  });
+  return clone(schema, def);
+}
+function required(Class, schema, mask) {
+  const def = mergeDefs(schema._zod.def, {
+    get shape() {
+      const oldShape = schema._zod.def.shape;
+      const shape = { ...oldShape };
+      if (mask) {
+        for (const key in mask) {
+          if (!(key in shape)) {
+            throw new Error(`Unrecognized key: "${key}"`);
+          }
+          if (!mask[key])
+            continue;
+          shape[key] = new Class({
+            type: "nonoptional",
+            innerType: oldShape[key]
+          });
+        }
+      } else {
+        for (const key in oldShape) {
+          shape[key] = new Class({
+            type: "nonoptional",
+            innerType: oldShape[key]
+          });
+        }
+      }
+      assignProp(this, "shape", shape);
+      return shape;
+    }
+  });
+  return clone(schema, def);
+}
+function aborted(x, startIndex = 0) {
+  if (x.aborted === true)
+    return true;
+  for (let i = startIndex;i < x.issues.length; i++) {
+    if (x.issues[i]?.continue !== true) {
+      return true;
+    }
+  }
+  return false;
+}
+function explicitlyAborted(x, startIndex = 0) {
+  if (x.aborted === true)
+    return true;
+  for (let i = startIndex;i < x.issues.length; i++) {
+    if (x.issues[i]?.continue === false) {
+      return true;
+    }
+  }
+  return false;
+}
+function prefixIssues(path, issues) {
+  return issues.map((iss) => {
+    var _a;
+    (_a = iss).path ?? (_a.path = []);
+    iss.path.unshift(path);
+    return iss;
+  });
+}
+function unwrapMessage(message) {
+  return typeof message === "string" ? message : message?.message;
+}
+function finalizeIssue(iss, ctx, config) {
+  const message = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config.customError?.(iss)) ?? unwrapMessage(config.localeError?.(iss)) ?? "Invalid input";
+  const { inst: _inst, continue: _continue, input: _input, ...rest } = iss;
+  rest.path ?? (rest.path = []);
+  rest.message = message;
+  if (ctx?.reportInput) {
+    rest.input = _input;
+  }
+  return rest;
+}
+function getLengthableOrigin(input) {
+  if (Array.isArray(input))
+    return "array";
+  if (typeof input === "string")
+    return "string";
+  return "unknown";
+}
+function issue(...args) {
+  const [iss, input, inst] = args;
+  if (typeof iss === "string") {
+    return {
+      message: iss,
+      code: "custom",
+      input,
+      inst
+    };
+  }
+  return { ...iss };
+}
+
+// ../gola-source/node_modules/zod/v4/core/errors.js
+var initializer = (inst, def) => {
+  inst.name = "$ZodError";
+  Object.defineProperty(inst, "_zod", {
+    value: inst._zod,
+    enumerable: false
+  });
+  Object.defineProperty(inst, "issues", {
+    value: def,
+    enumerable: false
+  });
+  inst.message = JSON.stringify(def, jsonStringifyReplacer, 2);
+  Object.defineProperty(inst, "toString", {
+    value: () => inst.message,
+    enumerable: false
+  });
+};
+var $ZodError = $constructor("$ZodError", initializer);
+var $ZodRealError = $constructor("$ZodError", initializer, { Parent: Error });
+function flattenError(error, mapper = (issue) => issue.message) {
+  const fieldErrors = {};
+  const formErrors = [];
+  for (const sub of error.issues) {
+    if (sub.path.length > 0) {
+      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+      fieldErrors[sub.path[0]].push(mapper(sub));
+    } else {
+      formErrors.push(mapper(sub));
+    }
+  }
+  return { formErrors, fieldErrors };
+}
+function formatError(error, mapper = (issue) => issue.message) {
+  const fieldErrors = { _errors: [] };
+  const processError = (error, path = []) => {
+    for (const issue of error.issues) {
+      if (issue.code === "invalid_union" && issue.errors.length) {
+        issue.errors.map((issues) => processError({ issues }, [...path, ...issue.path]));
+      } else if (issue.code === "invalid_key") {
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
+      } else if (issue.code === "invalid_element") {
+        processError({ issues: issue.issues }, [...path, ...issue.path]);
+      } else {
+        const fullpath = [...path, ...issue.path];
+        if (fullpath.length === 0) {
+          fieldErrors._errors.push(mapper(issue));
+        } else {
+          let curr = fieldErrors;
+          let i = 0;
+          while (i < fullpath.length) {
+            const el = fullpath[i];
+            const terminal = i === fullpath.length - 1;
+            if (!terminal) {
+              curr[el] = curr[el] || { _errors: [] };
+            } else {
+              curr[el] = curr[el] || { _errors: [] };
+              curr[el]._errors.push(mapper(issue));
+            }
+            curr = curr[el];
+            i++;
+          }
+        }
+      }
+    }
+  };
+  processError(error);
+  return fieldErrors;
+}
+
+// ../gola-source/node_modules/zod/v4/core/parse.js
+var _parse = (_Err) => (schema, value, _ctx, _params) => {
+  const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) {
+    throw new $ZodAsyncError;
+  }
+  if (result.issues.length) {
+    const e = new (_params?.Err ?? _Err)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+    captureStackTrace(e, _params?.callee);
+    throw e;
+  }
+  return result.value;
+};
+var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
+  const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
+  let result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise)
+    result = await result;
+  if (result.issues.length) {
+    const e = new (params?.Err ?? _Err)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
+    captureStackTrace(e, params?.callee);
+    throw e;
+  }
+  return result.value;
+};
+var _safeParse = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
+  const result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise) {
+    throw new $ZodAsyncError;
+  }
+  return result.issues.length ? {
+    success: false,
+    error: new (_Err ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+  } : { success: true, data: result.value };
+};
+var safeParse = /* @__PURE__ */ _safeParse($ZodRealError);
+var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
+  let result = schema._zod.run({ value, issues: [] }, ctx);
+  if (result instanceof Promise)
+    result = await result;
+  return result.issues.length ? {
+    success: false,
+    error: new _Err(result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+  } : { success: true, data: result.value };
+};
+var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
+var _encode = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
+  return _parse(_Err)(schema, value, ctx);
+};
+var _decode = (_Err) => (schema, value, _ctx) => {
+  return _parse(_Err)(schema, value, _ctx);
+};
+var _encodeAsync = (_Err) => async (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
+  return _parseAsync(_Err)(schema, value, ctx);
+};
+var _decodeAsync = (_Err) => async (schema, value, _ctx) => {
+  return _parseAsync(_Err)(schema, value, _ctx);
+};
+var _safeEncode = (_Err) => (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
+  return _safeParse(_Err)(schema, value, ctx);
+};
+var _safeDecode = (_Err) => (schema, value, _ctx) => {
+  return _safeParse(_Err)(schema, value, _ctx);
+};
+var _safeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
+  const ctx = _ctx ? { ..._ctx, direction: "backward" } : { direction: "backward" };
+  return _safeParseAsync(_Err)(schema, value, ctx);
+};
+var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
+  return _safeParseAsync(_Err)(schema, value, _ctx);
+};
+// ../gola-source/node_modules/zod/v4/core/regexes.js
+var cuid = /^[cC][0-9a-z]{6,}$/;
+var cuid2 = /^[0-9a-z]+$/;
+var ulid = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
+var xid = /^[0-9a-vA-V]{20}$/;
+var ksuid = /^[A-Za-z0-9]{27}$/;
+var nanoid = /^[a-zA-Z0-9_-]{21}$/;
+var duration = /^P(?:(\d+W)|(?!.*W)(?=\d|T\d)(\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+([.,]\d+)?S)?)?)$/;
+var guid = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+var uuid = (version) => {
+  if (!version)
+    return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/;
+  return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`);
+};
+var email = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+var _emoji = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+function emoji() {
+  return new RegExp(_emoji, "u");
+}
+var ipv4 = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+var ipv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
+var cidrv4 = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
+var cidrv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:?){0,6})\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
+var base64 = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
+var base64url = /^[A-Za-z0-9_-]*$/;
+var httpProtocol = /^https?$/;
+var e164 = /^\+[1-9]\d{6,14}$/;
+var dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
+var date = /* @__PURE__ */ new RegExp(`^${dateSource}$`);
+function timeSource(args) {
+  const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
+  const regex = typeof args.precision === "number" ? args.precision === -1 ? `${hhmm}` : args.precision === 0 ? `${hhmm}:[0-5]\\d` : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}` : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+  return regex;
+}
+function time(args) {
+  return new RegExp(`^${timeSource(args)}$`);
+}
+function datetime(args) {
+  const time = timeSource({ precision: args.precision });
+  const opts = ["Z"];
+  if (args.local)
+    opts.push("");
+  if (args.offset)
+    opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
+  const timeRegex = `${time}(?:${opts.join("|")})`;
+  return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
+}
+var string = (params) => {
+  const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
+  return new RegExp(`^${regex}$`);
+};
+var integer = /^-?\d+$/;
+var number = /^-?\d+(?:\.\d+)?$/;
+var boolean = /^(?:true|false)$/i;
+var _null = /^null$/i;
+var lowercase = /^[^A-Z]*$/;
+var uppercase = /^[^a-z]*$/;
+
+// ../gola-source/node_modules/zod/v4/core/checks.js
+var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
+  var _a;
+  inst._zod ?? (inst._zod = {});
+  inst._zod.def = def;
+  (_a = inst._zod).onattach ?? (_a.onattach = []);
+});
+var numericOriginMap = {
+  number: "number",
+  bigint: "bigint",
+  object: "date"
+};
+var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  const origin = numericOriginMap[typeof def.value];
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
+    if (def.value < curr) {
+      if (def.inclusive)
+        bag.maximum = def.value;
+      else
+        bag.exclusiveMaximum = def.value;
+    }
+  });
+  inst._zod.check = (payload) => {
+    if (def.inclusive ? payload.value <= def.value : payload.value < def.value) {
+      return;
+    }
+    payload.issues.push({
+      origin,
+      code: "too_big",
+      maximum: typeof def.value === "object" ? def.value.getTime() : def.value,
+      input: payload.value,
+      inclusive: def.inclusive,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckGreaterThan = /* @__PURE__ */ $constructor("$ZodCheckGreaterThan", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  const origin = numericOriginMap[typeof def.value];
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
+    if (def.value > curr) {
+      if (def.inclusive)
+        bag.minimum = def.value;
+      else
+        bag.exclusiveMinimum = def.value;
+    }
+  });
+  inst._zod.check = (payload) => {
+    if (def.inclusive ? payload.value >= def.value : payload.value > def.value) {
+      return;
+    }
+    payload.issues.push({
+      origin,
+      code: "too_small",
+      minimum: typeof def.value === "object" ? def.value.getTime() : def.value,
+      input: payload.value,
+      inclusive: def.inclusive,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckMultipleOf = /* @__PURE__ */ $constructor("$ZodCheckMultipleOf", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  inst._zod.onattach.push((inst) => {
+    var _a;
+    (_a = inst._zod.bag).multipleOf ?? (_a.multipleOf = def.value);
+  });
+  inst._zod.check = (payload) => {
+    if (typeof payload.value !== typeof def.value)
+      throw new Error("Cannot mix number and bigint in multiple_of check.");
+    const isMultiple = typeof payload.value === "bigint" ? payload.value % def.value === BigInt(0) : floatSafeRemainder(payload.value, def.value) === 0;
+    if (isMultiple)
+      return;
+    payload.issues.push({
+      origin: typeof payload.value,
+      code: "not_multiple_of",
+      divisor: def.value,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  def.format = def.format || "float64";
+  const isInt = def.format?.includes("int");
+  const origin = isInt ? "int" : "number";
+  const [minimum, maximum] = NUMBER_FORMAT_RANGES[def.format];
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    bag.format = def.format;
+    bag.minimum = minimum;
+    bag.maximum = maximum;
+    if (isInt)
+      bag.pattern = integer;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    if (isInt) {
+      if (!Number.isInteger(input)) {
+        payload.issues.push({
+          expected: origin,
+          format: def.format,
+          code: "invalid_type",
+          continue: false,
+          input,
+          inst
+        });
+        return;
+      }
+      if (!Number.isSafeInteger(input)) {
+        if (input > 0) {
+          payload.issues.push({
+            input,
+            code: "too_big",
+            maximum: Number.MAX_SAFE_INTEGER,
+            note: "Integers must be within the safe integer range.",
+            inst,
+            origin,
+            inclusive: true,
+            continue: !def.abort
+          });
+        } else {
+          payload.issues.push({
+            input,
+            code: "too_small",
+            minimum: Number.MIN_SAFE_INTEGER,
+            note: "Integers must be within the safe integer range.",
+            inst,
+            origin,
+            inclusive: true,
+            continue: !def.abort
+          });
+        }
+        return;
+      }
+    }
+    if (input < minimum) {
+      payload.issues.push({
+        origin: "number",
+        input,
+        code: "too_small",
+        minimum,
+        inclusive: true,
+        inst,
+        continue: !def.abort
+      });
+    }
+    if (input > maximum) {
+      payload.issues.push({
+        origin: "number",
+        input,
+        code: "too_big",
+        maximum,
+        inclusive: true,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+var $ZodCheckMaxLength = /* @__PURE__ */ $constructor("$ZodCheckMaxLength", (inst, def) => {
+  var _a;
+  $ZodCheck.init(inst, def);
+  (_a = inst._zod.def).when ?? (_a.when = (payload) => {
+    const val = payload.value;
+    return !nullish(val) && val.length !== undefined;
+  });
+  inst._zod.onattach.push((inst) => {
+    const curr = inst._zod.bag.maximum ?? Number.POSITIVE_INFINITY;
+    if (def.maximum < curr)
+      inst._zod.bag.maximum = def.maximum;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const length = input.length;
+    if (length <= def.maximum)
+      return;
+    const origin = getLengthableOrigin(input);
+    payload.issues.push({
+      origin,
+      code: "too_big",
+      maximum: def.maximum,
+      inclusive: true,
+      input,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckMinLength = /* @__PURE__ */ $constructor("$ZodCheckMinLength", (inst, def) => {
+  var _a;
+  $ZodCheck.init(inst, def);
+  (_a = inst._zod.def).when ?? (_a.when = (payload) => {
+    const val = payload.value;
+    return !nullish(val) && val.length !== undefined;
+  });
+  inst._zod.onattach.push((inst) => {
+    const curr = inst._zod.bag.minimum ?? Number.NEGATIVE_INFINITY;
+    if (def.minimum > curr)
+      inst._zod.bag.minimum = def.minimum;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const length = input.length;
+    if (length >= def.minimum)
+      return;
+    const origin = getLengthableOrigin(input);
+    payload.issues.push({
+      origin,
+      code: "too_small",
+      minimum: def.minimum,
+      inclusive: true,
+      input,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckLengthEquals = /* @__PURE__ */ $constructor("$ZodCheckLengthEquals", (inst, def) => {
+  var _a;
+  $ZodCheck.init(inst, def);
+  (_a = inst._zod.def).when ?? (_a.when = (payload) => {
+    const val = payload.value;
+    return !nullish(val) && val.length !== undefined;
+  });
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    bag.minimum = def.length;
+    bag.maximum = def.length;
+    bag.length = def.length;
+  });
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const length = input.length;
+    if (length === def.length)
+      return;
+    const origin = getLengthableOrigin(input);
+    const tooBig = length > def.length;
+    payload.issues.push({
+      origin,
+      ...tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length },
+      inclusive: true,
+      exact: true,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckStringFormat = /* @__PURE__ */ $constructor("$ZodCheckStringFormat", (inst, def) => {
+  var _a, _b;
+  $ZodCheck.init(inst, def);
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    bag.format = def.format;
+    if (def.pattern) {
+      bag.patterns ?? (bag.patterns = new Set);
+      bag.patterns.add(def.pattern);
+    }
+  });
+  if (def.pattern)
+    (_a = inst._zod).check ?? (_a.check = (payload) => {
+      def.pattern.lastIndex = 0;
+      if (def.pattern.test(payload.value))
+        return;
+      payload.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: def.format,
+        input: payload.value,
+        ...def.pattern ? { pattern: def.pattern.toString() } : {},
+        inst,
+        continue: !def.abort
+      });
+    });
+  else
+    (_b = inst._zod).check ?? (_b.check = () => {});
+});
+var $ZodCheckRegex = /* @__PURE__ */ $constructor("$ZodCheckRegex", (inst, def) => {
+  $ZodCheckStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    def.pattern.lastIndex = 0;
+    if (def.pattern.test(payload.value))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "regex",
+      input: payload.value,
+      pattern: def.pattern.toString(),
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckLowerCase = /* @__PURE__ */ $constructor("$ZodCheckLowerCase", (inst, def) => {
+  def.pattern ?? (def.pattern = lowercase);
+  $ZodCheckStringFormat.init(inst, def);
+});
+var $ZodCheckUpperCase = /* @__PURE__ */ $constructor("$ZodCheckUpperCase", (inst, def) => {
+  def.pattern ?? (def.pattern = uppercase);
+  $ZodCheckStringFormat.init(inst, def);
+});
+var $ZodCheckIncludes = /* @__PURE__ */ $constructor("$ZodCheckIncludes", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  const escapedRegex = escapeRegex(def.includes);
+  const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position}}${escapedRegex}` : escapedRegex);
+  def.pattern = pattern;
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    bag.patterns ?? (bag.patterns = new Set);
+    bag.patterns.add(pattern);
+  });
+  inst._zod.check = (payload) => {
+    if (payload.value.includes(def.includes, def.position))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "includes",
+      includes: def.includes,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckStartsWith = /* @__PURE__ */ $constructor("$ZodCheckStartsWith", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  const pattern = new RegExp(`^${escapeRegex(def.prefix)}.*`);
+  def.pattern ?? (def.pattern = pattern);
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    bag.patterns ?? (bag.patterns = new Set);
+    bag.patterns.add(pattern);
+  });
+  inst._zod.check = (payload) => {
+    if (payload.value.startsWith(def.prefix))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "starts_with",
+      prefix: def.prefix,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckEndsWith = /* @__PURE__ */ $constructor("$ZodCheckEndsWith", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  const pattern = new RegExp(`.*${escapeRegex(def.suffix)}$`);
+  def.pattern ?? (def.pattern = pattern);
+  inst._zod.onattach.push((inst) => {
+    const bag = inst._zod.bag;
+    bag.patterns ?? (bag.patterns = new Set);
+    bag.patterns.add(pattern);
+  });
+  inst._zod.check = (payload) => {
+    if (payload.value.endsWith(def.suffix))
+      return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "ends_with",
+      suffix: def.suffix,
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  inst._zod.check = (payload) => {
+    payload.value = def.tx(payload.value);
+  };
+});
+
+// ../gola-source/node_modules/zod/v4/core/doc.js
+class Doc {
+  constructor(args = []) {
+    this.content = [];
+    this.indent = 0;
+    if (this)
+      this.args = args;
+  }
+  indented(fn) {
+    this.indent += 1;
+    fn(this);
+    this.indent -= 1;
+  }
+  write(arg) {
+    if (typeof arg === "function") {
+      arg(this, { execution: "sync" });
+      arg(this, { execution: "async" });
+      return;
+    }
+    const content = arg;
+    const lines = content.split(`
+`).filter((x) => x);
+    const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));
+    const dedented = lines.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
+    for (const line of dedented) {
+      this.content.push(line);
+    }
+  }
+  compile() {
+    const F = Function;
+    const args = this?.args;
+    const content = this?.content ?? [``];
+    const lines = [...content.map((x) => `  ${x}`)];
+    return new F(...args, lines.join(`
+`));
+  }
+}
+
+// ../gola-source/node_modules/zod/v4/core/versions.js
+var version = {
+  major: 4,
+  minor: 4,
+  patch: 3
+};
+
+// ../gola-source/node_modules/zod/v4/core/schemas.js
+var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
+  var _a;
+  inst ?? (inst = {});
+  inst._zod.def = def;
+  inst._zod.bag = inst._zod.bag || {};
+  inst._zod.version = version;
+  const checks = [...inst._zod.def.checks ?? []];
+  if (inst._zod.traits.has("$ZodCheck")) {
+    checks.unshift(inst);
+  }
+  for (const ch of checks) {
+    for (const fn of ch._zod.onattach) {
+      fn(inst);
+    }
+  }
+  if (checks.length === 0) {
+    (_a = inst._zod).deferred ?? (_a.deferred = []);
+    inst._zod.deferred?.push(() => {
+      inst._zod.run = inst._zod.parse;
+    });
+  } else {
+    const runChecks = (payload, checks, ctx) => {
+      let isAborted = aborted(payload);
+      let asyncResult;
+      for (const ch of checks) {
+        if (ch._zod.def.when) {
+          if (explicitlyAborted(payload))
+            continue;
+          const shouldRun = ch._zod.def.when(payload);
+          if (!shouldRun)
+            continue;
+        } else if (isAborted) {
+          continue;
+        }
+        const currLen = payload.issues.length;
+        const _ = ch._zod.check(payload);
+        if (_ instanceof Promise && ctx?.async === false) {
+          throw new $ZodAsyncError;
+        }
+        if (asyncResult || _ instanceof Promise) {
+          asyncResult = (asyncResult ?? Promise.resolve()).then(async () => {
+            await _;
+            const nextLen = payload.issues.length;
+            if (nextLen === currLen)
+              return;
+            if (!isAborted)
+              isAborted = aborted(payload, currLen);
+          });
+        } else {
+          const nextLen = payload.issues.length;
+          if (nextLen === currLen)
+            continue;
+          if (!isAborted)
+            isAborted = aborted(payload, currLen);
+        }
+      }
+      if (asyncResult) {
+        return asyncResult.then(() => {
+          return payload;
+        });
+      }
+      return payload;
+    };
+    const handleCanaryResult = (canary, payload, ctx) => {
+      if (aborted(canary)) {
+        canary.aborted = true;
+        return canary;
+      }
+      const checkResult = runChecks(payload, checks, ctx);
+      if (checkResult instanceof Promise) {
+        if (ctx.async === false)
+          throw new $ZodAsyncError;
+        return checkResult.then((checkResult) => inst._zod.parse(checkResult, ctx));
+      }
+      return inst._zod.parse(checkResult, ctx);
+    };
+    inst._zod.run = (payload, ctx) => {
+      if (ctx.skipChecks) {
+        return inst._zod.parse(payload, ctx);
+      }
+      if (ctx.direction === "backward") {
+        const canary = inst._zod.parse({ value: payload.value, issues: [] }, { ...ctx, skipChecks: true });
+        if (canary instanceof Promise) {
+          return canary.then((canary) => {
+            return handleCanaryResult(canary, payload, ctx);
+          });
+        }
+        return handleCanaryResult(canary, payload, ctx);
+      }
+      const result = inst._zod.parse(payload, ctx);
+      if (result instanceof Promise) {
+        if (ctx.async === false)
+          throw new $ZodAsyncError;
+        return result.then((result) => runChecks(result, checks, ctx));
+      }
+      return runChecks(result, checks, ctx);
+    };
+  }
+  defineLazy(inst, "~standard", () => ({
+    validate: (value) => {
+      try {
+        const r = safeParse(inst, value);
+        return r.success ? { value: r.data } : { issues: r.error?.issues };
+      } catch (_) {
+        return safeParseAsync(inst, value).then((r) => r.success ? { value: r.data } : { issues: r.error?.issues });
+      }
+    },
+    vendor: "zod",
+    version: 1
+  }));
+});
+var $ZodString = /* @__PURE__ */ $constructor("$ZodString", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.pattern = [...inst?._zod.bag?.patterns ?? []].pop() ?? string(inst._zod.bag);
+  inst._zod.parse = (payload, _) => {
+    if (def.coerce)
+      try {
+        payload.value = String(payload.value);
+      } catch (_) {}
+    if (typeof payload.value === "string")
+      return payload;
+    payload.issues.push({
+      expected: "string",
+      code: "invalid_type",
+      input: payload.value,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodStringFormat = /* @__PURE__ */ $constructor("$ZodStringFormat", (inst, def) => {
+  $ZodCheckStringFormat.init(inst, def);
+  $ZodString.init(inst, def);
+});
+var $ZodGUID = /* @__PURE__ */ $constructor("$ZodGUID", (inst, def) => {
+  def.pattern ?? (def.pattern = guid);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodUUID = /* @__PURE__ */ $constructor("$ZodUUID", (inst, def) => {
+  if (def.version) {
+    const versionMap = {
+      v1: 1,
+      v2: 2,
+      v3: 3,
+      v4: 4,
+      v5: 5,
+      v6: 6,
+      v7: 7,
+      v8: 8
+    };
+    const v = versionMap[def.version];
+    if (v === undefined)
+      throw new Error(`Invalid UUID version: "${def.version}"`);
+    def.pattern ?? (def.pattern = uuid(v));
+  } else
+    def.pattern ?? (def.pattern = uuid());
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodEmail = /* @__PURE__ */ $constructor("$ZodEmail", (inst, def) => {
+  def.pattern ?? (def.pattern = email);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodURL = /* @__PURE__ */ $constructor("$ZodURL", (inst, def) => {
+  $ZodStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    try {
+      const trimmed = payload.value.trim();
+      if (!def.normalize && def.protocol?.source === httpProtocol.source) {
+        if (!/^https?:\/\//i.test(trimmed)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid URL format",
+            input: payload.value,
+            inst,
+            continue: !def.abort
+          });
+          return;
+        }
+      }
+      const url = new URL(trimmed);
+      if (def.hostname) {
+        def.hostname.lastIndex = 0;
+        if (!def.hostname.test(url.hostname)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid hostname",
+            pattern: def.hostname.source,
+            input: payload.value,
+            inst,
+            continue: !def.abort
+          });
+        }
+      }
+      if (def.protocol) {
+        def.protocol.lastIndex = 0;
+        if (!def.protocol.test(url.protocol.endsWith(":") ? url.protocol.slice(0, -1) : url.protocol)) {
+          payload.issues.push({
+            code: "invalid_format",
+            format: "url",
+            note: "Invalid protocol",
+            pattern: def.protocol.source,
+            input: payload.value,
+            inst,
+            continue: !def.abort
+          });
+        }
+      }
+      if (def.normalize) {
+        payload.value = url.href;
+      } else {
+        payload.value = trimmed;
+      }
+      return;
+    } catch (_) {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "url",
+        input: payload.value,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+var $ZodEmoji = /* @__PURE__ */ $constructor("$ZodEmoji", (inst, def) => {
+  def.pattern ?? (def.pattern = emoji());
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodNanoID = /* @__PURE__ */ $constructor("$ZodNanoID", (inst, def) => {
+  def.pattern ?? (def.pattern = nanoid);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodCUID = /* @__PURE__ */ $constructor("$ZodCUID", (inst, def) => {
+  def.pattern ?? (def.pattern = cuid);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodCUID2 = /* @__PURE__ */ $constructor("$ZodCUID2", (inst, def) => {
+  def.pattern ?? (def.pattern = cuid2);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodULID = /* @__PURE__ */ $constructor("$ZodULID", (inst, def) => {
+  def.pattern ?? (def.pattern = ulid);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodXID = /* @__PURE__ */ $constructor("$ZodXID", (inst, def) => {
+  def.pattern ?? (def.pattern = xid);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodKSUID = /* @__PURE__ */ $constructor("$ZodKSUID", (inst, def) => {
+  def.pattern ?? (def.pattern = ksuid);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodISODateTime = /* @__PURE__ */ $constructor("$ZodISODateTime", (inst, def) => {
+  def.pattern ?? (def.pattern = datetime(def));
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodISODate = /* @__PURE__ */ $constructor("$ZodISODate", (inst, def) => {
+  def.pattern ?? (def.pattern = date);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodISOTime = /* @__PURE__ */ $constructor("$ZodISOTime", (inst, def) => {
+  def.pattern ?? (def.pattern = time(def));
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodISODuration = /* @__PURE__ */ $constructor("$ZodISODuration", (inst, def) => {
+  def.pattern ?? (def.pattern = duration);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodIPv4 = /* @__PURE__ */ $constructor("$ZodIPv4", (inst, def) => {
+  def.pattern ?? (def.pattern = ipv4);
+  $ZodStringFormat.init(inst, def);
+  inst._zod.bag.format = `ipv4`;
+});
+var $ZodIPv6 = /* @__PURE__ */ $constructor("$ZodIPv6", (inst, def) => {
+  def.pattern ?? (def.pattern = ipv6);
+  $ZodStringFormat.init(inst, def);
+  inst._zod.bag.format = `ipv6`;
+  inst._zod.check = (payload) => {
+    try {
+      new URL(`http://[${payload.value}]`);
+    } catch {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "ipv6",
+        input: payload.value,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+var $ZodCIDRv4 = /* @__PURE__ */ $constructor("$ZodCIDRv4", (inst, def) => {
+  def.pattern ?? (def.pattern = cidrv4);
+  $ZodStringFormat.init(inst, def);
+});
+var $ZodCIDRv6 = /* @__PURE__ */ $constructor("$ZodCIDRv6", (inst, def) => {
+  def.pattern ?? (def.pattern = cidrv6);
+  $ZodStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    const parts = payload.value.split("/");
+    try {
+      if (parts.length !== 2)
+        throw new Error;
+      const [address, prefix] = parts;
+      if (!prefix)
+        throw new Error;
+      const prefixNum = Number(prefix);
+      if (`${prefixNum}` !== prefix)
+        throw new Error;
+      if (prefixNum < 0 || prefixNum > 128)
+        throw new Error;
+      new URL(`http://[${address}]`);
+    } catch {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "cidrv6",
+        input: payload.value,
+        inst,
+        continue: !def.abort
+      });
+    }
+  };
+});
+function isValidBase64(data) {
+  if (data === "")
+    return true;
+  if (/\s/.test(data))
+    return false;
+  if (data.length % 4 !== 0)
+    return false;
+  try {
+    atob(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
+var $ZodBase64 = /* @__PURE__ */ $constructor("$ZodBase64", (inst, def) => {
+  def.pattern ?? (def.pattern = base64);
+  $ZodStringFormat.init(inst, def);
+  inst._zod.bag.contentEncoding = "base64";
+  inst._zod.check = (payload) => {
+    if (isValidBase64(payload.value))
+      return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "base64",
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+function isValidBase64URL(data) {
+  if (!base64url.test(data))
+    return false;
+  const base64 = data.replace(/[-_]/g, (c) => c === "-" ? "+" : "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  return isValidBase64(padded);
+}
+var $ZodBase64URL = /* @__PURE__ */ $constructor("$ZodBase64URL", (inst, def) => {
+  def.pattern ?? (def.pattern = base64url);
+  $ZodStringFormat.init(inst, def);
+  inst._zod.bag.contentEncoding = "base64url";
+  inst._zod.check = (payload) => {
+    if (isValidBase64URL(payload.value))
+      return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "base64url",
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodE164 = /* @__PURE__ */ $constructor("$ZodE164", (inst, def) => {
+  def.pattern ?? (def.pattern = e164);
+  $ZodStringFormat.init(inst, def);
+});
+function isValidJWT(token, algorithm = null) {
+  try {
+    const tokensParts = token.split(".");
+    if (tokensParts.length !== 3)
+      return false;
+    const [header] = tokensParts;
+    if (!header)
+      return false;
+    const parsedHeader = JSON.parse(atob(header));
+    if ("typ" in parsedHeader && parsedHeader?.typ !== "JWT")
+      return false;
+    if (!parsedHeader.alg)
+      return false;
+    if (algorithm && (!("alg" in parsedHeader) || parsedHeader.alg !== algorithm))
+      return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+var $ZodJWT = /* @__PURE__ */ $constructor("$ZodJWT", (inst, def) => {
+  $ZodStringFormat.init(inst, def);
+  inst._zod.check = (payload) => {
+    if (isValidJWT(payload.value, def.alg))
+      return;
+    payload.issues.push({
+      code: "invalid_format",
+      format: "jwt",
+      input: payload.value,
+      inst,
+      continue: !def.abort
+    });
+  };
+});
+var $ZodNumber = /* @__PURE__ */ $constructor("$ZodNumber", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.pattern = inst._zod.bag.pattern ?? number;
+  inst._zod.parse = (payload, _ctx) => {
+    if (def.coerce)
+      try {
+        payload.value = Number(payload.value);
+      } catch (_) {}
+    const input = payload.value;
+    if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
+      return payload;
+    }
+    const received = typeof input === "number" ? Number.isNaN(input) ? "NaN" : !Number.isFinite(input) ? "Infinity" : undefined : undefined;
+    payload.issues.push({
+      expected: "number",
+      code: "invalid_type",
+      input,
+      inst,
+      ...received ? { received } : {}
+    });
+    return payload;
+  };
+});
+var $ZodNumberFormat = /* @__PURE__ */ $constructor("$ZodNumberFormat", (inst, def) => {
+  $ZodCheckNumberFormat.init(inst, def);
+  $ZodNumber.init(inst, def);
+});
+var $ZodBoolean = /* @__PURE__ */ $constructor("$ZodBoolean", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.pattern = boolean;
+  inst._zod.parse = (payload, _ctx) => {
+    if (def.coerce)
+      try {
+        payload.value = Boolean(payload.value);
+      } catch (_) {}
+    const input = payload.value;
+    if (typeof input === "boolean")
+      return payload;
+    payload.issues.push({
+      expected: "boolean",
+      code: "invalid_type",
+      input,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodNull = /* @__PURE__ */ $constructor("$ZodNull", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.pattern = _null;
+  inst._zod.values = new Set([null]);
+  inst._zod.parse = (payload, _ctx) => {
+    const input = payload.value;
+    if (input === null)
+      return payload;
+    payload.issues.push({
+      expected: "null",
+      code: "invalid_type",
+      input,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodUnknown = /* @__PURE__ */ $constructor("$ZodUnknown", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.parse = (payload) => payload;
+});
+var $ZodNever = /* @__PURE__ */ $constructor("$ZodNever", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.parse = (payload, _ctx) => {
+    payload.issues.push({
+      expected: "never",
+      code: "invalid_type",
+      input: payload.value,
+      inst
+    });
+    return payload;
+  };
+});
+function handleArrayResult(result, final, index) {
+  if (result.issues.length) {
+    final.issues.push(...prefixIssues(index, result.issues));
+  }
+  final.value[index] = result.value;
+}
+var $ZodArray = /* @__PURE__ */ $constructor("$ZodArray", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.parse = (payload, ctx) => {
+    const input = payload.value;
+    if (!Array.isArray(input)) {
+      payload.issues.push({
+        expected: "array",
+        code: "invalid_type",
+        input,
+        inst
+      });
+      return payload;
+    }
+    payload.value = Array(input.length);
+    const proms = [];
+    for (let i = 0;i < input.length; i++) {
+      const item = input[i];
+      const result = def.element._zod.run({
+        value: item,
+        issues: []
+      }, ctx);
+      if (result instanceof Promise) {
+        proms.push(result.then((result) => handleArrayResult(result, payload, i)));
+      } else {
+        handleArrayResult(result, payload, i);
+      }
+    }
+    if (proms.length) {
+      return Promise.all(proms).then(() => payload);
+    }
+    return payload;
+  };
+});
+function handlePropertyResult(result, final, key, input, isOptionalIn, isOptionalOut) {
+  const isPresent = key in input;
+  if (result.issues.length) {
+    if (isOptionalIn && isOptionalOut && !isPresent) {
+      return;
+    }
+    final.issues.push(...prefixIssues(key, result.issues));
+  }
+  if (!isPresent && !isOptionalIn) {
+    if (!result.issues.length) {
+      final.issues.push({
+        code: "invalid_type",
+        expected: "nonoptional",
+        input: undefined,
+        path: [key]
+      });
+    }
+    return;
+  }
+  if (result.value === undefined) {
+    if (isPresent) {
+      final.value[key] = undefined;
+    }
+  } else {
+    final.value[key] = result.value;
+  }
+}
+function normalizeDef(def) {
+  const keys = Object.keys(def.shape);
+  for (const k of keys) {
+    if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
+      throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
+    }
+  }
+  const okeys = optionalKeys(def.shape);
+  return {
+    ...def,
+    keys,
+    keySet: new Set(keys),
+    numKeys: keys.length,
+    optionalKeys: new Set(okeys)
+  };
+}
+function handleCatchall(proms, input, payload, ctx, def, inst) {
+  const unrecognized = [];
+  const keySet = def.keySet;
+  const _catchall = def.catchall._zod;
+  const t = _catchall.def.type;
+  const isOptionalIn = _catchall.optin === "optional";
+  const isOptionalOut = _catchall.optout === "optional";
+  for (const key in input) {
+    if (key === "__proto__")
+      continue;
+    if (keySet.has(key))
+      continue;
+    if (t === "never") {
+      unrecognized.push(key);
+      continue;
+    }
+    const r = _catchall.run({ value: input[key], issues: [] }, ctx);
+    if (r instanceof Promise) {
+      proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+    } else {
+      handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+    }
+  }
+  if (unrecognized.length) {
+    payload.issues.push({
+      code: "unrecognized_keys",
+      keys: unrecognized,
+      input,
+      inst
+    });
+  }
+  if (!proms.length)
+    return payload;
+  return Promise.all(proms).then(() => {
+    return payload;
+  });
+}
+var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
+  $ZodType.init(inst, def);
+  const desc = Object.getOwnPropertyDescriptor(def, "shape");
+  if (!desc?.get) {
+    const sh = def.shape;
+    Object.defineProperty(def, "shape", {
+      get: () => {
+        const newSh = { ...sh };
+        Object.defineProperty(def, "shape", {
+          value: newSh
+        });
+        return newSh;
+      }
+    });
+  }
+  const _normalized = cached(() => normalizeDef(def));
+  defineLazy(inst._zod, "propValues", () => {
+    const shape = def.shape;
+    const propValues = {};
+    for (const key in shape) {
+      const field = shape[key]._zod;
+      if (field.values) {
+        propValues[key] ?? (propValues[key] = new Set);
+        for (const v of field.values)
+          propValues[key].add(v);
+      }
+    }
+    return propValues;
+  });
+  const isObject2 = isObject;
+  const catchall = def.catchall;
+  let value;
+  inst._zod.parse = (payload, ctx) => {
+    value ?? (value = _normalized.value);
+    const input = payload.value;
+    if (!isObject2(input)) {
+      payload.issues.push({
+        expected: "object",
+        code: "invalid_type",
+        input,
+        inst
+      });
+      return payload;
+    }
+    payload.value = {};
+    const proms = [];
+    const shape = value.shape;
+    for (const key of value.keys) {
+      const el = shape[key];
+      const isOptionalIn = el._zod.optin === "optional";
+      const isOptionalOut = el._zod.optout === "optional";
+      const r = el._zod.run({ value: input[key], issues: [] }, ctx);
+      if (r instanceof Promise) {
+        proms.push(r.then((r) => handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut)));
+      } else {
+        handlePropertyResult(r, payload, key, input, isOptionalIn, isOptionalOut);
+      }
+    }
+    if (!catchall) {
+      return proms.length ? Promise.all(proms).then(() => payload) : payload;
+    }
+    return handleCatchall(proms, input, payload, ctx, _normalized.value, inst);
+  };
+});
+var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) => {
+  $ZodObject.init(inst, def);
+  const superParse = inst._zod.parse;
+  const _normalized = cached(() => normalizeDef(def));
+  const generateFastpass = (shape) => {
+    const doc = new Doc(["shape", "payload", "ctx"]);
+    const normalized = _normalized.value;
+    const parseStr = (key) => {
+      const k = esc(key);
+      return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
+    };
+    doc.write(`const input = payload.value;`);
+    const ids = Object.create(null);
+    let counter = 0;
+    for (const key of normalized.keys) {
+      ids[key] = `key_${counter++}`;
+    }
+    doc.write(`const newResult = {};`);
+    for (const key of normalized.keys) {
+      const id = ids[key];
+      const k = esc(key);
+      const schema = shape[key];
+      const isOptionalIn = schema?._zod?.optin === "optional";
+      const isOptionalOut = schema?._zod?.optout === "optional";
+      doc.write(`const ${id} = ${parseStr(key)};`);
+      if (isOptionalIn && isOptionalOut) {
+        doc.write(`
+        if (${id}.issues.length) {
+          if (${k} in input) {
+            payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
               ...iss,
-              path: iss.path ? [${se}, ...iss.path] : [${se}]
+              path: iss.path ? [${k}, ...iss.path] : [${k}]
             })));
           }
         }
         
-        if (${Q}.value === undefined) {
-          if (${se} in input) {
-            newResult[${se}] = undefined;
+        if (${id}.value === undefined) {
+          if (${k} in input) {
+            newResult[${k}] = undefined;
           }
         } else {
-          newResult[${se}] = ${Q}.value;
+          newResult[${k}] = ${id}.value;
         }
         
-      `);else if(!Yr)b.write(`
-        const ${Q}_present = ${se} in input;
-        if (${Q}.issues.length) {
-          payload.issues = payload.issues.concat(${Q}.issues.map(iss => ({
+      `);
+      } else if (!isOptionalIn) {
+        doc.write(`
+        const ${id}_present = ${k} in input;
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
             ...iss,
-            path: iss.path ? [${se}, ...iss.path] : [${se}]
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
-        if (!${Q}_present && !${Q}.issues.length) {
+        if (!${id}_present && !${id}.issues.length) {
           payload.issues.push({
             code: "invalid_type",
             expected: "nonoptional",
             input: undefined,
-            path: [${se}]
+            path: [${k}]
           });
         }
 
-        if (${Q}_present) {
-          if (${Q}.value === undefined) {
-            newResult[${se}] = undefined;
+        if (${id}_present) {
+          if (${id}.value === undefined) {
+            newResult[${k}] = undefined;
           } else {
-            newResult[${se}] = ${Q}.value;
+            newResult[${k}] = ${id}.value;
           }
         }
 
-      `);else b.write(`
-        if (${Q}.issues.length) {
-          payload.issues = payload.issues.concat(${Q}.issues.map(iss => ({
+      `);
+      } else {
+        doc.write(`
+        if (${id}.issues.length) {
+          payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
             ...iss,
-            path: iss.path ? [${se}, ...iss.path] : [${se}]
+            path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
-        if (${Q}.value === undefined) {
-          if (${se} in input) {
-            newResult[${se}] = undefined;
+        if (${id}.value === undefined) {
+          if (${k} in input) {
+            newResult[${k}] = undefined;
           }
         } else {
-          newResult[${se}] = ${Q}.value;
+          newResult[${k}] = ${id}.value;
         }
         
-      `)}b.write("payload.value = newResult;"),b.write("return payload;");let j=b.compile();return(ve,Q)=>j(y,ve,Q)},s,i=tt,a=!Me.jitless,c=a&&oo.value,d=t.catchall,h;e._zod.parse=(y,b)=>{h??(h=o.value);let x=y.value;if(!i(x))return y.issues.push({expected:"object",code:"invalid_type",input:x,inst:e}),y;if(a&&c&&b?.async===!1&&b.jitless!==!0){if(!s)s=n(t.shape);if(y=s(y,b),!d)return y;return Yn([],x,y,b,h,e)}return r(y,b)}});function fn(e,t,r,o){for(let s of e)if(s.issues.length===0)return t.value=s.value,t;let n=e.filter((s)=>!Ue(s));if(n.length===1)return t.value=n[0].value,n[0];return t.issues.push({code:"invalid_union",input:t.value,inst:r,errors:e.map((s)=>s.issues.map((i)=>Ae(i,o,Pe())))}),t}var es=p("$ZodUnion",(e,t)=>{B.init(e,t),E(e._zod,"optin",()=>t.options.some((o)=>o._zod.optin==="optional")?"optional":void 0),E(e._zod,"optout",()=>t.options.some((o)=>o._zod.optout==="optional")?"optional":void 0),E(e._zod,"values",()=>{if(t.options.every((o)=>o._zod.values))return new Set(t.options.flatMap((o)=>Array.from(o._zod.values)));return}),E(e._zod,"pattern",()=>{if(t.options.every((o)=>o._zod.pattern)){let o=t.options.map((n)=>n._zod.pattern);return new RegExp(`^(${o.map((n)=>zt(n.source)).join("|")})$`)}return});let r=t.options.length===1?t.options[0]._zod.run:null;e._zod.parse=(o,n)=>{if(r)return r(o,n);let s=!1,i=[];for(let a of t.options){let u=a._zod.run({value:o.value,issues:[]},n);if(u instanceof Promise)i.push(u),s=!0;else{if(u.issues.length===0)return u;i.push(u)}}if(!s)return fn(i,o,e,n);return Promise.all(i).then((a)=>fn(a,o,e,n))}});var ts=p("$ZodIntersection",(e,t)=>{B.init(e,t),e._zod.parse=(r,o)=>{let n=r.value,s=t.left._zod.run({value:n,issues:[]},o),i=t.right._zod.run({value:n,issues:[]},o);if(s instanceof Promise||i instanceof Promise)return Promise.all([s,i]).then(([u,c])=>hn(r,u,c));return hn(r,s,i)}});function dr(e,t){if(e===t)return{valid:!0,data:e};if(e instanceof Date&&t instanceof Date&&+e===+t)return{valid:!0,data:e};if(Je(e)&&Je(t)){let r=Object.keys(t),o=Object.keys(e).filter((s)=>r.indexOf(s)!==-1),n={...e,...t};for(let s of o){let i=dr(e[s],t[s]);if(!i.valid)return{valid:!1,mergeErrorPath:[s,...i.mergeErrorPath]};n[s]=i.data}return{valid:!0,data:n}}if(Array.isArray(e)&&Array.isArray(t)){if(e.length!==t.length)return{valid:!1,mergeErrorPath:[]};let r=[];for(let o=0;o<e.length;o++){let n=e[o],s=t[o],i=dr(n,s);if(!i.valid)return{valid:!1,mergeErrorPath:[o,...i.mergeErrorPath]};r.push(i.data)}return{valid:!0,data:r}}return{valid:!1,mergeErrorPath:[]}}function hn(e,t,r){let o=new Map,n;for(let a of t.issues)if(a.code==="unrecognized_keys"){n??(n=a);for(let u of a.keys){if(!o.has(u))o.set(u,{});o.get(u).l=!0}}else e.issues.push(a);for(let a of r.issues)if(a.code==="unrecognized_keys")for(let u of a.keys){if(!o.has(u))o.set(u,{});o.get(u).r=!0}else e.issues.push(a);let s=[...o].filter(([,a])=>a.l&&a.r).map(([a])=>a);if(s.length&&n)e.issues.push({...n,keys:s});if(Ue(e))return e;let i=dr(t.value,r.value);if(!i.valid)throw Error(`Unmergable intersection. Error path: ${JSON.stringify(i.mergeErrorPath)}`);return e.value=i.data,e}var rs=p("$ZodEnum",(e,t)=>{B.init(e,t);let r=bt(t.entries),o=new Set(r);e._zod.values=o,e._zod.pattern=new RegExp(`^(${r.filter((n)=>no.has(typeof n)).map((n)=>typeof n==="string"?Ee(n):n.toString()).join("|")})$`),e._zod.parse=(n,s)=>{let i=n.value;if(o.has(i))return n;return n.issues.push({code:"invalid_value",values:r,input:i,inst:e}),n}}),os=p("$ZodLiteral",(e,t)=>{if(B.init(e,t),t.values.length===0)throw Error("Cannot create literal schema with no valid values");let r=new Set(t.values);e._zod.values=r,e._zod.pattern=new RegExp(`^(${t.values.map((o)=>typeof o==="string"?Ee(o):o?Ee(o.toString()):String(o)).join("|")})$`),e._zod.parse=(o,n)=>{let s=o.value;if(r.has(s))return o;return o.issues.push({code:"invalid_value",values:t.values,input:s,inst:e}),o}});var ns=p("$ZodTransform",(e,t)=>{B.init(e,t),e._zod.optin="optional",e._zod.parse=(r,o)=>{if(o.direction==="backward")throw new et(e.constructor.name);let n=t.transform(r.value,r);if(o.async)return(n instanceof Promise?n:Promise.resolve(n)).then((i)=>(r.value=i,r.fallback=!0,r));if(n instanceof Promise)throw new Se;return r.value=n,r.fallback=!0,r}});function gn(e,t){if(t===void 0&&(e.issues.length||e.fallback))return{issues:[],value:void 0};return e}var mr=p("$ZodOptional",(e,t)=>{B.init(e,t),e._zod.optin="optional",e._zod.optout="optional",E(e._zod,"values",()=>t.innerType._zod.values?new Set([...t.innerType._zod.values,void 0]):void 0),E(e._zod,"pattern",()=>{let r=t.innerType._zod.pattern;return r?new RegExp(`^(${zt(r.source)})?$`):void 0}),e._zod.parse=(r,o)=>{if(t.innerType._zod.optin==="optional"){let n=r.value,s=t.innerType._zod.run(r,o);if(s instanceof Promise)return s.then((i)=>gn(i,n));return gn(s,n)}if(r.value===void 0)return r;return t.innerType._zod.run(r,o)}}),ss=p("$ZodExactOptional",(e,t)=>{mr.init(e,t),E(e._zod,"values",()=>t.innerType._zod.values),E(e._zod,"pattern",()=>t.innerType._zod.pattern),e._zod.parse=(r,o)=>t.innerType._zod.run(r,o)}),is=p("$ZodNullable",(e,t)=>{B.init(e,t),E(e._zod,"optin",()=>t.innerType._zod.optin),E(e._zod,"optout",()=>t.innerType._zod.optout),E(e._zod,"pattern",()=>{let r=t.innerType._zod.pattern;return r?new RegExp(`^(${zt(r.source)}|null)$`):void 0}),E(e._zod,"values",()=>t.innerType._zod.values?new Set([...t.innerType._zod.values,null]):void 0),e._zod.parse=(r,o)=>{if(r.value===null)return r;return t.innerType._zod.run(r,o)}}),as=p("$ZodDefault",(e,t)=>{B.init(e,t),e._zod.optin="optional",E(e._zod,"values",()=>t.innerType._zod.values),e._zod.parse=(r,o)=>{if(o.direction==="backward")return t.innerType._zod.run(r,o);if(r.value===void 0)return r.value=t.defaultValue,r;let n=t.innerType._zod.run(r,o);if(n instanceof Promise)return n.then((s)=>wn(s,t));return wn(n,t)}});function wn(e,t){if(e.value===void 0)e.value=t.defaultValue;return e}var cs=p("$ZodPrefault",(e,t)=>{B.init(e,t),e._zod.optin="optional",E(e._zod,"values",()=>t.innerType._zod.values),e._zod.parse=(r,o)=>{if(o.direction==="backward")return t.innerType._zod.run(r,o);if(r.value===void 0)r.value=t.defaultValue;return t.innerType._zod.run(r,o)}}),us=p("$ZodNonOptional",(e,t)=>{B.init(e,t),E(e._zod,"values",()=>{let r=t.innerType._zod.values;return r?new Set([...r].filter((o)=>o!==void 0)):void 0}),e._zod.parse=(r,o)=>{let n=t.innerType._zod.run(r,o);if(n instanceof Promise)return n.then((s)=>yn(s,e));return yn(n,e)}});function yn(e,t){if(!e.issues.length&&e.value===void 0)e.issues.push({code:"invalid_type",expected:"nonoptional",input:e.value,inst:t});return e}var ls=p("$ZodCatch",(e,t)=>{B.init(e,t),e._zod.optin="optional",E(e._zod,"optout",()=>t.innerType._zod.optout),E(e._zod,"values",()=>t.innerType._zod.values),e._zod.parse=(r,o)=>{if(o.direction==="backward")return t.innerType._zod.run(r,o);let n=t.innerType._zod.run(r,o);if(n instanceof Promise)return n.then((s)=>{if(r.value=s.value,s.issues.length)r.value=t.catchValue({...r,error:{issues:s.issues.map((i)=>Ae(i,o,Pe()))},input:r.value}),r.issues=[],r.fallback=!0;return r});if(r.value=n.value,n.issues.length)r.value=t.catchValue({...r,error:{issues:n.issues.map((s)=>Ae(s,o,Pe()))},input:r.value}),r.issues=[],r.fallback=!0;return r}});var ds=p("$ZodPipe",(e,t)=>{B.init(e,t),E(e._zod,"values",()=>t.in._zod.values),E(e._zod,"optin",()=>t.in._zod.optin),E(e._zod,"optout",()=>t.out._zod.optout),E(e._zod,"propValues",()=>t.in._zod.propValues),e._zod.parse=(r,o)=>{if(o.direction==="backward"){let s=t.out._zod.run(r,o);if(s instanceof Promise)return s.then((i)=>Zt(i,t.in,o));return Zt(s,t.in,o)}let n=t.in._zod.run(r,o);if(n instanceof Promise)return n.then((s)=>Zt(s,t.out,o));return Zt(n,t.out,o)}});function Zt(e,t,r){if(e.issues.length)return e.aborted=!0,e;return t._zod.run({value:e.value,issues:e.issues,fallback:e.fallback},r)}var ps=p("$ZodReadonly",(e,t)=>{B.init(e,t),E(e._zod,"propValues",()=>t.innerType._zod.propValues),E(e._zod,"values",()=>t.innerType._zod.values),E(e._zod,"optin",()=>t.innerType?._zod?.optin),E(e._zod,"optout",()=>t.innerType?._zod?.optout),e._zod.parse=(r,o)=>{if(o.direction==="backward")return t.innerType._zod.run(r,o);let n=t.innerType._zod.run(r,o);if(n instanceof Promise)return n.then(_n);return _n(n)}});function _n(e){return e.value=Object.freeze(e.value),e}var ms=p("$ZodCustom",(e,t)=>{ie.init(e,t),B.init(e,t),e._zod.parse=(r,o)=>r,e._zod.check=(r)=>{let o=r.value,n=t.fn(o);if(n instanceof Promise)return n.then((s)=>bn(s,r,o,e));bn(n,r,o,e);return}});function bn(e,t,r,o){if(!e){let n={code:"custom",input:r,inst:o,path:[...o._zod.def.path??[]],continue:!o._zod.def.abort};if(o._zod.def.params)n.params=o._zod.def.params;t.issues.push(Be(n))}}var fs,wl=Symbol("ZodOutput"),yl=Symbol("ZodInput");class hs{constructor(){this._map=new WeakMap,this._idmap=new Map}add(e,...t){let r=t[0];if(this._map.set(e,r),r&&typeof r==="object"&&"id"in r)this._idmap.set(r.id,e);return this}clear(){return this._map=new WeakMap,this._idmap=new Map,this}remove(e){let t=this._map.get(e);if(t&&typeof t==="object"&&"id"in t)this._idmap.delete(t.id);return this._map.delete(e),this}get(e){let t=e._zod.parent;if(t){let r={...this.get(t)??{}};delete r.id;let o={...r,...this._map.get(e)};return Object.keys(o).length?o:void 0}return this._map.get(e)}has(e){return this._map.has(e)}}function _c(){return new hs}(fs=globalThis).__zod_globalRegistry??(fs.__zod_globalRegistry=_c());var Ve=globalThis.__zod_globalRegistry;function gs(e,t){return new e({type:"string",...v(t)})}function ws(e,t){return new e({type:"string",format:"email",check:"string_format",abort:!1,...v(t)})}function fr(e,t){return new e({type:"string",format:"guid",check:"string_format",abort:!1,...v(t)})}function ys(e,t){return new e({type:"string",format:"uuid",check:"string_format",abort:!1,...v(t)})}function _s(e,t){return new e({type:"string",format:"uuid",check:"string_format",abort:!1,version:"v4",...v(t)})}function bs(e,t){return new e({type:"string",format:"uuid",check:"string_format",abort:!1,version:"v6",...v(t)})}function vs(e,t){return new e({type:"string",format:"uuid",check:"string_format",abort:!1,version:"v7",...v(t)})}function xs(e,t){return new e({type:"string",format:"url",check:"string_format",abort:!1,...v(t)})}function zs(e,t){return new e({type:"string",format:"emoji",check:"string_format",abort:!1,...v(t)})}function ks(e,t){return new e({type:"string",format:"nanoid",check:"string_format",abort:!1,...v(t)})}function $s(e,t){return new e({type:"string",format:"cuid",check:"string_format",abort:!1,...v(t)})}function Is(e,t){return new e({type:"string",format:"cuid2",check:"string_format",abort:!1,...v(t)})}function Ss(e,t){return new e({type:"string",format:"ulid",check:"string_format",abort:!1,...v(t)})}function Ps(e,t){return new e({type:"string",format:"xid",check:"string_format",abort:!1,...v(t)})}function As(e,t){return new e({type:"string",format:"ksuid",check:"string_format",abort:!1,...v(t)})}function Zs(e,t){return new e({type:"string",format:"ipv4",check:"string_format",abort:!1,...v(t)})}function Ns(e,t){return new e({type:"string",format:"ipv6",check:"string_format",abort:!1,...v(t)})}function Ts(e,t){return new e({type:"string",format:"cidrv4",check:"string_format",abort:!1,...v(t)})}function Cs(e,t){return new e({type:"string",format:"cidrv6",check:"string_format",abort:!1,...v(t)})}function Os(e,t){return new e({type:"string",format:"base64",check:"string_format",abort:!1,...v(t)})}function Es(e,t){return new e({type:"string",format:"base64url",check:"string_format",abort:!1,...v(t)})}function js(e,t){return new e({type:"string",format:"e164",check:"string_format",abort:!1,...v(t)})}function Ds(e,t){return new e({type:"string",format:"jwt",check:"string_format",abort:!1,...v(t)})}function Rs(e,t){return new e({type:"string",format:"datetime",check:"string_format",offset:!1,local:!1,precision:null,...v(t)})}function Fs(e,t){return new e({type:"string",format:"date",check:"string_format",...v(t)})}function Ls(e,t){return new e({type:"string",format:"time",check:"string_format",precision:null,...v(t)})}function Us(e,t){return new e({type:"string",format:"duration",check:"string_format",...v(t)})}function Bs(e,t){return new e({type:"number",checks:[],...v(t)})}function Vs(e,t){return new e({type:"number",check:"number_format",abort:!1,format:"safeint",...v(t)})}function qs(e,t){return new e({type:"boolean",...v(t)})}function Ms(e,t){return new e({type:"null",...v(t)})}function Js(e){return new e({type:"unknown"})}function Qs(e,t){return new e({type:"never",...v(t)})}function Ct(e,t){return new cr({check:"less_than",...v(t),value:e,inclusive:!1})}function it(e,t){return new cr({check:"less_than",...v(t),value:e,inclusive:!0})}function Ot(e,t){return new ur({check:"greater_than",...v(t),value:e,inclusive:!1})}function at(e,t){return new ur({check:"greater_than",...v(t),value:e,inclusive:!0})}function Et(e,t){return new Yo({check:"multiple_of",...v(t),value:e})}function jt(e,t){return new en({check:"max_length",...v(t),maximum:e})}function Qe(e,t){return new tn({check:"min_length",...v(t),minimum:e})}function Dt(e,t){return new rn({check:"length_equals",...v(t),length:e})}function hr(e,t){return new on({check:"string_format",format:"regex",...v(t),pattern:e})}function gr(e){return new nn({check:"string_format",format:"lowercase",...v(e)})}function wr(e){return new sn({check:"string_format",format:"uppercase",...v(e)})}function yr(e,t){return new an({check:"string_format",format:"includes",...v(t),includes:e})}function _r(e,t){return new cn({check:"string_format",format:"starts_with",...v(t),prefix:e})}function br(e,t){return new un({check:"string_format",format:"ends_with",...v(t),suffix:e})}function De(e){return new ln({check:"overwrite",tx:e})}function vr(e){return De((t)=>t.normalize(e))}function xr(){return De((e)=>e.trim())}function zr(){return De((e)=>e.toLowerCase())}function kr(){return De((e)=>e.toUpperCase())}function $r(){return De((e)=>ro(e))}function Ks(e,t,r){return new e({type:"array",element:t,...v(r)})}function Gs(e,t,r){return new e({type:"custom",check:"custom",fn:t,...v(r)})}function Ws(e,t){let r=bc((o)=>(o.addIssue=(n)=>{if(typeof n==="string")o.issues.push(Be(n,o.value,r._zod.def));else{let s=n;if(s.fatal)s.continue=!1;s.code??(s.code="custom"),s.input??(s.input=o.value),s.inst??(s.inst=r),s.continue??(s.continue=!r._zod.def.abort),o.issues.push(Be(s))}},e(o.value,o)),t);return r}function bc(e,t){let r=new ie({check:"custom",...v(t)});return r._zod.check=e,r}function Ir(e){let t=e?.target??"draft-2020-12";if(t==="draft-4")t="draft-04";if(t==="draft-7")t="draft-07";return{processors:e.processors??{},metadataRegistry:e?.metadata??Ve,target:t,unrepresentable:e?.unrepresentable??"throw",override:e?.override??(()=>{}),io:e?.io??"output",counter:0,seen:new Map,cycles:e?.cycles??"ref",reused:e?.reused??"inline",external:e?.external??void 0}}function re(e,t,r={path:[],schemaPath:[]}){var o;let n=e._zod.def,s=t.seen.get(e);if(s){if(s.count++,r.schemaPath.includes(e))s.cycle=r.path;return s.schema}let i={schema:{},count:1,cycle:void 0,path:r.path};t.seen.set(e,i);let a=e._zod.toJSONSchema?.();if(a)i.schema=a;else{let d={...r,schemaPath:[...r.schemaPath,e],path:r.path};if(e._zod.processJSONSchema)e._zod.processJSONSchema(t,i.schema,d);else{let y=i.schema,b=t.processors[n.type];if(!b)throw Error(`[toJSONSchema]: Non-representable type encountered: ${n.type}`);b(e,t,y,d)}let h=e._zod.parent;if(h){if(!i.ref)i.ref=h;re(h,t,d),t.seen.get(h).isParent=!0}}let u=t.metadataRegistry.get(e);if(u)Object.assign(i.schema,u);if(t.io==="input"&&me(e))delete i.schema.examples,delete i.schema.default;if(t.io==="input"&&"_prefault"in i.schema)(o=i.schema).default??(o.default=i.schema._prefault);return delete i.schema._prefault,t.seen.get(e).schema}function Sr(e,t){let r=e.seen.get(t);if(!r)throw Error("Unprocessed schema. This is a bug in Zod.");let o=new Map;for(let i of e.seen.entries()){let a=e.metadataRegistry.get(i[0])?.id;if(a){let u=o.get(a);if(u&&u!==i[0])throw Error(`Duplicate schema id "${a}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);o.set(a,i[0])}}let n=(i)=>{let a=e.target==="draft-2020-12"?"$defs":"definitions";if(e.external){let h=e.external.registry.get(i[0])?.id,y=e.external.uri??((x)=>x);if(h)return{ref:y(h)};let b=i[1].defId??i[1].schema.id??`schema${e.counter++}`;return i[1].defId=b,{defId:b,ref:`${y("__shared")}#/${a}/${b}`}}if(i[1]===r)return{ref:"#"};let c=`${"#"}/${a}/`,d=i[1].schema.id??`__schema${e.counter++}`;return{defId:d,ref:c+d}},s=(i)=>{if(i[1].schema.$ref)return;let a=i[1],{ref:u,defId:c}=n(i);if(a.def={...a.schema},c)a.defId=c;let d=a.schema;for(let h in d)delete d[h];d.$ref=u};if(e.cycles==="throw")for(let i of e.seen.entries()){let a=i[1];if(a.cycle)throw Error(`Cycle detected: #/${a.cycle?.join("/")}/<root>
+      `);
+      }
+    }
+    doc.write(`payload.value = newResult;`);
+    doc.write(`return payload;`);
+    const fn = doc.compile();
+    return (payload, ctx) => fn(shape, payload, ctx);
+  };
+  let fastpass;
+  const isObject2 = isObject;
+  const jit = !globalConfig.jitless;
+  const allowsEval2 = allowsEval;
+  const fastEnabled = jit && allowsEval2.value;
+  const catchall = def.catchall;
+  let value;
+  inst._zod.parse = (payload, ctx) => {
+    value ?? (value = _normalized.value);
+    const input = payload.value;
+    if (!isObject2(input)) {
+      payload.issues.push({
+        expected: "object",
+        code: "invalid_type",
+        input,
+        inst
+      });
+      return payload;
+    }
+    if (jit && fastEnabled && ctx?.async === false && ctx.jitless !== true) {
+      if (!fastpass)
+        fastpass = generateFastpass(def.shape);
+      payload = fastpass(payload, ctx);
+      if (!catchall)
+        return payload;
+      return handleCatchall([], input, payload, ctx, value, inst);
+    }
+    return superParse(payload, ctx);
+  };
+});
+function handleUnionResults(results, final, inst, ctx) {
+  for (const result of results) {
+    if (result.issues.length === 0) {
+      final.value = result.value;
+      return final;
+    }
+  }
+  const nonaborted = results.filter((r) => !aborted(r));
+  if (nonaborted.length === 1) {
+    final.value = nonaborted[0].value;
+    return nonaborted[0];
+  }
+  final.issues.push({
+    code: "invalid_union",
+    input: final.value,
+    inst,
+    errors: results.map((result) => result.issues.map((iss) => finalizeIssue(iss, ctx, config())))
+  });
+  return final;
+}
+var $ZodUnion = /* @__PURE__ */ $constructor("$ZodUnion", (inst, def) => {
+  $ZodType.init(inst, def);
+  defineLazy(inst._zod, "optin", () => def.options.some((o) => o._zod.optin === "optional") ? "optional" : undefined);
+  defineLazy(inst._zod, "optout", () => def.options.some((o) => o._zod.optout === "optional") ? "optional" : undefined);
+  defineLazy(inst._zod, "values", () => {
+    if (def.options.every((o) => o._zod.values)) {
+      return new Set(def.options.flatMap((option) => Array.from(option._zod.values)));
+    }
+    return;
+  });
+  defineLazy(inst._zod, "pattern", () => {
+    if (def.options.every((o) => o._zod.pattern)) {
+      const patterns = def.options.map((o) => o._zod.pattern);
+      return new RegExp(`^(${patterns.map((p) => cleanRegex(p.source)).join("|")})$`);
+    }
+    return;
+  });
+  const first = def.options.length === 1 ? def.options[0]._zod.run : null;
+  inst._zod.parse = (payload, ctx) => {
+    if (first) {
+      return first(payload, ctx);
+    }
+    let async = false;
+    const results = [];
+    for (const option of def.options) {
+      const result = option._zod.run({
+        value: payload.value,
+        issues: []
+      }, ctx);
+      if (result instanceof Promise) {
+        results.push(result);
+        async = true;
+      } else {
+        if (result.issues.length === 0)
+          return result;
+        results.push(result);
+      }
+    }
+    if (!async)
+      return handleUnionResults(results, payload, inst, ctx);
+    return Promise.all(results).then((results) => {
+      return handleUnionResults(results, payload, inst, ctx);
+    });
+  };
+});
+var $ZodIntersection = /* @__PURE__ */ $constructor("$ZodIntersection", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.parse = (payload, ctx) => {
+    const input = payload.value;
+    const left = def.left._zod.run({ value: input, issues: [] }, ctx);
+    const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+    const async = left instanceof Promise || right instanceof Promise;
+    if (async) {
+      return Promise.all([left, right]).then(([left, right]) => {
+        return handleIntersectionResults(payload, left, right);
+      });
+    }
+    return handleIntersectionResults(payload, left, right);
+  };
+});
+function mergeValues(a, b) {
+  if (a === b) {
+    return { valid: true, data: a };
+  }
+  if (a instanceof Date && b instanceof Date && +a === +b) {
+    return { valid: true, data: a };
+  }
+  if (isPlainObject(a) && isPlainObject(b)) {
+    const bKeys = Object.keys(b);
+    const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
+    const newObj = { ...a, ...b };
+    for (const key of sharedKeys) {
+      const sharedValue = mergeValues(a[key], b[key]);
+      if (!sharedValue.valid) {
+        return {
+          valid: false,
+          mergeErrorPath: [key, ...sharedValue.mergeErrorPath]
+        };
+      }
+      newObj[key] = sharedValue.data;
+    }
+    return { valid: true, data: newObj };
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) {
+      return { valid: false, mergeErrorPath: [] };
+    }
+    const newArray = [];
+    for (let index = 0;index < a.length; index++) {
+      const itemA = a[index];
+      const itemB = b[index];
+      const sharedValue = mergeValues(itemA, itemB);
+      if (!sharedValue.valid) {
+        return {
+          valid: false,
+          mergeErrorPath: [index, ...sharedValue.mergeErrorPath]
+        };
+      }
+      newArray.push(sharedValue.data);
+    }
+    return { valid: true, data: newArray };
+  }
+  return { valid: false, mergeErrorPath: [] };
+}
+function handleIntersectionResults(result, left, right) {
+  const unrecKeys = new Map;
+  let unrecIssue;
+  for (const iss of left.issues) {
+    if (iss.code === "unrecognized_keys") {
+      unrecIssue ?? (unrecIssue = iss);
+      for (const k of iss.keys) {
+        if (!unrecKeys.has(k))
+          unrecKeys.set(k, {});
+        unrecKeys.get(k).l = true;
+      }
+    } else {
+      result.issues.push(iss);
+    }
+  }
+  for (const iss of right.issues) {
+    if (iss.code === "unrecognized_keys") {
+      for (const k of iss.keys) {
+        if (!unrecKeys.has(k))
+          unrecKeys.set(k, {});
+        unrecKeys.get(k).r = true;
+      }
+    } else {
+      result.issues.push(iss);
+    }
+  }
+  const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
+  if (bothKeys.length && unrecIssue) {
+    result.issues.push({ ...unrecIssue, keys: bothKeys });
+  }
+  if (aborted(result))
+    return result;
+  const merged = mergeValues(left.value, right.value);
+  if (!merged.valid) {
+    throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
+  }
+  result.value = merged.data;
+  return result;
+}
+var $ZodEnum = /* @__PURE__ */ $constructor("$ZodEnum", (inst, def) => {
+  $ZodType.init(inst, def);
+  const values = getEnumValues(def.entries);
+  const valuesSet = new Set(values);
+  inst._zod.values = valuesSet;
+  inst._zod.pattern = new RegExp(`^(${values.filter((k) => propertyKeyTypes.has(typeof k)).map((o) => typeof o === "string" ? escapeRegex(o) : o.toString()).join("|")})$`);
+  inst._zod.parse = (payload, _ctx) => {
+    const input = payload.value;
+    if (valuesSet.has(input)) {
+      return payload;
+    }
+    payload.issues.push({
+      code: "invalid_value",
+      values,
+      input,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodLiteral = /* @__PURE__ */ $constructor("$ZodLiteral", (inst, def) => {
+  $ZodType.init(inst, def);
+  if (def.values.length === 0) {
+    throw new Error("Cannot create literal schema with no valid values");
+  }
+  const values = new Set(def.values);
+  inst._zod.values = values;
+  inst._zod.pattern = new RegExp(`^(${def.values.map((o) => typeof o === "string" ? escapeRegex(o) : o ? escapeRegex(o.toString()) : String(o)).join("|")})$`);
+  inst._zod.parse = (payload, _ctx) => {
+    const input = payload.value;
+    if (values.has(input)) {
+      return payload;
+    }
+    payload.issues.push({
+      code: "invalid_value",
+      values: def.values,
+      input,
+      inst
+    });
+    return payload;
+  };
+});
+var $ZodTransform = /* @__PURE__ */ $constructor("$ZodTransform", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      throw new $ZodEncodeError(inst.constructor.name);
+    }
+    const _out = def.transform(payload.value, payload);
+    if (ctx.async) {
+      const output = _out instanceof Promise ? _out : Promise.resolve(_out);
+      return output.then((output) => {
+        payload.value = output;
+        payload.fallback = true;
+        return payload;
+      });
+    }
+    if (_out instanceof Promise) {
+      throw new $ZodAsyncError;
+    }
+    payload.value = _out;
+    payload.fallback = true;
+    return payload;
+  };
+});
+function handleOptionalResult(result, input) {
+  if (input === undefined && (result.issues.length || result.fallback)) {
+    return { issues: [], value: undefined };
+  }
+  return result;
+}
+var $ZodOptional = /* @__PURE__ */ $constructor("$ZodOptional", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
+  inst._zod.optout = "optional";
+  defineLazy(inst._zod, "values", () => {
+    return def.innerType._zod.values ? new Set([...def.innerType._zod.values, undefined]) : undefined;
+  });
+  defineLazy(inst._zod, "pattern", () => {
+    const pattern = def.innerType._zod.pattern;
+    return pattern ? new RegExp(`^(${cleanRegex(pattern.source)})?$`) : undefined;
+  });
+  inst._zod.parse = (payload, ctx) => {
+    if (def.innerType._zod.optin === "optional") {
+      const input = payload.value;
+      const result = def.innerType._zod.run(payload, ctx);
+      if (result instanceof Promise)
+        return result.then((r) => handleOptionalResult(r, input));
+      return handleOptionalResult(result, input);
+    }
+    if (payload.value === undefined) {
+      return payload;
+    }
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodExactOptional = /* @__PURE__ */ $constructor("$ZodExactOptional", (inst, def) => {
+  $ZodOptional.init(inst, def);
+  defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  defineLazy(inst._zod, "pattern", () => def.innerType._zod.pattern);
+  inst._zod.parse = (payload, ctx) => {
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodNullable = /* @__PURE__ */ $constructor("$ZodNullable", (inst, def) => {
+  $ZodType.init(inst, def);
+  defineLazy(inst._zod, "optin", () => def.innerType._zod.optin);
+  defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
+  defineLazy(inst._zod, "pattern", () => {
+    const pattern = def.innerType._zod.pattern;
+    return pattern ? new RegExp(`^(${cleanRegex(pattern.source)}|null)$`) : undefined;
+  });
+  defineLazy(inst._zod, "values", () => {
+    return def.innerType._zod.values ? new Set([...def.innerType._zod.values, null]) : undefined;
+  });
+  inst._zod.parse = (payload, ctx) => {
+    if (payload.value === null)
+      return payload;
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodDefault = /* @__PURE__ */ $constructor("$ZodDefault", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
+  defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    if (payload.value === undefined) {
+      payload.value = def.defaultValue;
+      return payload;
+    }
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result) => handleDefaultResult(result, def));
+    }
+    return handleDefaultResult(result, def);
+  };
+});
+function handleDefaultResult(payload, def) {
+  if (payload.value === undefined) {
+    payload.value = def.defaultValue;
+  }
+  return payload;
+}
+var $ZodPrefault = /* @__PURE__ */ $constructor("$ZodPrefault", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
+  defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    if (payload.value === undefined) {
+      payload.value = def.defaultValue;
+    }
+    return def.innerType._zod.run(payload, ctx);
+  };
+});
+var $ZodNonOptional = /* @__PURE__ */ $constructor("$ZodNonOptional", (inst, def) => {
+  $ZodType.init(inst, def);
+  defineLazy(inst._zod, "values", () => {
+    const v = def.innerType._zod.values;
+    return v ? new Set([...v].filter((x) => x !== undefined)) : undefined;
+  });
+  inst._zod.parse = (payload, ctx) => {
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result) => handleNonOptionalResult(result, inst));
+    }
+    return handleNonOptionalResult(result, inst);
+  };
+});
+function handleNonOptionalResult(payload, inst) {
+  if (!payload.issues.length && payload.value === undefined) {
+    payload.issues.push({
+      code: "invalid_type",
+      expected: "nonoptional",
+      input: payload.value,
+      inst
+    });
+  }
+  return payload;
+}
+var $ZodCatch = /* @__PURE__ */ $constructor("$ZodCatch", (inst, def) => {
+  $ZodType.init(inst, def);
+  inst._zod.optin = "optional";
+  defineLazy(inst._zod, "optout", () => def.innerType._zod.optout);
+  defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result) => {
+        payload.value = result.value;
+        if (result.issues.length) {
+          payload.value = def.catchValue({
+            ...payload,
+            error: {
+              issues: result.issues.map((iss) => finalizeIssue(iss, ctx, config()))
+            },
+            input: payload.value
+          });
+          payload.issues = [];
+          payload.fallback = true;
+        }
+        return payload;
+      });
+    }
+    payload.value = result.value;
+    if (result.issues.length) {
+      payload.value = def.catchValue({
+        ...payload,
+        error: {
+          issues: result.issues.map((iss) => finalizeIssue(iss, ctx, config()))
+        },
+        input: payload.value
+      });
+      payload.issues = [];
+      payload.fallback = true;
+    }
+    return payload;
+  };
+});
+var $ZodPipe = /* @__PURE__ */ $constructor("$ZodPipe", (inst, def) => {
+  $ZodType.init(inst, def);
+  defineLazy(inst._zod, "values", () => def.in._zod.values);
+  defineLazy(inst._zod, "optin", () => def.in._zod.optin);
+  defineLazy(inst._zod, "optout", () => def.out._zod.optout);
+  defineLazy(inst._zod, "propValues", () => def.in._zod.propValues);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      const right = def.out._zod.run(payload, ctx);
+      if (right instanceof Promise) {
+        return right.then((right) => handlePipeResult(right, def.in, ctx));
+      }
+      return handlePipeResult(right, def.in, ctx);
+    }
+    const left = def.in._zod.run(payload, ctx);
+    if (left instanceof Promise) {
+      return left.then((left) => handlePipeResult(left, def.out, ctx));
+    }
+    return handlePipeResult(left, def.out, ctx);
+  };
+});
+function handlePipeResult(left, next, ctx) {
+  if (left.issues.length) {
+    left.aborted = true;
+    return left;
+  }
+  return next._zod.run({ value: left.value, issues: left.issues, fallback: left.fallback }, ctx);
+}
+var $ZodReadonly = /* @__PURE__ */ $constructor("$ZodReadonly", (inst, def) => {
+  $ZodType.init(inst, def);
+  defineLazy(inst._zod, "propValues", () => def.innerType._zod.propValues);
+  defineLazy(inst._zod, "values", () => def.innerType._zod.values);
+  defineLazy(inst._zod, "optin", () => def.innerType?._zod?.optin);
+  defineLazy(inst._zod, "optout", () => def.innerType?._zod?.optout);
+  inst._zod.parse = (payload, ctx) => {
+    if (ctx.direction === "backward") {
+      return def.innerType._zod.run(payload, ctx);
+    }
+    const result = def.innerType._zod.run(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then(handleReadonlyResult);
+    }
+    return handleReadonlyResult(result);
+  };
+});
+function handleReadonlyResult(payload) {
+  payload.value = Object.freeze(payload.value);
+  return payload;
+}
+var $ZodCustom = /* @__PURE__ */ $constructor("$ZodCustom", (inst, def) => {
+  $ZodCheck.init(inst, def);
+  $ZodType.init(inst, def);
+  inst._zod.parse = (payload, _) => {
+    return payload;
+  };
+  inst._zod.check = (payload) => {
+    const input = payload.value;
+    const r = def.fn(input);
+    if (r instanceof Promise) {
+      return r.then((r) => handleRefineResult(r, payload, input, inst));
+    }
+    handleRefineResult(r, payload, input, inst);
+    return;
+  };
+});
+function handleRefineResult(result, payload, input, inst) {
+  if (!result) {
+    const _iss = {
+      code: "custom",
+      input,
+      inst,
+      path: [...inst._zod.def.path ?? []],
+      continue: !inst._zod.def.abort
+    };
+    if (inst._zod.def.params)
+      _iss.params = inst._zod.def.params;
+    payload.issues.push(issue(_iss));
+  }
+}
+// ../gola-source/node_modules/zod/v4/core/registries.js
+var _a2;
+var $output = Symbol("ZodOutput");
+var $input = Symbol("ZodInput");
 
-Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.`)}for(let i of e.seen.entries()){let a=i[1];if(t===i[0]){s(i);continue}if(e.external){let c=e.external.registry.get(i[0])?.id;if(t!==i[0]&&c){s(i);continue}}if(e.metadataRegistry.get(i[0])?.id){s(i);continue}if(a.cycle){s(i);continue}if(a.count>1){if(e.reused==="ref"){s(i);continue}}}}function Pr(e,t){let r=e.seen.get(t);if(!r)throw Error("Unprocessed schema. This is a bug in Zod.");let o=(a)=>{let u=e.seen.get(a);if(u.ref===null)return;let c=u.def??u.schema,d={...c},h=u.ref;if(u.ref=null,h){o(h);let b=e.seen.get(h),x=b.schema;if(x.$ref&&(e.target==="draft-07"||e.target==="draft-04"||e.target==="openapi-3.0"))c.allOf=c.allOf??[],c.allOf.push(x);else Object.assign(c,x);if(Object.assign(c,d),a._zod.parent===h)for(let I in c){if(I==="$ref"||I==="allOf")continue;if(!(I in d))delete c[I]}if(x.$ref&&b.def)for(let I in c){if(I==="$ref"||I==="allOf")continue;if(I in b.def&&JSON.stringify(c[I])===JSON.stringify(b.def[I]))delete c[I]}}let y=a._zod.parent;if(y&&y!==h){o(y);let b=e.seen.get(y);if(b?.schema.$ref){if(c.$ref=b.schema.$ref,b.def)for(let x in c){if(x==="$ref"||x==="allOf")continue;if(x in b.def&&JSON.stringify(c[x])===JSON.stringify(b.def[x]))delete c[x]}}}e.override({zodSchema:a,jsonSchem
+class $ZodRegistry {
+  constructor() {
+    this._map = new WeakMap;
+    this._idmap = new Map;
+  }
+  add(schema, ..._meta) {
+    const meta = _meta[0];
+    this._map.set(schema, meta);
+    if (meta && typeof meta === "object" && "id" in meta) {
+      this._idmap.set(meta.id, schema);
+    }
+    return this;
+  }
+  clear() {
+    this._map = new WeakMap;
+    this._idmap = new Map;
+    return this;
+  }
+  remove(schema) {
+    const meta = this._map.get(schema);
+    if (meta && typeof meta === "object" && "id" in meta) {
+      this._idmap.delete(meta.id);
+    }
+    this._map.delete(schema);
+    return this;
+  }
+  get(schema) {
+    const p = schema._zod.parent;
+    if (p) {
+      const pm = { ...this.get(p) ?? {} };
+      delete pm.id;
+      const f = { ...pm, ...this._map.get(schema) };
+      return Object.keys(f).length ? f : undefined;
+    }
+    return this._map.get(schema);
+  }
+  has(schema) {
+    return this._map.has(schema);
+  }
+}
+function registry() {
+  return new $ZodRegistry;
+}
+(_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry());
+var globalRegistry = globalThis.__zod_globalRegistry;
+// ../gola-source/node_modules/zod/v4/core/api.js
+function _string(Class, params) {
+  return new Class({
+    type: "string",
+    ...normalizeParams(params)
+  });
+}
+function _email(Class, params) {
+  return new Class({
+    type: "string",
+    format: "email",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _guid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "guid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _uuid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _uuidv4(Class, params) {
+  return new Class({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    version: "v4",
+    ...normalizeParams(params)
+  });
+}
+function _uuidv6(Class, params) {
+  return new Class({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    version: "v6",
+    ...normalizeParams(params)
+  });
+}
+function _uuidv7(Class, params) {
+  return new Class({
+    type: "string",
+    format: "uuid",
+    check: "string_format",
+    abort: false,
+    version: "v7",
+    ...normalizeParams(params)
+  });
+}
+function _url(Class, params) {
+  return new Class({
+    type: "string",
+    format: "url",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _emoji2(Class, params) {
+  return new Class({
+    type: "string",
+    format: "emoji",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _nanoid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "nanoid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _cuid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "cuid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _cuid2(Class, params) {
+  return new Class({
+    type: "string",
+    format: "cuid2",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _ulid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "ulid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _xid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "xid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _ksuid(Class, params) {
+  return new Class({
+    type: "string",
+    format: "ksuid",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _ipv4(Class, params) {
+  return new Class({
+    type: "string",
+    format: "ipv4",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _ipv6(Class, params) {
+  return new Class({
+    type: "string",
+    format: "ipv6",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _cidrv4(Class, params) {
+  return new Class({
+    type: "string",
+    format: "cidrv4",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _cidrv6(Class, params) {
+  return new Class({
+    type: "string",
+    format: "cidrv6",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _base64(Class, params) {
+  return new Class({
+    type: "string",
+    format: "base64",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _base64url(Class, params) {
+  return new Class({
+    type: "string",
+    format: "base64url",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _e164(Class, params) {
+  return new Class({
+    type: "string",
+    format: "e164",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _jwt(Class, params) {
+  return new Class({
+    type: "string",
+    format: "jwt",
+    check: "string_format",
+    abort: false,
+    ...normalizeParams(params)
+  });
+}
+function _isoDateTime(Class, params) {
+  return new Class({
+    type: "string",
+    format: "datetime",
+    check: "string_format",
+    offset: false,
+    local: false,
+    precision: null,
+    ...normalizeParams(params)
+  });
+}
+function _isoDate(Class, params) {
+  return new Class({
+    type: "string",
+    format: "date",
+    check: "string_format",
+    ...normalizeParams(params)
+  });
+}
+function _isoTime(Class, params) {
+  return new Class({
+    type: "string",
+    format: "time",
+    check: "string_format",
+    precision: null,
+    ...normalizeParams(params)
+  });
+}
+function _isoDuration(Class, params) {
+  return new Class({
+    type: "string",
+    format: "duration",
+    check: "string_format",
+    ...normalizeParams(params)
+  });
+}
+function _number(Class, params) {
+  return new Class({
+    type: "number",
+    checks: [],
+    ...normalizeParams(params)
+  });
+}
+function _int(Class, params) {
+  return new Class({
+    type: "number",
+    check: "number_format",
+    abort: false,
+    format: "safeint",
+    ...normalizeParams(params)
+  });
+}
+function _boolean(Class, params) {
+  return new Class({
+    type: "boolean",
+    ...normalizeParams(params)
+  });
+}
+function _null2(Class, params) {
+  return new Class({
+    type: "null",
+    ...normalizeParams(params)
+  });
+}
+function _unknown(Class) {
+  return new Class({
+    type: "unknown"
+  });
+}
+function _never(Class, params) {
+  return new Class({
+    type: "never",
+    ...normalizeParams(params)
+  });
+}
+function _lt(value, params) {
+  return new $ZodCheckLessThan({
+    check: "less_than",
+    ...normalizeParams(params),
+    value,
+    inclusive: false
+  });
+}
+function _lte(value, params) {
+  return new $ZodCheckLessThan({
+    check: "less_than",
+    ...normalizeParams(params),
+    value,
+    inclusive: true
+  });
+}
+function _gt(value, params) {
+  return new $ZodCheckGreaterThan({
+    check: "greater_than",
+    ...normalizeParams(params),
+    value,
+    inclusive: false
+  });
+}
+function _gte(value, params) {
+  return new $ZodCheckGreaterThan({
+    check: "greater_than",
+    ...normalizeParams(params),
+    value,
+    inclusive: true
+  });
+}
+function _multipleOf(value, params) {
+  return new $ZodCheckMultipleOf({
+    check: "multiple_of",
+    ...normalizeParams(params),
+    value
+  });
+}
+function _maxLength(maximum, params) {
+  const ch = new $ZodCheckMaxLength({
+    check: "max_length",
+    ...normalizeParams(params),
+    maximum
+  });
+  return ch;
+}
+function _minLength(minimum, params) {
+  return new $ZodCheckMinLength({
+    check: "min_length",
+    ...normalizeParams(params),
+    minimum
+  });
+}
+function _length(length, params) {
+  return new $ZodCheckLengthEquals({
+    check: "length_equals",
+    ...normalizeParams(params),
+    length
+  });
+}
+function _regex(pattern, params) {
+  return new $ZodCheckRegex({
+    check: "string_format",
+    format: "regex",
+    ...normalizeParams(params),
+    pattern
+  });
+}
+function _lowercase(params) {
+  return new $ZodCheckLowerCase({
+    check: "string_format",
+    format: "lowercase",
+    ...normalizeParams(params)
+  });
+}
+function _uppercase(params) {
+  return new $ZodCheckUpperCase({
+    check: "string_format",
+    format: "uppercase",
+    ...normalizeParams(params)
+  });
+}
+function _includes(includes, params) {
+  return new $ZodCheckIncludes({
+    check: "string_format",
+    format: "includes",
+    ...normalizeParams(params),
+    includes
+  });
+}
+function _startsWith(prefix, params) {
+  return new $ZodCheckStartsWith({
+    check: "string_format",
+    format: "starts_with",
+    ...normalizeParams(params),
+    prefix
+  });
+}
+function _endsWith(suffix, params) {
+  return new $ZodCheckEndsWith({
+    check: "string_format",
+    format: "ends_with",
+    ...normalizeParams(params),
+    suffix
+  });
+}
+function _overwrite(tx) {
+  return new $ZodCheckOverwrite({
+    check: "overwrite",
+    tx
+  });
+}
+function _normalize(form) {
+  return _overwrite((input) => input.normalize(form));
+}
+function _trim() {
+  return _overwrite((input) => input.trim());
+}
+function _toLowerCase() {
+  return _overwrite((input) => input.toLowerCase());
+}
+function _toUpperCase() {
+  return _overwrite((input) => input.toUpperCase());
+}
+function _slugify() {
+  return _overwrite((input) => slugify(input));
+}
+function _array(Class, element, params) {
+  return new Class({
+    type: "array",
+    element,
+    ...normalizeParams(params)
+  });
+}
+function _refine(Class, fn, _params) {
+  const schema = new Class({
+    type: "custom",
+    check: "custom",
+    fn,
+    ...normalizeParams(_params)
+  });
+  return schema;
+}
+function _superRefine(fn, params) {
+  const ch = _check((payload) => {
+    payload.addIssue = (issue2) => {
+      if (typeof issue2 === "string") {
+        payload.issues.push(issue(issue2, payload.value, ch._zod.def));
+      } else {
+        const _issue = issue2;
+        if (_issue.fatal)
+          _issue.continue = false;
+        _issue.code ?? (_issue.code = "custom");
+        _issue.input ?? (_issue.input = payload.value);
+        _issue.inst ?? (_issue.inst = ch);
+        _issue.continue ?? (_issue.continue = !ch._zod.def.abort);
+        payload.issues.push(issue(_issue));
+      }
+    };
+    return fn(payload.value, payload);
+  }, params);
+  return ch;
+}
+function _check(fn, params) {
+  const ch = new $ZodCheck({
+    check: "custom",
+    ...normalizeParams(params)
+  });
+  ch._zod.check = fn;
+  return ch;
+}
+// ../gola-source/node_modules/zod/v4/core/to-json-schema.js
+function initializeContext(params) {
+  let target = params?.target ?? "draft-2020-12";
+  if (target === "draft-4")
+    target = "draft-04";
+  if (target === "draft-7")
+    target = "draft-07";
+  return {
+    processors: params.processors ?? {},
+    metadataRegistry: params?.metadata ?? globalRegistry,
+    target,
+    unrepresentable: params?.unrepresentable ?? "throw",
+    override: params?.override ?? (() => {}),
+    io: params?.io ?? "output",
+    counter: 0,
+    seen: new Map,
+    cycles: params?.cycles ?? "ref",
+    reused: params?.reused ?? "inline",
+    external: params?.external ?? undefined
+  };
+}
+function process(schema, ctx, _params = { path: [], schemaPath: [] }) {
+  var _a;
+  const def = schema._zod.def;
+  const seen = ctx.seen.get(schema);
+  if (seen) {
+    seen.count++;
+    const isCycle = _params.schemaPath.includes(schema);
+    if (isCycle) {
+      seen.cycle = _params.path;
+    }
+    return seen.schema;
+  }
+  const result = { schema: {}, count: 1, cycle: undefined, path: _params.path };
+  ctx.seen.set(schema, result);
+  const overrideSchema = schema._zod.toJSONSchema?.();
+  if (overrideSchema) {
+    result.schema = overrideSchema;
+  } else {
+    const params = {
+      ..._params,
+      schemaPath: [..._params.schemaPath, schema],
+      path: _params.path
+    };
+    if (schema._zod.processJSONSchema) {
+      schema._zod.processJSONSchema(ctx, result.schema, params);
+    } else {
+      const _jso
