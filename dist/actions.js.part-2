@@ -1,140 +1,4 @@
-
-      const processor = ctx.processors[def.type];
-      if (!processor) {
-        throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
-      }
-      processor(schema, ctx, _json, params);
-    }
-    const parent = schema._zod.parent;
-    if (parent) {
-      if (!result.ref)
-        result.ref = parent;
-      process(parent, ctx, params);
-      ctx.seen.get(parent).isParent = true;
-    }
-  }
-  const meta = ctx.metadataRegistry.get(schema);
-  if (meta)
-    Object.assign(result.schema, meta);
-  if (ctx.io === "input" && isTransforming(schema)) {
-    delete result.schema.examples;
-    delete result.schema.default;
-  }
-  if (ctx.io === "input" && "_prefault" in result.schema)
-    (_a = result.schema).default ?? (_a.default = result.schema._prefault);
-  delete result.schema._prefault;
-  const _result = ctx.seen.get(schema);
-  return _result.schema;
-}
-function extractDefs(ctx, schema) {
-  const root = ctx.seen.get(schema);
-  if (!root)
-    throw new Error("Unprocessed schema. This is a bug in Zod.");
-  const idToSchema = new Map;
-  for (const entry of ctx.seen.entries()) {
-    const id = ctx.metadataRegistry.get(entry[0])?.id;
-    if (id) {
-      const existing = idToSchema.get(id);
-      if (existing && existing !== entry[0]) {
-        throw new Error(`Duplicate schema id "${id}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
-      }
-      idToSchema.set(id, entry[0]);
-    }
-  }
-  const makeURI = (entry) => {
-    const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
-    if (ctx.external) {
-      const externalId = ctx.external.registry.get(entry[0])?.id;
-      const uriGenerator = ctx.external.uri ?? ((id) => id);
-      if (externalId) {
-        return { ref: uriGenerator(externalId) };
-      }
-      const id = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-      entry[1].defId = id;
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
-    }
-    if (entry[1] === root) {
-      return { ref: "#" };
-    }
-    const uriPrefix = `#`;
-    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
-    const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
-    return { defId, ref: defUriPrefix + defId };
-  };
-  const extractToDef = (entry) => {
-    if (entry[1].schema.$ref) {
-      return;
-    }
-    const seen = entry[1];
-    const { ref, defId } = makeURI(entry);
-    seen.def = { ...seen.schema };
-    if (defId)
-      seen.defId = defId;
-    const schema = seen.schema;
-    for (const key in schema) {
-      delete schema[key];
-    }
-    schema.$ref = ref;
-  };
-  if (ctx.cycles === "throw") {
-    for (const entry of ctx.seen.entries()) {
-      const seen = entry[1];
-      if (seen.cycle) {
-        throw new Error("Cycle detected: " + `#/${seen.cycle?.join("/")}/<root>` + '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.');
-      }
-    }
-  }
-  for (const entry of ctx.seen.entries()) {
-    const seen = entry[1];
-    if (schema === entry[0]) {
-      extractToDef(entry);
-      continue;
-    }
-    if (ctx.external) {
-      const ext = ctx.external.registry.get(entry[0])?.id;
-      if (schema !== entry[0] && ext) {
-        extractToDef(entry);
-        continue;
-      }
-    }
-    const id = ctx.metadataRegistry.get(entry[0])?.id;
-    if (id) {
-      extractToDef(entry);
-      continue;
-    }
-    if (seen.cycle) {
-      extractToDef(entry);
-      continue;
-    }
-    if (seen.count > 1) {
-      if (ctx.reused === "ref") {
-        extractToDef(entry);
-        continue;
-      }
-    }
-  }
-}
-function finalize(ctx, schema) {
-  const root = ctx.seen.get(schema);
-  if (!root)
-    throw new Error("Unprocessed schema. This is a bug in Zod.");
-  const flattenRef = (zodSchema) => {
-    const seen = ctx.seen.get(zodSchema);
-    if (seen.ref === null)
-      return;
-    const schema = seen.def ?? seen.schema;
-    const _cached = { ...schema };
-    const ref = seen.ref;
-    seen.ref = null;
-    if (ref) {
-      flattenRef(ref);
-      const refSeen = ctx.seen.get(ref);
-      const refSchema = refSeen.schema;
-      if (refSchema.$ref && (ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0")) {
-        schema.allOf = schema.allOf ?? [];
-        schema.allOf.push(refSchema);
-      } else {
-        Object.assign(schema, refSchema);
+Object.assign(schema, refSchema);
       }
       Object.assign(schema, _cached);
       const isParentRef = zodSchema._zod.parent === ref;
@@ -292,14 +156,14 @@ function isTransforming(_schema, _ctx) {
 }
 var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
   const ctx = initializeContext({ ...params, processors });
-  process(schema, ctx);
+  process2(schema, ctx);
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
 var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) => {
   const { libraryOptions, target } = params ?? {};
   const ctx = initializeContext({ ...libraryOptions ?? {}, target, io, processors });
-  process(schema, ctx);
+  process2(schema, ctx);
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
@@ -458,7 +322,7 @@ var arrayProcessor = (schema, ctx, _json, params) => {
   if (typeof maximum === "number")
     json.maxItems = maximum;
   json.type = "array";
-  json.items = process(def.element, ctx, {
+  json.items = process2(def.element, ctx, {
     ...params,
     path: [...params.path, "items"]
   });
@@ -470,7 +334,7 @@ var objectProcessor = (schema, ctx, _json, params) => {
   json.properties = {};
   const shape = def.shape;
   for (const key in shape) {
-    json.properties[key] = process(shape[key], ctx, {
+    json.properties[key] = process2(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
     });
@@ -493,7 +357,7 @@ var objectProcessor = (schema, ctx, _json, params) => {
     if (ctx.io === "output")
       json.additionalProperties = false;
   } else if (def.catchall) {
-    json.additionalProperties = process(def.catchall, ctx, {
+    json.additionalProperties = process2(def.catchall, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
@@ -502,7 +366,7 @@ var objectProcessor = (schema, ctx, _json, params) => {
 var unionProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
   const isExclusive = def.inclusive === false;
-  const options = def.options.map((x, i) => process(x, ctx, {
+  const options = def.options.map((x, i) => process2(x, ctx, {
     ...params,
     path: [...params.path, isExclusive ? "oneOf" : "anyOf", i]
   }));
@@ -514,11 +378,11 @@ var unionProcessor = (schema, ctx, json, params) => {
 };
 var intersectionProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
-  const a = process(def.left, ctx, {
+  const a = process2(def.left, ctx, {
     ...params,
     path: [...params.path, "allOf", 0]
   });
-  const b = process(def.right, ctx, {
+  const b = process2(def.right, ctx, {
     ...params,
     path: [...params.path, "allOf", 1]
   });
@@ -531,7 +395,7 @@ var intersectionProcessor = (schema, ctx, json, params) => {
 };
 var nullableProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
-  const inner = process(def.innerType, ctx, params);
+  const inner = process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
@@ -542,20 +406,20 @@ var nullableProcessor = (schema, ctx, json, params) => {
 };
 var nonoptionalProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
 var defaultProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   json.default = JSON.parse(JSON.stringify(def.defaultValue));
 };
 var prefaultProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   if (ctx.io === "input")
@@ -563,7 +427,7 @@ var prefaultProcessor = (schema, ctx, json, params) => {
 };
 var catchProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   let catchValue;
@@ -578,20 +442,20 @@ var pipeProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
   const inIsTransform = def.in._zod.traits.has("$ZodTransform");
   const innerType = ctx.io === "input" ? inIsTransform ? def.out : def.in : def.out;
-  process(innerType, ctx, params);
+  process2(innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = innerType;
 };
 var readonlyProcessor = (schema, ctx, json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   json.readOnly = true;
 };
 var optionalProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
@@ -2142,6 +2006,20 @@ function and(...unfilteredConditions) {
     new StringChunk(")")
   ]);
 }
+function or(...unfilteredConditions) {
+  const conditions = unfilteredConditions.filter((c) => c !== undefined);
+  if (conditions.length === 0) {
+    return;
+  }
+  if (conditions.length === 1) {
+    return new SQL(conditions);
+  }
+  return new SQL([
+    new StringChunk("("),
+    sql.join(conditions, new StringChunk(" or ")),
+    new StringChunk(")")
+  ]);
+}
 var gt = (left, right) => {
   return sql`${left} > ${bindIfParam(right, left)}`;
 };
@@ -2803,10 +2681,14 @@ var profiles = sqliteTable("profiles", {
   deactivatedUntil: integer2("deactivated_until", { mode: "timestamp_ms" }),
   lastDeactivatedAt: integer2("last_deactivated_at", { mode: "timestamp_ms" }),
   profileUpdatedAt: integer2("profile_updated_at", { mode: "timestamp_ms" }),
+  approvalStatus: text("approval_status", { enum: ["pending", "approved", "declined"] }).notNull().default("approved"),
+  mentionPrivacy: text("mention_privacy", { enum: ["everyone", "peopleIFollow", "off"] }).notNull().default("everyone"),
+  discordUserId: text("discord_user_id"),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
 }, (table) => [
   uniqueIndex("profiles_handle_unique").on(table.handle),
-  uniqueIndex("profiles_email_unique").on(table.email)
+  uniqueIndex("profiles_email_unique").on(table.email),
+  uniqueIndex("profiles_discord_user_id_unique").on(table.discordUserId)
 ]);
 var sessions = sqliteTable("sessions", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
@@ -2845,4 +2727,120 @@ var likes = sqliteTable("likes", {
 var reposts = sqliteTable("reposts", {
   profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
-  createdAt: integer2("created_at", { mode: 
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
+var follows = sqliteTable("follows", {
+  followerId: integer2("follower_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  followingId: integer2("following_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.followerId, table.followingId] })]);
+var notifications = sqliteTable("notifications", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  recipientId: integer2("recipient_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  actorId: integer2("actor_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  type: text("type", { enum: ["like", "comment", "follow", "repost", "story_reaction", "mention", "reply", "message", "approval"] }).notNull(),
+  postId: integer2("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  commentId: integer2("comment_id").references(() => comments.id, { onDelete: "cascade" }),
+  storyId: integer2("story_id"),
+  conversationId: integer2("conversation_id"),
+  readAt: integer2("read_at", { mode: "timestamp_ms" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+});
+var stories = sqliteTable("stories", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  authorId: integer2("author_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  text: text("text"),
+  blobKey: text("blob_key"),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
+  expiresAt: integer2("expires_at", { mode: "timestamp_ms" }).notNull()
+});
+var storyViews = sqliteTable("story_views", {
+  storyId: integer2("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
+  viewerId: integer2("viewer_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  viewedAt: integer2("viewed_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.storyId, table.viewerId] })]);
+var storyReactions = sqliteTable("story_reactions", {
+  storyId: integer2("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
+  reactorId: integer2("reactor_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  emoji: text("emoji", { enum: ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDC4F"] }).notNull(),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.storyId, table.reactorId] })]);
+var bookmarks = sqliteTable("bookmarks", {
+  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
+var reports = sqliteTable("reports", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  targetType: text("target_type", { enum: ["post", "comment"] }).notNull(),
+  targetId: integer2("target_id").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [uniqueIndex("reports_reporter_target_unique").on(table.reporterId, table.targetType, table.targetId)]);
+var conversations = sqliteTable("conversations", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  userLowId: integer2("user_low_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  userHighId: integer2("user_high_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  updatedAt: integer2("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [uniqueIndex("conversations_pair_unique").on(table.userLowId, table.userHighId)]);
+var messages = sqliteTable("messages", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  conversationId: integer2("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: integer2("sender_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  readAt: integer2("read_at", { mode: "timestamp_ms" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+});
+var blocks = sqliteTable("blocks", {
+  blockerId: integer2("blocker_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  blockedId: integer2("blocked_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.blockerId, table.blockedId] })]);
+var pushTokens = sqliteTable("push_tokens", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  pushToken: text("push_token").notNull(),
+  platform: text("platform", { enum: ["android", "ios", "web"] }).notNull().default("android"),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [uniqueIndex("push_tokens_token_unique").on(table.pushToken)]);
+var googleIntegrations = sqliteTable("google_integrations", {
+  id: integer2("id").primaryKey(),
+  sheetsEnabled: integer2("sheets_enabled", { mode: "boolean" }).notNull().default(false),
+  spreadsheetId: text("spreadsheet_id"),
+  spreadsheetUrl: text("spreadsheet_url"),
+  driveFileUrl: text("drive_file_url"),
+  connectedAt: integer2("connected_at", { mode: "timestamp_ms" }),
+  lastSyncAt: integer2("last_sync_at", { mode: "timestamp_ms" }),
+  lastError: text("last_error"),
+  updatedAt: integer2("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+});
+var googleSyncQueue = sqliteTable("google_sync_queue", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  tab: text("tab", { enum: ["users", "posts", "comments", "logins", "follows", "likes"] }).notNull(),
+  recordKey: text("record_key").notNull(),
+  operation: text("operation", { enum: ["upsert", "delete", "login", "signup"] }).notNull(),
+  payload: text("payload").notNull(),
+  status: text("status", { enum: ["pending", "synced", "failed"] }).notNull().default("pending"),
+  error: text("error"),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
+  syncedAt: integer2("synced_at", { mode: "timestamp_ms" })
+}, (table) => [index("google_sync_queue_status_idx").on(table.status)]);
+
+// ../gola-source/server/src/privileged.ts
+import { mkdir, rm, writeFile } from "fs/promises";
+import { join } from "path";
+var privileged = definePrivilegedContracts({
+  googleConnectionStatus: {
+    request: object({ service: _enum(["drive", "sheets"]) }),
+    response: object({ connected: boolean2(), message: string2() }),
+    capabilities: ["google.workspace.status"],
+    timeoutMs: 8000
+  },
+  initializeGoogleSheets: {
+    request: object({
+      title: string2(),
+      tabs: array(object({ tab: _enum(["users", "posts", "comments", "logins", "follows", "likes"]), rows: array(array(union([string2(), number2(), boolean2(), _null3()]))) }))
+    }),
+    response: object({ ok: boolean2(), spreadsheetId: string2().nullable(), spreadsheetUrl: string2().nullable(), error: string2().nullable() }),

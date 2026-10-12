@@ -1,113 +1,4 @@
-"timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
-var follows = sqliteTable("follows", {
-  followerId: integer2("follower_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  followingId: integer2("following_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [primaryKey({ columns: [table.followerId, table.followingId] })]);
-var notifications = sqliteTable("notifications", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  recipientId: integer2("recipient_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  actorId: integer2("actor_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  type: text("type", { enum: ["like", "comment", "follow", "repost", "story_reaction", "mention", "reply", "message"] }).notNull(),
-  postId: integer2("post_id").references(() => posts.id, { onDelete: "cascade" }),
-  commentId: integer2("comment_id").references(() => comments.id, { onDelete: "cascade" }),
-  storyId: integer2("story_id"),
-  conversationId: integer2("conversation_id"),
-  readAt: integer2("read_at", { mode: "timestamp_ms" }),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-});
-var stories = sqliteTable("stories", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  authorId: integer2("author_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  text: text("text"),
-  blobKey: text("blob_key"),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
-  expiresAt: integer2("expires_at", { mode: "timestamp_ms" }).notNull()
-});
-var storyViews = sqliteTable("story_views", {
-  storyId: integer2("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
-  viewerId: integer2("viewer_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  viewedAt: integer2("viewed_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [primaryKey({ columns: [table.storyId, table.viewerId] })]);
-var storyReactions = sqliteTable("story_reactions", {
-  storyId: integer2("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
-  reactorId: integer2("reactor_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  emoji: text("emoji", { enum: ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDC4F"] }).notNull(),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [primaryKey({ columns: [table.storyId, table.reactorId] })]);
-var bookmarks = sqliteTable("bookmarks", {
-  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
-var reports = sqliteTable("reports", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  targetType: text("target_type", { enum: ["post", "comment"] }).notNull(),
-  targetId: integer2("target_id").notNull(),
-  reason: text("reason").notNull(),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [uniqueIndex("reports_reporter_target_unique").on(table.reporterId, table.targetType, table.targetId)]);
-var conversations = sqliteTable("conversations", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  userLowId: integer2("user_low_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  userHighId: integer2("user_high_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  updatedAt: integer2("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [uniqueIndex("conversations_pair_unique").on(table.userLowId, table.userHighId)]);
-var messages = sqliteTable("messages", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  conversationId: integer2("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
-  senderId: integer2("sender_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  text: text("text").notNull(),
-  readAt: integer2("read_at", { mode: "timestamp_ms" }),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-});
-var blocks = sqliteTable("blocks", {
-  blockerId: integer2("blocker_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  blockedId: integer2("blocked_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [primaryKey({ columns: [table.blockerId, table.blockedId] })]);
-var googleIntegrations = sqliteTable("google_integrations", {
-  id: integer2("id").primaryKey(),
-  sheetsEnabled: integer2("sheets_enabled", { mode: "boolean" }).notNull().default(false),
-  spreadsheetId: text("spreadsheet_id"),
-  spreadsheetUrl: text("spreadsheet_url"),
-  driveFileUrl: text("drive_file_url"),
-  connectedAt: integer2("connected_at", { mode: "timestamp_ms" }),
-  lastSyncAt: integer2("last_sync_at", { mode: "timestamp_ms" }),
-  lastError: text("last_error"),
-  updatedAt: integer2("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-});
-var googleSyncQueue = sqliteTable("google_sync_queue", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  tab: text("tab", { enum: ["users", "posts", "comments", "logins", "follows", "likes"] }).notNull(),
-  recordKey: text("record_key").notNull(),
-  operation: text("operation", { enum: ["upsert", "delete", "login", "signup"] }).notNull(),
-  payload: text("payload").notNull(),
-  status: text("status", { enum: ["pending", "synced", "failed"] }).notNull().default("pending"),
-  error: text("error"),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
-  syncedAt: integer2("synced_at", { mode: "timestamp_ms" })
-}, (table) => [index("google_sync_queue_status_idx").on(table.status)]);
 
-// ../gola-source/server/src/privileged.ts
-import { mkdir, rm, writeFile } from "fs/promises";
-import { join } from "path";
-var privileged = definePrivilegedContracts({
-  googleConnectionStatus: {
-    request: object({ service: _enum(["drive", "sheets"]) }),
-    response: object({ connected: boolean2(), message: string2() }),
-    capabilities: ["google.workspace.status"],
-    timeoutMs: 8000
-  },
-  initializeGoogleSheets: {
-    request: object({
-      title: string2(),
-      tabs: array(object({ tab: _enum(["users", "posts", "comments", "logins", "follows", "likes"]), rows: array(array(union([string2(), number2(), boolean2(), _null3()]))) }))
-    }),
-    response: object({ ok: boolean2(), spreadsheetId: string2().nullable(), spreadsheetUrl: string2().nullable(), error: string2().nullable() }),
     capabilities: ["google.sheets.write"],
     timeoutMs: 45000
   },
@@ -126,8 +17,8 @@ var privileged = definePrivilegedContracts({
 });
 async function runCli(args) {
   try {
-    const process = Bun.spawn(["hatch_gws_cli", ...args], { stdout: "pipe", stderr: "pipe" });
-    const [stdout, stderr, exitCode] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
+    const process2 = Bun.spawn(["hatch_gws_cli", ...args], { stdout: "pipe", stderr: "pipe" });
+    const [stdout, stderr, exitCode] = await Promise.all([new Response(process2.stdout).text(), new Response(process2.stderr).text(), process2.exited]);
     const text = stdout.trim();
     let data = null;
     if (text) {
@@ -210,13 +101,14 @@ var profileSchema = object({
   isFounder: boolean2(),
   badge: _enum(["none", "community", "official"]),
   isPrivate: boolean2(),
+  mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
   createdAt: string2(),
   avatarUrl: string2().nullable()
 });
 var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
 var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
 var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
-var accountProfileSchema = profileSchema.extend({ profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
+var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
 var commentSchema = object({ id: number2(), parentCommentId: number2().nullable(), text: string2(), createdAt: string2(), author: profileSchema });
 var postSchema = object({
   id: number2(),
@@ -244,7 +136,7 @@ var preferenceResponse = object({ status: _enum(["ok", "error"]), message: strin
 var toggleResponse = object({ active: boolean2(), count: number2() });
 var connectionProfileSchema = profileSchema.extend({ viewerFollowing: boolean2(), followerCount: number2() });
 var moderationSchema = object({ allowed: boolean2(), feedback: string2() });
-var visibleNotificationTypeSchema = _enum(["like", "comment", "follow", "repost", "story_reaction", "mention", "reply"]);
+var visibleNotificationTypeSchema = _enum(["like", "comment", "follow", "repost", "story_reaction", "mention", "reply", "approval"]);
 function decodeBase64(value) {
   const binary = atob(value);
   const bytes = new Uint8Array(binary.length);
@@ -301,6 +193,23 @@ async function createSession(ctx, profileId) {
 function isActiveProfile(row) {
   return !row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now();
 }
+function isApprovedProfile(row) {
+  return row.approvalStatus === "approved";
+}
+async function approvedProfile(ctx, token) {
+  const profile = await authenticatedProfile(ctx, token);
+  return profile && isApprovedProfile(profile) ? profile : null;
+}
+async function mentionAllowed(ctx, actorId, person) {
+  if (person.mentionPrivacy === "off")
+    return false;
+  if (person.mentionPrivacy === "peopleIFollow") {
+    const [link] = await ctx.db().select({ followerId: follows.followerId }).from(follows).where(and(eq(follows.followerId, person.id), eq(follows.followingId, actorId))).limit(1);
+    if (!link)
+      return false;
+  }
+  return true;
+}
 async function profileForSession(ctx, token) {
   if (!token)
     return null;
@@ -314,10 +223,10 @@ async function authenticatedProfile(ctx, token) {
 }
 async function publicProfile(ctx, row, viewerId) {
   const hidden = row.isPrivate && row.id !== viewerId;
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, isPrivate: row.isPrivate, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null };
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null };
 }
 async function accountProfile(ctx, row) {
-  return { ...await publicProfile(ctx, row, row.id), profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
+  return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
 }
 async function canAccessPost(ctx, viewerId, postId) {
   const [row] = await ctx.db().select({ authorId: posts.authorId, isPrivate: profiles.isPrivate, deactivatedUntil: profiles.deactivatedUntil }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(eq(posts.id, postId)).limit(1);
@@ -344,7 +253,7 @@ async function notifyMentions(ctx, actorId, text, postId, commentId) {
   const db = ctx.db();
   const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
   for (const person of people) {
-    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id))
+    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
       continue;
     await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
   }
@@ -426,6 +335,7 @@ async function deleteAccountData(ctx, profile) {
   if (ownPosts.length)
     await db.delete(posts).where(inArray(posts.id, ownPosts));
   await db.delete(sessions).where(eq(sessions.profileId, profile.id));
+  await db.delete(pushTokens).where(eq(pushTokens.profileId, profile.id));
   await db.delete(profiles).where(eq(profiles.id, profile.id));
   const blobKeys = [profile.avatarBlobKey, ...postImages2.map((row) => row.blobKey), ...ownStories.map((row) => row.blobKey)].filter((key) => Boolean(key));
   for (const key of blobKeys) {
@@ -460,7 +370,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
 }
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer?.isFounder)
       return { enabled: false, spreadsheetUrl: null, driveFileUrl: null, lastSyncAt: null, lastError: null, pendingCount: 0, failedCount: 0 };
     const db = ctx.db();
@@ -469,7 +379,7 @@ var Actions = {
     return { enabled: Boolean(row?.sheetsEnabled && row.spreadsheetId), spreadsheetUrl: row?.spreadsheetUrl ?? null, driveFileUrl: row?.driveFileUrl ?? null, lastSyncAt: row?.lastSyncAt?.toISOString() ?? null, lastError: row?.lastError ?? null, pendingCount: pending.length, failedCount: failed.length };
   } }),
   connectGoogleSheets: defineAction({ request: object({ token: string2() }), response: googleWriteResponse, privileged: [privileged.initializeGoogleSheets], async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer?.isFounder)
       return { status: "error", message: "Only the Gola creator can connect the database.", url: null };
     const db = ctx.db();
@@ -503,7 +413,7 @@ var Actions = {
     return { status: "ok", message: "Gola Database is connected. Existing records were copied and new activity will sync automatically.", url: result.spreadsheetUrl };
   } }),
   retryGoogleSheetsSync: defineAction({ request: object({ token: string2() }), response: googleWriteResponse, privileged: [privileged.appendGoogleSheetRow], async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer?.isFounder)
       return { status: "error", message: "Only the Gola creator can retry database sync.", url: null };
     const db = ctx.db();
@@ -534,7 +444,7 @@ var Actions = {
     return { status: synced === jobs.length ? "ok" : "error", message: jobs.length === 0 ? "Everything is already synced." : `${synced} of ${jobs.length} queued updates synced.`, url: config.spreadsheetUrl };
   } }),
   saveSourceToGoogleDrive: defineAction({ request: object({ token: string2(), filename: string2().max(100), dataBase64: string2().min(1) }), response: googleWriteResponse, privileged: [privileged.uploadSourceToDrive], async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer?.isFounder)
       return { status: "error", message: "Only the Gola creator can save the source export.", url: null };
     const result = await ctx.executePrivileged(privileged.uploadSourceToDrive, { filename: args.filename, dataBase64: args.dataBase64 });
@@ -564,7 +474,7 @@ var Actions = {
       return { status: "error", message: "An account already uses that email. Log in instead.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, handle)).limit(1))[0])
       return { status: "error", message: "That username is already taken.", token: null, profile: null };
-    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", continent: "AS" }).returning();
+    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", approvalStatus: "pending", continent: "AS" }).returning();
     if (!created)
       return { status: "error", message: "The account could not be created.", token: null, profile: null };
     const token = await createSession(ctx, created.id);
@@ -579,6 +489,8 @@ var Actions = {
       return { status: "error", message: "The email or password is incorrect.", token: null, profile: null };
     if (!isActiveProfile(profile))
       return { status: "error", message: `This account is deactivated until ${profile.deactivatedUntil?.toLocaleDateString() ?? "its return date"}.`, token: null, profile: null };
+    if (profile.approvalStatus === "declined")
+      return { status: "error", message: "This account request was not approved.", token: null, profile: null };
     if (profile.deactivatedUntil)
       await ctx.db().update(profiles).set({ deactivatedUntil: null }).where(eq(profiles.id, profile.id));
     const token = await createSession(ctx, profile.id);
@@ -638,7 +550,7 @@ var Actions = {
     return { status: "ok", message: "Your account and its data were permanently deleted." };
   } }),
   updateProfile: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), displayName: string2().trim().min(2).max(40), bio: string2().trim().max(160) }), response: profileUpdateResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null, nextEditableAt: null };
     const next = viewer.profileUpdatedAt ? new Date(viewer.profileUpdatedAt.getTime() + 86400000) : null;
@@ -652,7 +564,7 @@ var Actions = {
     return { status: "ok", message: "Profile updated.", profile: await accountProfile(ctx, updated), nextEditableAt: new Date((updated.profileUpdatedAt ?? new Date).getTime() + 86400000).toISOString() };
   } }),
   setProfilePrivacy: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), isPrivate: boolean2() }), response: profileUpdateResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null, nextEditableAt: null };
     const [updated] = await ctx.db().update(profiles).set({ isPrivate: args.isPrivate }).where(eq(profiles.id, viewer.id)).returning();
@@ -663,7 +575,7 @@ var Actions = {
     return { status: "ok", message: args.isPrivate ? "Your account is now private." : "Your account is now public.", profile: await accountProfile(ctx, updated), nextEditableAt: updated.profileUpdatedAt ? new Date(updated.profileUpdatedAt.getTime() + 86400000).toISOString() : null };
   } }),
   setBadge: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), badge: _enum(["none", "community", "official"]) }), response: object({ status: _enum(["ok", "error"]), message: string2() }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer?.isFounder)
       return { status: "error", message: "Only the Gola creator can grant badges." };
     const db = ctx.db();
@@ -676,7 +588,7 @@ var Actions = {
     return { status: "ok", message: `@${target.handle} has been ${label}.` };
   } }),
   setColorTheme: defineAction({ request: object({ token: string2(), color: colorChoiceSchema }), response: colorThemeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null, nextChangeAt: null };
     if (viewer.themeColor === args.color)
@@ -692,7 +604,7 @@ var Actions = {
     return { status: "ok", message: "Your new color is now live across Gola.", profile: await accountProfile(ctx, updated), nextChangeAt: new Date(changedAt.getTime() + 30 * 86400000).toISOString() };
   } }),
   updatePreferences: defineAction({ request: object({ token: string2(), language: languageSchema, continent: continentSchema }), response: preferenceResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null };
     const [updated] = await ctx.db().update(profiles).set({ language: args.language, continent: args.continent }).where(eq(profiles.id, viewer.id)).returning();
@@ -702,7 +614,7 @@ var Actions = {
     return { status: "ok", message: "Language and continent saved.", profile: await accountProfile(ctx, updated) };
   } }),
   setAvatar: defineAction({ request: object({ token: string2(), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }) }), response: writeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
     const key = `avatars/${viewer.id}/${crypto.randomUUID()}`;
@@ -712,14 +624,14 @@ var Actions = {
     return { status: "ok", message: "Profile photo updated.", id: viewer.id };
   } }),
   listFeed: defineAction({ request: object({ token: string2(), limit: number2().int().positive().max(50).default(30) }), response: object({ posts: array(postSchema) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { posts: [] };
     const followed = await ctx.db().select({ id: follows.followingId }).from(follows).innerJoin(profiles, eq(follows.followingId, profiles.id)).where(and(eq(follows.followerId, viewer.id), eq(profiles.isPrivate, false)));
     return { posts: await loadPosts(ctx, viewer.id, [viewer.id, ...followed.map((x) => x.id)], args.limit) };
   } }),
   getProfile: defineAction({ request: object({ token: string2(), profileId: number2().int().positive() }), response: object({ profile: profileSchema.nullable(), postCount: number2(), followerCount: number2(), followingCount: number2(), viewerFollowing: boolean2(), viewerBlocked: boolean2(), blockedByTarget: boolean2(), privateView: boolean2(), posts: array(postSchema) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { profile: null, postCount: 0, followerCount: 0, followingCount: 0, viewerFollowing: false, viewerBlocked: false, blockedByTarget: false, privateView: false, posts: [] };
     const db = ctx.db();
@@ -740,7 +652,7 @@ var Actions = {
     return { profile, postCount: postRows.length, followerCount: visibleFollowers.length, followingCount: visibleFollowing.length, viewerFollowing: visibleFollowers.some((x) => x.followerId === viewer.id), viewerBlocked, blockedByTarget, privateView: false, posts: await loadPosts(ctx, viewer.id, [target.id], 50) };
   } }),
   listProfileConnections: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), kind: _enum(["followers", "following"]) }), response: object({ privateView: boolean2(), profiles: array(connectionProfileSchema) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { privateView: false, profiles: [] };
     const db = ctx.db();
@@ -759,7 +671,7 @@ var Actions = {
     return { privateView: false, profiles: await Promise.all(ordered.map(async (person) => ({ ...await publicProfile(ctx, person, viewer.id), viewerFollowing: allFollows.some((follow) => follow.followerId === viewer.id && follow.followingId === person.id), followerCount: person.isPrivate && person.id !== viewer.id ? 0 : allFollows.filter((follow) => follow.followingId === person.id && activeIds.has(follow.followerId)).length }))) };
   } }),
   createPost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), text: string2().max(12000), photos: array(object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp", "image/gif"]), filename: string2().max(200).optional() })).max(10) }), response: writeResponse, async handler(ctx, args) {
-    const author = await authenticatedProfile(ctx, args.token);
+    const author = await approvedProfile(ctx, args.token);
     if (!author)
       return { status: "error", message: "Please log in again before posting.", id: null };
     const text = args.text.trim();
@@ -793,7 +705,7 @@ var Actions = {
     return { status: "ok", message: null, id: post.id };
   } }),
   editPost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), text: string2().max(12000) }), response: writeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
     const text = args.text.trim();
@@ -812,7 +724,7 @@ var Actions = {
     return { status: "ok", message: "Post updated.", id: args.postId };
   } }),
   deletePost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive() }), response: writeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
     const [post] = await ctx.db().select().from(posts).where(eq(posts.id, args.postId)).limit(1);
@@ -824,7 +736,7 @@ var Actions = {
     return { status: "ok", message: null, id: args.postId };
   } }),
   addComment: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), parentCommentId: number2().int().positive().nullable().default(null), text: string2().trim().min(1).max(3000) }), response: writeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
       return { status: "error", message: "This post is unavailable.", id: null };
     const text = args.text.trim();
@@ -857,7 +769,7 @@ var Actions = {
     return { status: "ok", message: null, id: created.id };
   } }),
   toggleLike: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive() }), response: toggleResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
       return { active: false, count: 0 };
     const db = ctx.db();
@@ -879,7 +791,7 @@ var Actions = {
     return { active: !existing, count };
   } }),
   toggleRepost: defineAction({ request: object({ token: string2(), postId: number2().int().positive() }), response: toggleResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
       return { active: false, count: 0 };
     const db = ctx.db();
@@ -899,7 +811,7 @@ var Actions = {
     return { active: !existing, count };
   } }),
   toggleBookmark: defineAction({ request: object({ token: string2(), postId: number2().int().positive() }), response: toggleResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
       return { active: false, count: 0 };
     const db = ctx.db();
@@ -913,7 +825,7 @@ var Actions = {
     return { active: !existing, count: 0 };
   } }),
   listSaved: defineAction({ request: object({ token: string2() }), response: object({ posts: array(postSchema) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { posts: [] };
     const saved = await ctx.db().select({ id: bookmarks.postId }).from(bookmarks).where(eq(bookmarks.profileId, viewer.id)).orderBy(desc(bookmarks.createdAt));
@@ -921,7 +833,7 @@ var Actions = {
     return { posts: await loadPosts(ctx, viewer.id, [...publicIds, viewer.id], 100, saved.map((x) => x.id)) };
   } }),
   reportContent: defineAction({ request: object({ token: string2(), targetType: _enum(["post", "comment"]), targetId: number2().int().positive(), reason: string2().trim().min(3).max(300) }), response: writeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
     const db = ctx.db();
@@ -933,7 +845,7 @@ var Actions = {
     return { status: "ok", message: "Report received. Thank you for helping keep Gola kind.", id: created?.id ?? null };
   } }),
   searchProfiles: defineAction({ request: object({ token: string2(), query: string2().max(60).default("") }), response: object({ profiles: array(profileSchema.extend({ viewerFollowing: boolean2(), followerCount: number2() })) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { profiles: [] };
     const db = ctx.db();
@@ -945,7 +857,7 @@ var Actions = {
     return { profiles: await Promise.all(filtered.map(async (person) => ({ ...await publicProfile(ctx, person, viewer.id), viewerFollowing: person.isPrivate ? false : follows2.some((f) => f.followerId === viewer.id && f.followingId === person.id), followerCount: person.isPrivate ? 0 : follows2.filter((f) => f.followingId === person.id && activeIds.has(f.followerId)).length }))) };
   } }),
   toggleFollow: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), followingId: number2().int().positive() }), response: toggleResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || viewer.id === args.followingId)
       return { active: false, count: 0 };
     const db = ctx.db();
@@ -968,7 +880,7 @@ var Actions = {
     return { active: !existing, count };
   } }),
   listNotifications: defineAction({ request: object({ token: string2(), limit: number2().int().positive().max(50).default(30) }), response: object({ unreadCount: number2(), notifications: array(object({ id: number2(), type: visibleNotificationTypeSchema, postId: number2().nullable(), commentId: number2().nullable(), storyId: number2().nullable(), createdAt: string2(), read: boolean2(), actor: profileSchema })) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { unreadCount: 0, notifications: [] };
     const hiddenIds = await blockedIdsFor(ctx, viewer.id);
@@ -976,14 +888,14 @@ var Actions = {
     return { unreadCount: rows.filter((x) => x.notification.readAt === null).length, notifications: await Promise.all(rows.map(async ({ notification, actor }) => ({ id: notification.id, type: visibleNotificationTypeSchema.parse(notification.type), postId: notification.postId, commentId: notification.commentId, storyId: notification.storyId, createdAt: notification.createdAt.toISOString(), read: notification.readAt !== null, actor: await publicProfile(ctx, actor, viewer.id) }))) };
   } }),
   markNotificationsRead: defineAction({ request: object({ token: string2() }), response: object({ ok: literal(true) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (viewer)
       await ctx.db().update(notifications).set({ readAt: new Date }).where(and(eq(notifications.recipientId, viewer.id), isNull(notifications.readAt)));
     ctx.invalidateQueries();
     return { ok: true };
   } }),
   toggleBlock: defineAction({ request: object({ token: string2(), profileId: number2().int().positive() }), response: toggleResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || viewer.id === args.profileId)
       return { active: false, count: 0 };
     const db = ctx.db();
@@ -1000,7 +912,7 @@ var Actions = {
     return { active: !existing, count: 0 };
   } }),
   createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable() }), response: writeResponse, async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
     if (!args.text && !args.photo)
@@ -1020,7 +932,7 @@ var Actions = {
     return { status: "ok", message: "Story shared for 24 hours.", id: story?.id ?? null };
   } }),
   recordStoryView: defineAction({ request: object({ token: string2(), storyId: number2().int().positive() }), response: object({ ok: literal(true) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { ok: true };
     const db = ctx.db();
@@ -1036,7 +948,7 @@ var Actions = {
     return { ok: true };
   } }),
   reactToStory: defineAction({ request: object({ token: string2(), storyId: number2().int().positive(), emoji: storyReactionSchema }), response: object({ status: _enum(["ok", "error"]), message: string2(), emoji: storyReactionSchema.nullable() }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", emoji: null };
     const db = ctx.db();
@@ -1064,7 +976,7 @@ var Actions = {
     return { status: "ok", message: `Reacted ${args.emoji}`, emoji: args.emoji };
   } }),
   getStoryActivity: defineAction({ request: object({ token: string2(), storyId: number2().int().positive() }), response: object({ ownerOnly: boolean2(), views: array(object({ viewer: profileSchema, viewedAt: string2(), reaction: storyReactionSchema.nullable() })) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { ownerOnly: false, views: [] };
     const db = ctx.db();
@@ -1075,7 +987,7 @@ var Actions = {
     return { ownerOnly: true, views: await Promise.all(viewRows.filter(({ profile }) => isActiveProfile(profile)).map(async ({ view, profile }) => ({ viewer: await publicProfile(ctx, profile, viewer.id), viewedAt: view.viewedAt.toISOString(), reaction: reactions.find((item) => item.reactorId === profile.id)?.emoji ?? null }))) };
   } }),
   listStories: defineAction({ request: object({ token: string2() }), response: object({ stories: array(storySchema) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { stories: [] };
     const db = ctx.db();
@@ -1088,7 +1000,7 @@ var Actions = {
     return { stories: await Promise.all(rows.map(async ({ story, author }) => ({ id: story.id, text: story.text, imageUrl: story.blobKey ? await ctx.blobs.getUrl(story.blobKey) : null, createdAt: story.createdAt.toISOString(), expiresAt: story.expiresAt.toISOString(), author: await publicProfile(ctx, author, viewer.id), viewerReaction: reactions.find((item) => item.storyId === story.id)?.emoji ?? null }))) };
   } }),
   explore: defineAction({ request: object({ token: string2(), hashtag: string2().max(60).default("") }), response: object({ hashtags: array(object({ tag: string2(), count: number2() })), posts: array(postSchema) }), async handler(ctx, args) {
-    const viewer = await authenticatedProfile(ctx, args.token);
+    const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { hashtags: [], posts: [] };
     const publicAuthors = (await ctx.db().select().from(profiles).where(eq(profiles.isPrivate, false))).filter(isActiveProfile).map((x) => x.id);
@@ -1103,6 +1015,171 @@ var Actions = {
     const needle = args.hashtag.trim().toLowerCase().replace(/^#/u, "");
     const filtered = needle ? posts2.filter((post) => Array.from(post.text.matchAll(/#([\p{L}\p{N}_]{2,40})/gu)).some((match) => (match[1] ?? "").toLowerCase().includes(needle))) : [...posts2].sort((a, b) => b.likeCount + b.commentCount + b.repostCount - (a.likeCount + a.commentCount + a.repostCount)).slice(0, 30);
     return { hashtags: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count]) => ({ tag, count })), posts: filtered };
+  } }),
+  listPendingApprovals: defineAction({ request: object({ token: string2() }), response: object({ profiles: array(accountProfileSchema) }), async handler(ctx, args) {
+    const viewer = await authenticatedProfile(ctx, args.token);
+    if (!viewer?.isFounder)
+      return { profiles: [] };
+    const rows = await ctx.db().select().from(profiles).where(eq(profiles.approvalStatus, "pending")).orderBy(asc(profiles.createdAt));
+    return { profiles: await Promise.all(rows.map((row) => accountProfile(ctx, row))) };
+  } }),
+  reviewApproval: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), decision: _enum(["approved", "declined"]) }), response: object({ status: _enum(["ok", "error"]), message: string2() }), async handler(ctx, args) {
+    const viewer = await authenticatedProfile(ctx, args.token);
+    if (!viewer?.isFounder)
+      return { status: "error", message: "Only the Gola creator can review signups." };
+    const db = ctx.db();
+    const [target] = await db.select().from(profiles).where(eq(profiles.id, args.profileId)).limit(1);
+    if (!target)
+      return { status: "error", message: "That account could not be found." };
+    if (target.approvalStatus === args.decision)
+      return { status: "ok", message: "That decision was already recorded." };
+    await db.update(profiles).set({ approvalStatus: args.decision }).where(eq(profiles.id, target.id));
+    if (args.decision === "approved") {
+      await db.insert(notifications).values({ recipientId: target.id, actorId: viewer.id, type: "approval", postId: null });
+    } else {
+      await db.delete(sessions).where(eq(sessions.profileId, target.id));
+    }
+    ctx.invalidateQueries();
+    return { status: "ok", message: args.decision === "approved" ? `@${target.handle} was approved. Welcome to Gola!` : `@${target.handle} was declined.` };
+  } }),
+  setMentionPrivacy: defineAction({ request: object({ token: string2(), privacy: _enum(["everyone", "peopleIFollow", "off"]) }), response: preferenceResponse, async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { status: "error", message: "Please log in again.", profile: null };
+    const [updated] = await ctx.db().update(profiles).set({ mentionPrivacy: args.privacy }).where(eq(profiles.id, viewer.id)).returning();
+    if (!updated)
+      return { status: "error", message: "Your mention setting could not be saved.", profile: await accountProfile(ctx, viewer) };
+    ctx.invalidateQueries();
+    return { status: "ok", message: "Mention privacy updated.", profile: await accountProfile(ctx, updated) };
+  } }),
+  checkMentions: defineAction({ request: object({ token: string2(), handles: array(string2().trim().max(30)).max(20) }), response: object({ results: array(object({ handle: string2(), linkable: boolean2(), notify: boolean2() })) }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { results: [] };
+    const db = ctx.db();
+    const clean = [...new Set(args.handles.map((h) => h.toLowerCase().replace(/^@/u, "")).filter((h) => /^[a-z0-9_]{3,24}$/u.test(h)))];
+    if (!clean.length)
+      return { results: [] };
+    const people = await db.select().from(profiles).where(inArray(profiles.handle, clean));
+    return { results: await Promise.all(clean.map(async (handle) => {
+      const person = people.find((row) => row.handle === handle);
+      if (!person || person.id === viewer.id || !isActiveProfile(person))
+        return { handle, linkable: false, notify: false };
+      const allowed = await mentionAllowed(ctx, viewer.id, person) && !await blockedPair(ctx, viewer.id, person.id);
+      return { handle, linkable: allowed, notify: allowed };
+    })) };
+  } }),
+  listGlobalFeed: defineAction({ request: object({ token: string2(), limit: number2().int().positive().max(50).default(30), cursor: number2().int().positive().nullable().default(null) }), response: object({ posts: array(postSchema), nextCursor: number2().nullable() }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { posts: [], nextCursor: null };
+    const db = ctx.db();
+    const publicIds = (await db.select().from(profiles).where(eq(profiles.isPrivate, false))).filter(isActiveProfile).map((x) => x.id);
+    const authorIds = [...new Set([...publicIds, viewer.id])];
+    let cursorFilter;
+    if (args.cursor) {
+      const [c] = await db.select({ createdAt: posts.createdAt }).from(posts).where(eq(posts.id, args.cursor)).limit(1);
+      if (c?.createdAt)
+        cursorFilter = or(lt(posts.createdAt, c.createdAt), and(eq(posts.createdAt, c.createdAt), lt(posts.id, args.cursor)));
+    }
+    const page = await db.select({ id: posts.id }).from(posts).where(cursorFilter ? and(inArray(posts.authorId, authorIds), cursorFilter) : inArray(posts.authorId, authorIds)).orderBy(desc(posts.createdAt), desc(posts.id)).limit(args.limit + 1);
+    const ids = page.slice(0, args.limit).map((row) => row.id);
+    return { posts: await loadPosts(ctx, viewer.id, authorIds, args.limit, ids), nextCursor: page.length > args.limit ? ids[ids.length - 1] ?? null : null };
+  } }),
+  startDiscordOAuth: defineAction({ request: object({ redirectUri: string2().url().max(500) }), response: object({ status: _enum(["ok", "error"]), message: string2().nullable(), url: string2().nullable() }), async handler(ctx, args) {
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    if (!clientId)
+      return { status: "error", message: "Discord sign-in is not configured yet.", url: null };
+    const url = `https://discord.com/oauth2/authorize?${new URLSearchParams({ client_id: clientId, redirect_uri: args.redirectUri, response_type: "code", scope: "identify email" }).toString()}`;
+    return { status: "ok", message: null, url };
+  } }),
+  completeDiscordOAuth: defineAction({ request: object({ code: string2().min(1).max(500), redirectUri: string2().url().max(500) }), response: authResponse, async handler(ctx, args) {
+    const fail = (message) => ({ status: "error", message, token: null, profile: null });
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+    if (!clientId || !clientSecret)
+      return fail("Discord sign-in is not configured yet.");
+    let accessToken = null;
+    try {
+      const res = await fetch("https://discord.com/api/oauth2/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: "authorization_code", code: args.code, redirect_uri: args.redirectUri }).toString() });
+      if (!res.ok)
+        return fail("Discord sign-in failed. Please try again.");
+      const data = await res.json();
+      accessToken = typeof data.access_token === "string" ? data.access_token : null;
+    } catch {
+      return fail("Discord could not be reached. Please try again.");
+    }
+    if (!accessToken)
+      return fail("Discord sign-in failed. Please try again.");
+    let discordId = "";
+    let discordName = "discord_user";
+    let discordEmail = null;
+    try {
+      const res = await fetch("https://discord.com/api/users/@me", { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (!res.ok)
+        return fail("Discord sign-in failed. Please try again.");
+      const data = await res.json();
+      if (typeof data.id !== "string" || !data.id)
+        return fail("Discord sign-in failed. Please try again.");
+      discordId = data.id;
+      if (typeof data.username === "string" && data.username)
+        discordName = data.username;
+      if (typeof data.email === "string")
+        discordEmail = data.email;
+    } catch {
+      return fail("Discord could not be reached. Please try again.");
+    }
+    const db = ctx.db();
+    let [profile] = await db.select().from(profiles).where(eq(profiles.discordUserId, discordId)).limit(1);
+    if (!profile && discordEmail) {
+      const [byEmail] = await db.select().from(profiles).where(eq(profiles.email, discordEmail.toLowerCase())).limit(1);
+      if (byEmail) {
+        const [linked] = await db.update(profiles).set({ discordUserId: discordId }).where(eq(profiles.id, byEmail.id)).returning();
+        if (linked)
+          profile = linked;
+      }
+    }
+    if (!profile) {
+      const base = discordName.toLowerCase().replace(/[^a-z0-9_]/gu, "").slice(0, 20) || "discord_user";
+      let handle = base;
+      for (let attempt = 0;attempt < 10; attempt += 1) {
+        const candidate = attempt === 0 ? base : `${base}${Math.floor(100 + Math.random() * 900)}`.slice(0, 24);
+        const [taken] = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, candidate)).limit(1);
+        if (!taken) {
+          handle = candidate;
+          break;
+        }
+      }
+      const [created] = await db.insert(profiles).values({ email: discordEmail?.toLowerCase() ?? null, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "pending", continent: "AS" }).returning();
+      if (!created)
+        return fail("The account could not be created.");
+      profile = created;
+    }
+    if (profile.approvalStatus === "declined")
+      return fail("This account request was not approved.");
+    const token = await createSession(ctx, profile.id);
+    ctx.invalidateQueries();
+    return { status: "ok", message: null, token, profile: await accountProfile(ctx, profile) };
+  } }),
+  registerPushToken: defineAction({ request: object({ token: string2(), pushToken: string2().min(1).max(500), platform: _enum(["android", "ios", "web"]).default("android") }), response: object({ ok: literal(true) }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (viewer) {
+      const db = ctx.db();
+      const [existing] = await db.select({ id: pushTokens.id }).from(pushTokens).where(eq(pushTokens.pushToken, args.pushToken)).limit(1);
+      if (existing)
+        await db.update(pushTokens).set({ profileId: viewer.id, platform: args.platform, createdAt: new Date }).where(eq(pushTokens.id, existing.id));
+      else
+        await db.insert(pushTokens).values({ profileId: viewer.id, pushToken: args.pushToken, platform: args.platform });
+    }
+    ctx.invalidateQueries();
+    return { ok: true };
+  } }),
+  unregisterPushToken: defineAction({ request: object({ token: string2(), pushToken: string2().min(1).max(500) }), response: object({ ok: literal(true) }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (viewer)
+      await ctx.db().delete(pushTokens).where(and(eq(pushTokens.profileId, viewer.id), eq(pushTokens.pushToken, args.pushToken)));
+    ctx.invalidateQueries();
+    return { ok: true };
   } })
 };
 export {
