@@ -86,11 +86,30 @@ Bun.serve({
       });
     }
 
+    // Discord OAuth relay: Discord redirects here (HTTPS) after the user
+    // authorizes; this page immediately bounces the one-time code back into
+    // the Gola app via its deep link. Custom schemes don't survive the
+    // in-app browser reliably, but an HTTPS landing page can trigger them.
+    if (req.method === "GET" && url.pathname === "/oauth/discord") {
+      const code = url.searchParams.get("code") ?? "";
+      const err = url.searchParams.get("error") ?? "";
+      const deepLink = err
+        ? `gola://oauth/discord?error=${encodeURIComponent(err)}`
+        : `gola://oauth/discord?code=${encodeURIComponent(code)}`;
+      const safeLink = deepLink.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Returning to Gola…</title>
+<style>body{font-family:system-ui,sans-serif;background:#f6f1e7;color:#2b2620;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}.card{background:#fffdf8;border:3px solid #2b2620;border-radius:20px;box-shadow:6px 6px 0 #2b2620;padding:32px;max-width:340px;text-align:center}h1{font-size:20px;margin:0 0 8px}p{font-size:14px;opacity:.75}a{display:inline-block;margin-top:16px;background:#009788;color:#fff;font-weight:700;padding:12px 28px;border-radius:999px;text-decoration:none;border:3px solid #2b2620}</style>
+<script>window.location.replace(${JSON.stringify(deepLink)});</script></head>
+<body><div class="card"><h1>Returning to Gola…</h1><p>Taking you back to the app.</p><a href="${safeLink}">Open Gola</a></div></body></html>`;
+      return new Response(html, {
+        headers: { ...CORS, "content-type": "text/html; charset=utf-8" },
+      });
+    }
+
     if (
       req.method === "POST" &&
       (url.pathname === "/actions" || url.pathname === "/actions/")
-    ) {
-      let body: { action?: unknown; args?: unknown };
+    ) {      let body: { action?: unknown; args?: unknown };
       try {
         body = await req.json();
       } catch {
