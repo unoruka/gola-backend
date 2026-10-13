@@ -1,4 +1,11 @@
-ent: continentSchema, lastDeactivatedAt: string2().nullable() });
+, "off"]),
+  createdAt: string2(),
+  avatarUrl: string2().nullable(),
+  themeColor: colorChoiceSchema
+});
+var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
+var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
+var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
 var commentSchema = object({ id: number2(), parentCommentId: number2().nullable(), text: string2(), createdAt: string2(), author: profileSchema });
 var postSchema = object({
   id: number2(),
@@ -146,6 +153,8 @@ async function notifyMentions(ctx, actorId, text, postId, commentId) {
     if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
       continue;
     await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
+    const n = await pushName(ctx, actorId);
+    sendPushNotification(ctx, person.id, `${n} mentioned you`, text.slice(0, 100), { type: "mention", postId: String(postId) });
   }
 }
 var sheetValuesSchema = array(union([string2(), number2(), boolean2(), _null3()]));
@@ -649,10 +658,15 @@ var Actions = {
     if (!created)
       return { status: "error", message: "Your comment could not be saved.", id: null };
     const [post] = await db.select({ authorId: posts.authorId }).from(posts).where(eq(posts.id, args.postId)).limit(1);
-    if (parent && parent.authorId !== viewer.id && !await blockedPair(ctx, viewer.id, parent.authorId))
+    if (parent && parent.authorId !== viewer.id && !await blockedPair(ctx, viewer.id, parent.authorId)) {
       await db.insert(notifications).values({ recipientId: parent.authorId, actorId: viewer.id, type: "reply", postId: args.postId, commentId: created.id });
-    else if (post && post.authorId !== viewer.id && !await blockedPair(ctx, viewer.id, post.authorId))
+      const n = await pushName(ctx, viewer.id);
+      sendPushNotification(ctx, parent.authorId, `${n} replied to your comment`, text.slice(0, 100), { type: "reply", postId: String(args.postId) });
+    } else if (post && post.authorId !== viewer.id && !await blockedPair(ctx, viewer.id, post.authorId)) {
       await db.insert(notifications).values({ recipientId: post.authorId, actorId: viewer.id, type: "comment", postId: args.postId, commentId: created.id });
+      const n = await pushName(ctx, viewer.id);
+      sendPushNotification(ctx, post.authorId, `${n} commented on your post`, text.slice(0, 100), { type: "comment", postId: String(args.postId) });
+    }
     await notifyMentions(ctx, viewer.id, text, args.postId, created.id);
     const [savedComment] = await db.select().from(comments).where(eq(comments.id, created.id)).limit(1);
     if (savedComment)
@@ -673,8 +687,11 @@ var Actions = {
     } else {
       await db.insert(likes).values({ profileId: viewer.id, postId: args.postId });
       const [post] = await db.select({ authorId: posts.authorId }).from(posts).where(eq(posts.id, args.postId)).limit(1);
-      if (post && post.authorId !== viewer.id)
+      if (post && post.authorId !== viewer.id) {
         await db.insert(notifications).values({ recipientId: post.authorId, actorId: viewer.id, type: "like", postId: args.postId });
+        const n = await pushName(ctx, viewer.id);
+        sendPushNotification(ctx, post.authorId, `${n} liked your post`, "Tap to see it.", { type: "like", postId: String(args.postId) });
+      }
     }
     const count = (await db.select().from(likes).where(eq(likes.postId, args.postId))).length;
     const eventAt = new Date().toISOString();
@@ -850,6 +867,8 @@ var Actions = {
     } else {
       await db.insert(follows).values({ followerId: viewer.id, followingId: args.followingId });
       await db.insert(notifications).values({ recipientId: args.followingId, actorId: viewer.id, type: "follow", postId: null });
+      const n = await pushName(ctx, viewer.id);
+      sendPushNotification(ctx, args.followingId, `${n} started following you`, "Say hello!", { type: "follow", profileId: String(viewer.id) });
     }
     const count = (await db.select().from(follows).where(eq(follows.followingId, args.followingId))).length;
     const eventAt = new Date().toISOString();
@@ -970,6 +989,8 @@ var Actions = {
       await db.insert(storyReactions).values({ storyId: args.storyId, reactorId: viewer.id, emoji: args.emoji });
     await db.delete(notifications).where(and(eq(notifications.actorId, viewer.id), eq(notifications.storyId, args.storyId), eq(notifications.type, "story_reaction")));
     await db.insert(notifications).values({ recipientId: story.authorId, actorId: viewer.id, type: "story_reaction", postId: null, storyId: args.storyId });
+    const n = await pushName(ctx, viewer.id);
+    sendPushNotification(ctx, story.authorId, `${n} reacted to your story`, args.emoji, { type: "story_reaction", profileId: String(viewer.id) });
     ctx.invalidateQueries();
     return { status: "ok", message: `Reacted ${args.emoji}`, emoji: args.emoji };
   } }),
