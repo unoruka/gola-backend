@@ -1,5 +1,4 @@
-      if (key === "$ref" || key === "allOf")
-              continue;
+
             if (key in parentSeen.def && JSON.stringify(schema[key]) === JSON.stringify(parentSeen.def[key])) {
               delete schema[key];
             }
@@ -2856,4 +2855,6 @@ function readString(value) {
 }
 var privilegedHandlers = definePrivilegedHandlers(privileged, {
   async googleConnectionStatus({ service }) {
-    cons
+    const result = await runCli([service, "status"]);
+    const connected = result.ok && result.data?.status === "connected";
+    return { conne
