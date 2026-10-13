@@ -6652,8 +6652,9 @@ var Actions = {
       return { status: "error", message: "Please log in again.", profile: null, nextChangeAt: null };
     if (viewer.themeColor === args.color)
       return { status: "ok", message: "That color is already active.", profile: await accountProfile(ctx, viewer), nextChangeAt: viewer.themeChangedAt ? new Date(viewer.themeChangedAt.getTime() + 30 * 86400000).toISOString() : null };
+    const hasGoldenBadge = viewer.badge === "official";
     const next = viewer.themeChangedAt ? new Date(viewer.themeChangedAt.getTime() + 30 * 86400000) : null;
-    if (next && next.getTime() > Date.now())
+    if (!hasGoldenBadge && next && next.getTime() > Date.now())
       return { status: "error", message: "You can choose a new app color once every 30 days.", profile: await accountProfile(ctx, viewer), nextChangeAt: next.toISOString() };
     const changedAt = new Date;
     const [updated] = await ctx.db().update(profiles).set({ themeColor: args.color, themeChangedAt: changedAt }).where(eq(profiles.id, viewer.id)).returning();
