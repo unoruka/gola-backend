@@ -1,7 +1,4 @@
-n { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: "Connect Google Sheets to Muse, then try again." };
-    const createBody = { properties: { title }, sheets: tabs.map(({ tab }) => ({ properties: { title: tab } })) };
-    const created = await runCli(["sheets", "spreadsheets", "create", "--json", JSON.stringify(createBody)]);
-    const spreadsheetId = readString(created.data?.spreadsheetId);
+eadString(created.data?.spreadsheetId);
     const spreadsheetUrl = readString(created.data?.spreadsheetUrl);
     if (!created.ok || !spreadsheetId)
       return { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: created.error ?? "The Gola Database spreadsheet could not be created." };
@@ -43,7 +40,8 @@ n { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: "Connect Google
     }
   }
 });
-// ../gola-apk/gola-source/server/src/actions.ts
+// src/actions.ts
+var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
 var profileSchema = object({
   id: number2(),
   displayName: string2(),
@@ -54,9 +52,9 @@ var profileSchema = object({
   isPrivate: boolean2(),
   mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
   createdAt: string2(),
-  avatarUrl: string2().nullable()
+  avatarUrl: string2().nullable(),
+  themeColor: colorChoiceSchema
 });
-var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
 var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
 var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
 var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
@@ -174,7 +172,7 @@ async function authenticatedProfile(ctx, token) {
 }
 async function publicProfile(ctx, row, viewerId) {
   const hidden = row.isPrivate && row.id !== viewerId;
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null };
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
 }
 async function accountProfile(ctx, row) {
   return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
