@@ -1,325 +1,4 @@
-in shape) {
-    json.properties[key] = process2(shape[key], ctx, {
-      ...params,
-      path: [...params.path, "properties", key]
-    });
-  }
-  const allKeys = new Set(Object.keys(shape));
-  const requiredKeys = new Set([...allKeys].filter((key) => {
-    const v = def.shape[key]._zod;
-    if (ctx.io === "input") {
-      return v.optin === undefined;
-    } else {
-      return v.optout === undefined;
-    }
-  }));
-  if (requiredKeys.size > 0) {
-    json.required = Array.from(requiredKeys);
-  }
-  if (def.catchall?._zod.def.type === "never") {
-    json.additionalProperties = false;
-  } else if (!def.catchall) {
-    if (ctx.io === "output")
-      json.additionalProperties = false;
-  } else if (def.catchall) {
-    json.additionalProperties = process2(def.catchall, ctx, {
-      ...params,
-      path: [...params.path, "additionalProperties"]
-    });
-  }
-};
-var unionProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  const isExclusive = def.inclusive === false;
-  const options = def.options.map((x, i) => process2(x, ctx, {
-    ...params,
-    path: [...params.path, isExclusive ? "oneOf" : "anyOf", i]
-  }));
-  if (isExclusive) {
-    json.oneOf = options;
-  } else {
-    json.anyOf = options;
-  }
-};
-var intersectionProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  const a = process2(def.left, ctx, {
-    ...params,
-    path: [...params.path, "allOf", 0]
-  });
-  const b = process2(def.right, ctx, {
-    ...params,
-    path: [...params.path, "allOf", 1]
-  });
-  const isSimpleIntersection = (val) => ("allOf" in val) && Object.keys(val).length === 1;
-  const allOf = [
-    ...isSimpleIntersection(a) ? a.allOf : [a],
-    ...isSimpleIntersection(b) ? b.allOf : [b]
-  ];
-  json.allOf = allOf;
-};
-var nullableProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  const inner = process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  if (ctx.target === "openapi-3.0") {
-    seen.ref = def.innerType;
-    json.nullable = true;
-  } else {
-    json.anyOf = [inner, { type: "null" }];
-  }
-};
-var nonoptionalProcessor = (schema, ctx, _json, params) => {
-  const def = schema._zod.def;
-  process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = def.innerType;
-};
-var defaultProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = def.innerType;
-  json.default = JSON.parse(JSON.stringify(def.defaultValue));
-};
-var prefaultProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = def.innerType;
-  if (ctx.io === "input")
-    json._prefault = JSON.parse(JSON.stringify(def.defaultValue));
-};
-var catchProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = def.innerType;
-  let catchValue;
-  try {
-    catchValue = def.catchValue(undefined);
-  } catch {
-    throw new Error("Dynamic catch values are not supported in JSON Schema");
-  }
-  json.default = catchValue;
-};
-var pipeProcessor = (schema, ctx, _json, params) => {
-  const def = schema._zod.def;
-  const inIsTransform = def.in._zod.traits.has("$ZodTransform");
-  const innerType = ctx.io === "input" ? inIsTransform ? def.out : def.in : def.out;
-  process2(innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = innerType;
-};
-var readonlyProcessor = (schema, ctx, json, params) => {
-  const def = schema._zod.def;
-  process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = def.innerType;
-  json.readOnly = true;
-};
-var optionalProcessor = (schema, ctx, _json, params) => {
-  const def = schema._zod.def;
-  process2(def.innerType, ctx, params);
-  const seen = ctx.seen.get(schema);
-  seen.ref = def.innerType;
-};
-// ../node_modules/zod/v4/classic/iso.js
-var ZodISODateTime = /* @__PURE__ */ $constructor("ZodISODateTime", (inst, def) => {
-  $ZodISODateTime.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
-function datetime2(params) {
-  return _isoDateTime(ZodISODateTime, params);
-}
-var ZodISODate = /* @__PURE__ */ $constructor("ZodISODate", (inst, def) => {
-  $ZodISODate.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
-function date2(params) {
-  return _isoDate(ZodISODate, params);
-}
-var ZodISOTime = /* @__PURE__ */ $constructor("ZodISOTime", (inst, def) => {
-  $ZodISOTime.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
-function time2(params) {
-  return _isoTime(ZodISOTime, params);
-}
-var ZodISODuration = /* @__PURE__ */ $constructor("ZodISODuration", (inst, def) => {
-  $ZodISODuration.init(inst, def);
-  ZodStringFormat.init(inst, def);
-});
-function duration2(params) {
-  return _isoDuration(ZodISODuration, params);
-}
-
-// ../node_modules/zod/v4/classic/errors.js
-var initializer2 = (inst, issues) => {
-  $ZodError.init(inst, issues);
-  inst.name = "ZodError";
-  Object.defineProperties(inst, {
-    format: {
-      value: (mapper) => formatError(inst, mapper)
-    },
-    flatten: {
-      value: (mapper) => flattenError(inst, mapper)
-    },
-    addIssue: {
-      value: (issue) => {
-        inst.issues.push(issue);
-        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
-      }
-    },
-    addIssues: {
-      value: (issues) => {
-        inst.issues.push(...issues);
-        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
-      }
-    },
-    isEmpty: {
-      get() {
-        return inst.issues.length === 0;
-      }
-    }
-  });
-};
-var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
-  Parent: Error
-});
-
-// ../node_modules/zod/v4/classic/parse.js
-var parse3 = /* @__PURE__ */ _parse(ZodRealError);
-var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
-var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
-var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
-var encode = /* @__PURE__ */ _encode(ZodRealError);
-var decode = /* @__PURE__ */ _decode(ZodRealError);
-var encodeAsync = /* @__PURE__ */ _encodeAsync(ZodRealError);
-var decodeAsync = /* @__PURE__ */ _decodeAsync(ZodRealError);
-var safeEncode = /* @__PURE__ */ _safeEncode(ZodRealError);
-var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
-var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
-var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
-
-// ../node_modules/zod/v4/classic/schemas.js
-var _installedGroups = /* @__PURE__ */ new WeakMap;
-function _installLazyMethods(inst, group, methods) {
-  const proto = Object.getPrototypeOf(inst);
-  let installed = _installedGroups.get(proto);
-  if (!installed) {
-    installed = new Set;
-    _installedGroups.set(proto, installed);
-  }
-  if (installed.has(group))
-    return;
-  installed.add(group);
-  for (const key in methods) {
-    const fn = methods[key];
-    Object.defineProperty(proto, key, {
-      configurable: true,
-      enumerable: false,
-      get() {
-        const bound = fn.bind(this);
-        Object.defineProperty(this, key, {
-          configurable: true,
-          writable: true,
-          enumerable: true,
-          value: bound
-        });
-        return bound;
-      },
-      set(v) {
-        Object.defineProperty(this, key, {
-          configurable: true,
-          writable: true,
-          enumerable: true,
-          value: v
-        });
-      }
-    });
-  }
-}
-var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
-  $ZodType.init(inst, def);
-  Object.assign(inst["~standard"], {
-    jsonSchema: {
-      input: createStandardJSONSchemaMethod(inst, "input"),
-      output: createStandardJSONSchemaMethod(inst, "output")
-    }
-  });
-  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
-  inst.def = def;
-  inst.type = def.type;
-  Object.defineProperty(inst, "_def", { value: def });
-  inst.parse = (data, params) => parse3(inst, data, params, { callee: inst.parse });
-  inst.safeParse = (data, params) => safeParse2(inst, data, params);
-  inst.parseAsync = async (data, params) => parseAsync2(inst, data, params, { callee: inst.parseAsync });
-  inst.safeParseAsync = async (data, params) => safeParseAsync2(inst, data, params);
-  inst.spa = inst.safeParseAsync;
-  inst.encode = (data, params) => encode(inst, data, params);
-  inst.decode = (data, params) => decode(inst, data, params);
-  inst.encodeAsync = async (data, params) => encodeAsync(inst, data, params);
-  inst.decodeAsync = async (data, params) => decodeAsync(inst, data, params);
-  inst.safeEncode = (data, params) => safeEncode(inst, data, params);
-  inst.safeDecode = (data, params) => safeDecode(inst, data, params);
-  inst.safeEncodeAsync = async (data, params) => safeEncodeAsync(inst, data, params);
-  inst.safeDecodeAsync = async (data, params) => safeDecodeAsync(inst, data, params);
-  _installLazyMethods(inst, "ZodType", {
-    check(...chks) {
-      const def = this.def;
-      return this.clone(mergeDefs(def, {
-        checks: [
-          ...def.checks ?? [],
-          ...chks.map((ch) => typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch)
-        ]
-      }), { parent: true });
-    },
-    with(...chks) {
-      return this.check(...chks);
-    },
-    clone(def, params) {
-      return clone(this, def, params);
-    },
-    brand() {
-      return this;
-    },
-    register(reg, meta) {
-      reg.add(this, meta);
-      return this;
-    },
-    refine(check, params) {
-      return this.check(refine(check, params));
-    },
-    superRefine(refinement, params) {
-      return this.check(superRefine(refinement, params));
-    },
-    overwrite(fn) {
-      return this.check(_overwrite(fn));
-    },
-    optional() {
-      return optional(this);
-    },
-    exactOptional() {
-      return exactOptional(this);
-    },
-    nullable() {
-      return nullable(this);
-    },
-    nullish() {
-      return optional(nullable(this));
-    },
-    nonoptional(params) {
-      return nonoptional(this, params);
-    },
-    array() {
-      return array(this);
-    },
-    or(arg) {
-      return union([this, arg]);
-    },
-    and(arg) {
-      return intersection(this, arg);
+rsection(this, arg);
     },
     transform(tx) {
       return pipe(this, transform(tx));
@@ -1040,6 +719,63 @@ function createDefineAction() {
 }
 // ../node_modules/@hatch/space-sdk/dist/index.js
 var defineAction = createDefineAction();
+
+// src/moderation/wordlists.ts
+var WORD_LISTS = {
+  en: ["2g1c", "2 girls 1 cup", "acrotomophilia", "alabama hot pocket", "alaskan pipeline", "anal", "anilingus", "anus", "apeshit", "arsehole", "ass", "asshole", "assmunch", "auto erotic", "autoerotic", "babeland", "baby batter", "baby juice", "ball gag", "ball gravy", "ball kicking", "ball licking", "ball sack", "ball sucking", "bangbros", "bangbus", "bareback", "barely legal", "barenaked", "bastard", "bastardo", "bastinado", "bbw", "bdsm", "beaner", "beaners", "beaver cleaver", "beaver lips", "beastiality", "bestiality", "big black", "big breasts", "big knockers", "big tits", "bimbos", "birdlock", "bitch", "bitches", "black cock", "blonde action", "blonde on blonde action", "blowjob", "blow job", "blow your load", "blue waffle", "blumpkin", "bollocks", "bondage", "boner", "boob", "boobs", "booty call", "brown showers", "brunette action", "bukkake", "bulldyke", "bullet vibe", "bullshit", "bung hole", "bunghole", "busty", "butt", "buttcheeks", "butthole", "camel toe", "camgirl", "camslut", "camwhore", "carpet muncher", "carpetmuncher", "chocolate rosebuds", "cialis", "circlejerk", "cleveland steamer", "clit", "clitoris", "clover clamps", "clusterfuck", "cock", "cocks", "coprolagnia", "coprophilia", "cornhole", "coon", "coons", "creampie", "cum", "cumming", "cumshot", "cumshots", "cunnilingus", "cunt", "darkie", "date rape", "daterape", "deep throat", "deepthroat", "dendrophilia", "dick", "dildo", "dingleberry", "dingleberries", "dirty pillows", "dirty sanchez", "doggie style", "doggiestyle", "doggy style", "doggystyle", "dog style", "dolcett", "domination", "dominatrix", "dommes", "donkey punch", "double dong", "double penetration", "dp action", "dry hump", "dvda", "eat my ass", "ecchi", "ejaculation", "erotic", "erotism", "escort", "eunuch", "fag", "faggot", "fecal", "felch", "fellatio", "feltch", "female squirting", "femdom", "figging", "fingerbang", "fingering", "fisting", "foot fetish", "footjob", "frotting", "fuck", "fuck buttons", "fuckin", "fucking", "fucktards", "fudge packer", "fudgepacker", "futanari", "gangbang", "gang bang", "gay sex", "genitals", "giant cock", "girl on", "girl on top", "girls gone wild", "goatcx", "goatse", "god damn", "gokkun", "golden shower", "goodpoop", "goo girl", "goregasm", "grope", "group sex", "g-spot", "guro", "hand job", "handjob", "hard core", "hardcore", "hentai", "homoerotic", "honkey", "hooker", "horny", "hot carl", "hot chick", "how to kill", "how to murder", "huge fat", "humping", "incest", "intercourse", "jack off", "jail bait", "jailbait", "jelly donut", "jerk off", "jigaboo", "jiggaboo", "jiggerboo", "jizz", "juggs", "kike", "kinbaku", "kinkster", "kinky", "knobbing", "leather restraint", "leather straight jacket", "lemon party", "livesex", "lolita", "lovemaking", "make me come", "male squirting", "masturbate", "masturbating", "masturbation", "menage a trois", "milf", "missionary position", "mong", "motherfucker", "mound of venus", "mr hands", "muff diver", "muffdiving", "nambla", "nawashi", "negro", "neonazi", "nigga", "nigger", "nig nog", "nimphomania", "nipple", "nipples", "nsfw", "nsfw images", "nude", "nudity", "nutten", "nympho", "nymphomania", "octopussy", "omorashi", "one cup two girls", "one guy one jar", "orgasm", "orgy", "paedophile", "paki", "panties", "panty", "pedobear", "pedophile", "pegging", "penis", "phone sex", "piece of shit", "pikey", "pissing", "piss pig", "pisspig", "playboy", "pleasure chest", "pole smoker", "ponyplay", "poof", "poon", "poontang", "punany", "poop chute", "poopchute", "porn", "porno", "pornography", "prince albert piercing", "pthc", "pubes", "pussy", "queaf", "queef", "quim", "raghead", "raging boner", "rape", "raping", "rapist", "rectum", "reverse cowgirl", "rimjob", "rimming", "rosy palm", "rosy palm and her 5 sisters", "rusty trombone", "sadism", "santorum", "scat", "schlong", "scissoring", "semen", "sex", "sexcam", "sexo", "sexy", "sexual", "sexually", "sexuality", "shaved beaver", "shaved pussy", "shemale", "shibari", "shit", "shitblimp", "shitty", "shota", "shrimping", "skeet", "slanteye", "slut", "s&m", "smut", "snatch", "snowballing", "sodomize", "sodomy", "spastic", "spic", "splooge", "splooge moose", "spooge", "spread legs", "spunk", "strap on", "strapon", "strappado", "strip club", "style doggy", "suck", "sucks", "suicide girls", "sultry women", "swastika", "swinger", "tainted love", "taste my", "tea bagging", "threesome", "throating", "thumbzilla", "tied up", "tight white", "tit", "tits", "titties", "titty", "tongue in a", "topless", "tosser", "towelhead", "tranny", "tribadism", "tub girl", "tubgirl", "tushy", "twat", "twink", "twinkie", "two girls one cup", "undressing", "upskirt", "urethra play", "urophilia", "vagina", "venus mound", "viagra", "vibrator", "violet wand", "vorarephilia", "voyeur", "voyeurweb", "voyuer", "vulva", "wank", "wetback", "wet dream", "white power", "whore", "worldsex", "wrapping men", "wrinkled starfish", "xx", "xxx", "yaoi", "yellow showers", "yiffy", "zoophilia"],
+  hi: ["aand", "aandu", "balatkar", "balatkari", "behen chod", "beti chod", "bhadva", "bhadve", "bhandve", "bhangi", "bhootni ke", "bhosad", "bhosadi ke", "boobe", "chakke", "chinaal", "chinki", "chod", "chodu", "chodu bhagat", "chooche", "choochi", "choope", "choot", "choot ke baal", "chootia", "chootiya", "chuche", "chuchi", "chudaap", "chudai khanaa", "chudam chudai", "chude", "chut", "chut ka chuha", "chut ka churan", "chut ka mail", "chut ke baal", "chut ke dhakkan", "chut maarli", "chutad", "chutadd", "chutan", "chutia", "chutiya", "gaand", "gaandfat", "gaandmasti", "gaandufad", "gandfattu", "gandu", "gashti", "gasti", "ghassa", "ghasti", "gucchi", "gucchu", "harami", "haramzade", "hawas", "hawas ke pujari", "hijda", "hijra", "jhant", "jhant chaatu", "jhant ka keeda", "jhant ke baal", "jhant ke pissu", "jhantu", "kamine", "kaminey", "kanjar", "kutta", "kutta kamina", "kutte ki aulad", "kutte ki jat", "kuttiya", "loda", "lodu", "lund", "lund choos", "lund ka bakkal", "lund khajoor", "lundtopi", "lundure", "maa ki chut", "maal", "madar chod", "madarchod", "madhavchod", "mooh mein le", "mutth", "mutthal", "najayaz", "najayaz aulaad", "najayaz paidaish", "paki", "pataka", "patakha", "raand", "randaap", "randi", "randi rona", "saala", "saala kutta", "saali kutti", "saali randi", "suar", "suar ke lund", "suar ki aulad", "tatte", "tatti", "teri maa ka bhosada", "teri maa ka boba chusu", "teri maa ki behenchod", "teri maa ki chut", "tharak", "tharki", "tu chuda"],
+  es: ["Asesinato", "asno", "bastardo", "Bollera", "Cabr\xF3n", "Caca", "Chupada", "Chupapollas", "Chupet\xF3n", "concha", "Concha de tu madre", "Co\xF1o", "Coprofag\xEDa", "Culo", "Drogas", "Esperma", "Fiesta de salchichas", "Follador", "Follar", "Gilipichis", "Gilipollas", "Hacer una paja", "Haciendo el amor", "Hero\xEDna", "Hija de puta", "Hijaputa", "Hijo de puta", "Hijoputa", "Idiota", "Imb\xE9cil", "infierno", "Jilipollas", "Kapullo", "Lameculos", "Maciza", "Macizorra", "maldito", "Mamada", "Marica", "Maric\xF3n", "Mariconazo", "martillo", "Mierda", "Nazi", "Orina", "Pedo", "Pendejo", "Pervertido", "Pez\xF3n", "Pinche", "Pis", "Prostituta", "Puta", "Racista", "Ramera", "S\xE1dico", "Semen", "Sexo", "Sexo oral", "Soplagaitas", "Soplapollas", "Tetas grandes", "T\xEDa buena", "Travesti", "Trio", "Verga", "vete a la mierda", "Vulva"],
+  fr: ["baiser", "bander", "bigornette", "bite", "bitte", "bloblos", "bordel", "bourr\xE9", "bourr\xE9e", "brackmard", "branlage", "branler", "branlette", "branleur", "branleuse", "brouter le cresson", "caca", "chatte", "chiasse", "chier", "chiottes", "clito", "clitoris", "con", "connard", "connasse", "conne", "couilles", "cramouille", "cul", "d\xE9conne", "d\xE9conner", "emmerdant", "emmerder", "emmerdeur", "emmerdeuse", "encul\xE9", "encul\xE9e", "enculeur", "enculeurs", "enfoir\xE9", "enfoir\xE9e", "\xE9tron", "fille de pute", "fils de pute", "folle", "foutre", "gerbe", "gerber", "gouine", "grande folle", "grogniasse", "gueule", "jouir", "la putain de ta m\xE8re", "MALPT", "m\xE9nage \xE0 trois", "merde", "merdeuse", "merdeux", "meuf", "n\xE8gre", "negro", "nique ta m\xE8re", "nique ta race", "palucher", "p\xE9dale", "p\xE9d\xE9", "p\xE9ter", "pipi", "pisser", "pouffiasse", "pousse-crotte", "putain", "pute", "ramoner", "sac \xE0 foutre", "sac \xE0 merde", "salaud", "salope", "suce", "tapette", "tanche", "teuch", "tringler", "trique", "troncher", "trou du cul", "turlute", "zigounette", "zizi"],
+  ar: ["\u0633\u0643\u0633", "\u0637\u064A\u0632", "\u0634\u0631\u062C", "\u0644\u0639\u0642", "\u0644\u062D\u0633", "\u0645\u0635", "\u062A\u0645\u0635", "\u0628\u064A\u0636\u0627\u0646", "\u062B\u062F\u064A", "\u0628\u0632", "\u0628\u0632\u0627\u0632", "\u062D\u0644\u0645\u0629", "\u0645\u0641\u0644\u0642\u0633\u0629", "\u0628\u0638\u0631", "\u0643\u0633", "\u0641\u0631\u062C", "\u0634\u0647\u0648\u0629", "\u0634\u0627\u0630", "\u0645\u0628\u0627\u062F\u0644", "\u0639\u0627\u0647\u0631\u0629", "\u062C\u0645\u0627\u0639", "\u0642\u0636\u064A\u0628", "\u0632\u0628", "\u0644\u0648\u0637\u064A", "\u0644\u0648\u0627\u0637", "\u0633\u062D\u0627\u0642", "\u0633\u062D\u0627\u0642\u064A\u0629", "\u0627\u063A\u062A\u0635\u0627\u0628", "\u062E\u0646\u062B\u064A", "\u0627\u062D\u062A\u0644\u0627\u0645", "\u0646\u064A\u0643", "\u0645\u062A\u0646\u0627\u0643", "\u0645\u062A\u0646\u0627\u0643\u0629", "\u0634\u0631\u0645\u0648\u0637\u0629", "\u0639\u0631\u0635", "\u062E\u0648\u0644", "\u0642\u062D\u0628\u0629", "\u0644\u0628\u0648\u0629"]
+};
+
+// src/moderation/wordlist.ts
+var wordSets = new Map;
+function getSet(lang) {
+  let set = wordSets.get(lang);
+  if (!set) {
+    set = new Set((WORD_LISTS[lang] || []).map((w) => w.toLowerCase()));
+    wordSets.set(lang, set);
+  }
+  return set;
+}
+function findBannedWord(text, lang = "en") {
+  const words = getSet(lang);
+  if (words.size === 0)
+    return null;
+  const lower = text.toLowerCase();
+  const tokens = lower.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  for (const token of tokens) {
+    if (words.has(token))
+      return token;
+  }
+  return null;
+}
+function findBannedWordAny(text) {
+  for (const lang of ["en", "hi", "es", "fr", "ar"]) {
+    const word = findBannedWord(text, lang);
+    if (word)
+      return { word, lang };
+  }
+  return null;
+}
+function detectSpam(text) {
+  const letters = text.replace(/[^a-zA-Z]/g, "");
+  if (letters.length >= 10) {
+    const caps = letters.replace(/[^A-Z]/g, "").length;
+    if (caps / letters.length > 0.7)
+      return "excessive_caps";
+  }
+  if (/(.)\1{5,}/.test(text))
+    return "repeated_chars";
+  const emojiCount = (text.match(/\p{Extended_Pictographic}/gu) || []).length;
+  if (emojiCount > 10)
+    return "excessive_emoji";
+  const urls = (text.match(/https?:\/\/\S+/g) || []).length;
+  if (urls > 2)
+    return "link_spam";
+  return null;
+}
 
 // ../node_modules/drizzle-orm/entity.js
 var entityKind = Symbol.for("drizzle:entityKind");
@@ -2885,6 +2621,20 @@ async function canAccessPost(ctx, viewerId, postId) {
   return Boolean(row && (!row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now()) && (row.authorId === viewerId || !row.isPrivate && !await blockedPair(ctx, viewerId, row.authorId)));
 }
 async function moderateText(ctx, text) {
+  const banned = findBannedWordAny(text);
+  if (banned) {
+    return { allowed: false, feedback: "Please remove the inappropriate language and try again." };
+  }
+  const spam = detectSpam(text);
+  if (spam) {
+    const messages = {
+      excessive_caps: "Please don't use excessive capital letters.",
+      repeated_chars: "Please don't use excessive repeated characters.",
+      excessive_emoji: "Please use fewer emoji.",
+      link_spam: "Please don't post multiple links."
+    };
+    return { allowed: false, feedback: messages[spam] || "This looks like spam. Please revise." };
+  }
   return ctx.inference.complete(`Review this social post for a kindness-first community. Block attacks, criticism aimed at a person, insults, stereotypes, dehumanization, threats, racism, discrimination, dog whistles, and praise of harm. Allow supportive speech, neutral information, first-person feelings, constructive self-reflection, and discussion condemning racism. If blocked, give one calm sentence helping the writer rephrase around their own experience or a positive request. If allowed, feedback is empty. Text: ${JSON.stringify(text)}`, { schema: moderationSchema, timeout_secs: 30 });
 }
 async function blockedPair(ctx, a, b) {
@@ -2906,4 +2656,157 @@ async function triageReport(ctx, reportId) {
   let contentText = "";
   let targetAuthorId = 0;
   if (report.targetType === "post") {
-    const [post] = await db.select().fro
+    const [post] = await db.select().from(posts).where(eq(posts.id, report.targetId)).limit(1);
+    if (post) {
+      contentText = post.text || "";
+      targetAuthorId = post.authorId;
+    }
+  } else if (report.targetType === "comment") {
+    const [comment] = await db.select().from(comments).where(eq(comments.id, report.targetId)).limit(1);
+    if (comment) {
+      contentText = comment.text || "";
+      targetAuthorId = comment.authorId;
+    }
+  } else if (report.targetType === "account") {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, report.targetId)).limit(1);
+    if (profile) {
+      contentText = (profile.displayName || "") + " " + (profile.bio || "");
+      targetAuthorId = profile.id;
+    }
+  }
+  if (!contentText.trim()) {
+    await db.update(reports).set({ status: "dismissed", reviewedAt: new Date }).where(eq(reports.id, reportId));
+    return;
+  }
+  const review = await moderateText(ctx, contentText);
+  if (!review.allowed) {
+    await db.update(reports).set({ status: "genuine", reviewedAt: new Date }).where(eq(reports.id, reportId));
+    if (targetAuthorId) {
+      const [violator] = await db.select().from(profiles).where(eq(profiles.id, targetAuthorId)).limit(1);
+      if (violator) {
+        const newCount = (violator.violationCount || 0) + 1;
+        let postRestrictedUntil = null;
+        if (newCount === 2) {
+          postRestrictedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        }
+        await db.update(profiles).set({
+          violationCount: newCount,
+          postRestrictedUntil
+        }).where(eq(profiles.id, targetAuthorId));
+        await db.insert(notifications).values({
+          recipientId: targetAuthorId,
+          actorId: report.reporterId,
+          type: "approval",
+          postId: null
+        });
+      }
+    }
+  } else {
+    const [reporter] = await db.select().from(profiles).where(eq(profiles.id, report.reporterId)).limit(1);
+    if (reporter) {
+      const fakeCount = reporter.fakeReportCount || 0;
+      if (fakeCount >= 2) {
+        await db.update(reports).set({ status: "fake", reviewedAt: new Date }).where(eq(reports.id, reportId));
+        const newFakeCount = fakeCount + 1;
+        await db.update(profiles).set({
+          fakeReportCount: newFakeCount,
+          reportingSuspended: newFakeCount >= 3
+        }).where(eq(profiles.id, report.reporterId));
+      }
+    }
+  }
+}
+async function notifyMentions(ctx, actorId, text, postId, commentId) {
+  const handles = mentionedHandles(text);
+  if (!handles.length)
+    return;
+  const db = ctx.db();
+  const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
+  for (const person of people) {
+    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
+      continue;
+    await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
+    const n = await pushName(ctx, actorId);
+    sendPushNotification(ctx, person.id, `${n} mentioned you`, text.slice(0, 100), { type: "mention", postId: String(postId) });
+  }
+}
+var sheetValuesSchema = array(union([string2(), number2(), boolean2(), _null3()]));
+var googleSyncStatusSchema = object({ enabled: boolean2(), spreadsheetUrl: string2().nullable(), driveFileUrl: string2().nullable(), lastSyncAt: string2().nullable(), lastError: string2().nullable(), pendingCount: number2(), failedCount: number2() });
+var googleWriteResponse = object({ status: _enum(["ok", "error"]), message: string2(), url: string2().nullable() });
+function profileSheetRow(profile, operation = "upsert") {
+  return [profile.id, profile.displayName, profile.handle, profile.bio, profile.isPrivate, profile.isFounder, isActiveProfile(profile) ? "active" : "deactivated", profile.createdAt.toISOString(), operation, new Date().toISOString()];
+}
+function postSheetRow(post, operation = "upsert") {
+  return [post.id, post.authorId, post.text, post.createdAt.toISOString(), post.editedAt?.toISOString() ?? null, operation === "delete" ? "deleted" : "active", operation, new Date().toISOString()];
+}
+function commentSheetRow(comment) {
+  return [comment.id, comment.postId, comment.authorId, comment.parentCommentId, comment.text, comment.createdAt.toISOString(), "upsert", new Date().toISOString()];
+}
+async function queueGoogleSync(ctx, tab, recordKey, operation, values) {
+  try {
+    const db = ctx.db();
+    const [config] = await db.select().from(googleIntegrations).where(eq(googleIntegrations.id, 1)).limit(1);
+    if (!config?.sheetsEnabled || !config.spreadsheetId)
+      return;
+    const [job] = await db.insert(googleSyncQueue).values({ tab, recordKey, operation, payload: JSON.stringify(values) }).returning({ id: googleSyncQueue.id });
+    if (!job)
+      return;
+    try {
+      const result = await ctx.executePrivileged(privileged.appendGoogleSheetRow, { spreadsheetId: config.spreadsheetId, tab, values });
+      if (result.ok) {
+        const now = new Date;
+        await db.batch([db.update(googleSyncQueue).set({ status: "synced", error: null, syncedAt: now }).where(eq(googleSyncQueue.id, job.id)), db.update(googleIntegrations).set({ lastSyncAt: now, lastError: null, updatedAt: now }).where(eq(googleIntegrations.id, 1))]);
+      } else {
+        await db.batch([db.update(googleSyncQueue).set({ status: "failed", error: result.error }).where(eq(googleSyncQueue.id, job.id)), db.update(googleIntegrations).set({ lastError: result.error, updatedAt: new Date }).where(eq(googleIntegrations.id, 1))]);
+      }
+    } catch {
+      const message = "Google Sheets is temporarily unreachable. This update is queued for retry.";
+      await db.batch([db.update(googleSyncQueue).set({ status: "failed", error: message }).where(eq(googleSyncQueue.id, job.id)), db.update(googleIntegrations).set({ lastError: message, updatedAt: new Date }).where(eq(googleIntegrations.id, 1))]);
+    }
+    ctx.invalidateQueries();
+  } catch {}
+}
+async function deleteAccountData(ctx, profile) {
+  const db = ctx.db();
+  const ownPosts = (await db.select({ id: posts.id }).from(posts).where(eq(posts.authorId, profile.id))).map((row) => row.id);
+  const ownStories = await db.select({ id: stories.id, blobKey: stories.blobKey }).from(stories).where(eq(stories.authorId, profile.id));
+  const postImages2 = ownPosts.length ? await db.select({ blobKey: postImages.blobKey }).from(postImages).where(inArray(postImages.postId, ownPosts)) : [];
+  const ownComments = await db.select({ id: comments.id }).from(comments).where(eq(comments.authorId, profile.id));
+  const commentsOnOwnPosts = ownPosts.length ? await db.select({ id: comments.id }).from(comments).where(inArray(comments.postId, ownPosts)) : [];
+  const commentIds = [...new Set([...ownComments, ...commentsOnOwnPosts].map((row) => row.id))];
+  await db.delete(notifications).where(eq(notifications.recipientId, profile.id));
+  await db.delete(notifications).where(eq(notifications.actorId, profile.id));
+  if (ownPosts.length)
+    await db.delete(notifications).where(inArray(notifications.postId, ownPosts));
+  await db.delete(follows).where(eq(follows.followerId, profile.id));
+  await db.delete(follows).where(eq(follows.followingId, profile.id));
+  await db.delete(likes).where(eq(likes.profileId, profile.id));
+  await db.delete(reposts).where(eq(reposts.profileId, profile.id));
+  await db.delete(bookmarks).where(eq(bookmarks.profileId, profile.id));
+  if (ownPosts.length) {
+    await db.delete(likes).where(inArray(likes.postId, ownPosts));
+    await db.delete(reposts).where(inArray(reposts.postId, ownPosts));
+    await db.delete(bookmarks).where(inArray(bookmarks.postId, ownPosts));
+    await db.delete(comments).where(inArray(comments.postId, ownPosts));
+    await db.delete(postImages).where(inArray(postImages.postId, ownPosts));
+  }
+  await db.delete(comments).where(eq(comments.authorId, profile.id));
+  await db.delete(reports).where(eq(reports.reporterId, profile.id));
+  if (ownPosts.length)
+    await db.delete(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, ownPosts)));
+  if (commentIds.length)
+    await db.delete(reports).where(and(eq(reports.targetType, "comment"), inArray(reports.targetId, commentIds)));
+  await db.delete(storyViews).where(eq(storyViews.viewerId, profile.id));
+  await db.delete(storyReactions).where(eq(storyReactions.reactorId, profile.id));
+  if (ownStories.length) {
+    const storyIds = ownStories.map((row) => row.id);
+    await db.delete(storyViews).where(inArray(storyViews.storyId, storyIds));
+    await db.delete(storyReactions).where(inArray(storyReactions.storyId, storyIds));
+  }
+  await db.delete(stories).where(eq(stories.authorId, profile.id));
+  if (ownPosts.length)
+    await db.delete(posts).where(inArray(posts.id, ownPosts));
+  await db.delete(sessions).where(eq(sessions.profileId, profile.id));
+  await db.delete(pushTokens).where(eq(pushTokens.profileId, profile.id));
+  await db.delete(profiles).where(eq(profiles.id, profile.id));
+  const blobKeys = [profile.avatarBlo
