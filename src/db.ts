@@ -42,8 +42,12 @@ export const isTurso = usingTurso;
  *  half-applied (crash between statements, before it was recorded) can then
  *  be safely retried instead of killing the boot with "duplicate column". */
 async function skipIfColumnExists(stmt: string): Promise<boolean> {
-  const m = stmt.match(
-    /^\s*ALTER\s+TABLE\s+[`"\[]?(\w+)[`"\]]?\s+ADD\s+(?:COLUMN\s+)?[`"\[]?(\w+)/i
+  // Strip SQL line comments first: drizzle's "--> statement-breakpoint"
+  // markers get glued to the following statement when we split the file,
+  // which would otherwise hide the ALTER TABLE from the match below.
+  const clean = stmt.replace(/--[^\n]*/g, " ");
+  const m = clean.match(
+    /ALTER\s+TABLE\s+[`"\[]?(\w+)[`"\]]?\s+ADD\s+(?:COLUMN\s+)?[`"\[]?(\w+)/i
   );
   if (!m) return false;
   const [, table, column] = m;
@@ -81,6 +85,9 @@ export async function runMigrations(): Promise<void> {
     const sql = readFileSync(join(dir, f), "utf8");
     // Split multi-statement files; libSQL executes one statement at a time.
     for (const stmt of sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
+      // Skip chunks that are only comments (e.g. drizzle's trailing
+      // "--> statement-breakpoint" marker).
+      if (!stmt.replace(/--[^\n]*/g, "").trim()) continue;
       if (await skipIfColumnExists(stmt)) continue;
       await client.execute(stmt);
     }
