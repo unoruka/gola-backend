@@ -6877,6 +6877,17 @@ var Actions = {
     const visibleFollowing = following.filter((link) => activeIds.has(link.followingId));
     return { profile, postCount: postRows.length, followerCount: visibleFollowers.length, followingCount: visibleFollowing.length, viewerFollowing: visibleFollowers.some((x) => x.followerId === viewer.id), viewerBlocked, blockedByTarget, privateView: false, posts: await loadPosts(ctx, viewer.id, [target.id], 50) };
   } }),
+  resolveHandle: defineAction({ request: object({ token: string2(), handle: string2().min(1).max(30) }), response: object({ profileId: number2().nullable() }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { profileId: null };
+    const db = ctx.db();
+    const handle = args.handle.toLowerCase().replace(/^@/, "");
+    const [target] = await db.select().from(profiles).where(eq(profiles.handle, handle)).limit(1);
+    if (!target || !isActiveProfile(target))
+      return { profileId: null };
+    return { profileId: target.id };
+  } }),
   listProfileConnections: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), kind: _enum(["followers", "following"]) }), response: object({ privateView: boolean2(), profiles: array(connectionProfileSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)

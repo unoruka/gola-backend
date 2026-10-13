@@ -123,6 +123,49 @@ Bun.serve({
       return Response.json(assetlinks, { headers: CORS });
     }
 
+    // Shared profile preview: GET /u/:handle serves a tiny HTML page with Open
+    // Graph tags so WhatsApp/Telegram render a clickable preview card.
+    if (req.method === "GET" && url.pathname.startsWith("/u/")) {
+      const handle = url.pathname.slice("/u/".length).split("/")[0];
+      if (!handle || !/^[A-Za-z0-9_]{3,24}$/.test(handle)) {
+        return new Response("Not found", { status: 404, headers: CORS });
+      }
+      try {
+        const { db } = await import("./db");
+        const { sql } = await import("drizzle-orm");
+        const rows = await db.execute(sql`
+          SELECT display_name, handle, bio, is_private
+          FROM profiles WHERE handle = ${handle.toLowerCase()} LIMIT 1
+        `);
+        const row = (rows as unknown as any[])[0];
+        if (!row) {
+          return new Response("Not found", { status: 404, headers: CORS });
+        }
+        const title = `${row.display_name} (@${row.handle}) on Gola`;
+        const desc = row.is_private ? "This profile is private. Open it in the Gola app." : String(row.bio || "Check out this profile on Gola.").slice(0, 200);
+        const pageUrl = `https://gola-backend.onrender.com/u/${encodeURIComponent(handle)}`;
+        const appLink = `gola://u/${encodeURIComponent(handle)}`;
+        const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title>
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="https://gola-backend.onrender.com/icon.png">
+<meta property="og:url" content="${esc(pageUrl)}">
+<meta property="og:type" content="profile">
+<meta name="twitter:card" content="summary">
+<style>body{font-family:system-ui,sans-serif;background:#f6f1e7;color:#2b2620;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}.card{background:#fffdf8;border:3px solid #2b2620;border-radius:20px;box-shadow:6px 6px 0 #2b2620;padding:32px;max-width:340px;text-align:center}h1{font-size:20px;margin:0 0 8px}p{font-size:14px;opacity:.75}a{display:inline-block;margin-top:16px;background:#009788;color:#fff;font-weight:700;padding:12px 28px;border-radius:999px;text-decoration:none;border:3px solid #2b2620}</style>
+<script>window.location.replace(${JSON.stringify(appLink)});</script></head>
+<body><div class="card"><h1>${esc(title)}</h1><p>${esc(desc)}</p><a href="${esc(appLink)}">Open in Gola</a></div></body></html>`;
+        return new Response(html, {
+          headers: { ...CORS, "content-type": "text/html; charset=utf-8" },
+        });
+      } catch (e) {
+        console.log("[gola][profile-preview] error:", e instanceof Error ? e.message : e);
+        return new Response("Not found", { status: 404, headers: CORS });
+      }
+    }
+
     // Shared post preview: GET /p/:id serves a tiny HTML page with Open Graph
     // tags so WhatsApp/Telegram render a clickable preview card. The page has
     // an "Open in Gola" button (custom scheme) for users without the app.
