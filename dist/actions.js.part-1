@@ -3109,4 +3109,5 @@ function finalize(ctx, schema) {
         schema.$ref = parentSeen.schema.$ref;
         if (parentSeen.def) {
           for (const key in schema) {
-      
+            if (key === "$ref" || key === "allOf")
+              continue;
