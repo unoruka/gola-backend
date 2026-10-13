@@ -6792,6 +6792,23 @@ var Actions = {
     ctx.invalidateQueries();
     return { status: "ok", message: null, id: args.postId };
   } }),
+  deleteComment: defineAction({ request: object({ token: string2(), commentId: number2().int().positive() }), response: writeResponse, async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { status: "error", message: "Please log in again.", id: null };
+    const db = ctx.db();
+    const [comment] = await db.select().from(comments).where(eq(comments.id, args.commentId)).limit(1);
+    if (!comment)
+      return { status: "error", message: "Comment not found.", id: null };
+    const [post] = await db.select({ authorId: posts.authorId }).from(posts).where(eq(posts.id, comment.postId)).limit(1);
+    const isAuthor = comment.authorId === viewer.id;
+    const isPostOwner = post?.authorId === viewer.id;
+    if (!isAuthor && !isPostOwner)
+      return { status: "error", message: "You can only delete your own comments.", id: null };
+    await db.delete(comments).where(or(eq(comments.id, args.commentId), eq(comments.parentCommentId, args.commentId)));
+    ctx.invalidateQueries();
+    return { status: "ok", message: null, id: args.commentId };
+  } }),
   addComment: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), parentCommentId: number2().int().positive().nullable().default(null), text: string2().trim().min(1).max(3000) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
