@@ -1,11 +1,4 @@
-, "off"]),
-  createdAt: string2(),
-  avatarUrl: string2().nullable(),
-  themeColor: colorChoiceSchema
-});
-var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
-var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
-var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
+Schema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
 var commentSchema = object({ id: number2(), parentCommentId: number2().nullable(), text: string2(), createdAt: string2(), author: profileSchema });
 var postSchema = object({
   id: number2(),
@@ -1252,6 +1245,15 @@ var Actions = {
       await ctx.db().delete(pushTokens).where(and(eq(pushTokens.profileId, viewer.id), eq(pushTokens.pushToken, args.pushToken)));
     ctx.invalidateQueries();
     return { ok: true };
+  } }),
+  getPushStatus: defineAction({ request: object({ token: string2() }), response: object({ fcmConfigured: boolean2(), tokenCount: number2() }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { fcmConfigured: false, tokenCount: 0 };
+    const sa = getFcmServiceAccount();
+    const db = ctx.db();
+    const tokens = await db.select({ id: pushTokens.id }).from(pushTokens).where(eq(pushTokens.profileId, viewer.id));
+    return { fcmConfigured: !!sa, tokenCount: tokens.length };
   } })
 };
 export {
