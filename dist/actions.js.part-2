@@ -1,32 +1,4 @@
-f maximum === "number")
-    json.maxLength = maximum;
-  if (format) {
-    json.format = formatMap[format] ?? format;
-    if (json.format === "")
-      delete json.format;
-    if (format === "time") {
-      delete json.format;
-    }
-  }
-  if (contentEncoding)
-    json.contentEncoding = contentEncoding;
-  if (patterns && patterns.size > 0) {
-    const regexes = [...patterns];
-    if (regexes.length === 1)
-      json.pattern = regexes[0].source;
-    else if (regexes.length > 1) {
-      json.allOf = [
-        ...regexes.map((regex) => ({
-          ...ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0" ? { type: "string" } : {},
-          pattern: regex.source
-        }))
-      ];
-    }
-  }
-};
-var numberProcessor = (schema, ctx, _json, _params) => {
-  const json = _json;
-  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
+mum } = schema._zod.bag;
   if (typeof format === "string" && format.includes("int"))
     json.type = "integer";
   else
@@ -2490,6 +2462,7 @@ var profiles = sqliteTable("profiles", {
   avatarBlobKey: text("avatar_blob_key"),
   isFounder: integer2("is_founder", { mode: "boolean" }).notNull().default(false),
   badge: text("badge", { enum: ["none", "community", "official"] }).notNull().default("none"),
+  badgeGrantedAt: integer2("badge_granted_at", { mode: "timestamp_ms" }),
   isPrivate: integer2("is_private", { mode: "boolean" }).notNull().default(false),
   themeColor: text("theme_color", { enum: ["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"] }).notNull().default("teal"),
   themeChangedAt: integer2("theme_changed_at", { mode: "timestamp_ms" }),
@@ -2520,6 +2493,7 @@ var posts = sqliteTable("posts", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   authorId: integer2("author_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
+  slug: text("slug"),
   editedAt: integer2("edited_at", { mode: "timestamp_ms" }),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
 });
@@ -2890,6 +2864,7 @@ var profileSchema = object({
   bio: string2().nullable(),
   isFounder: boolean2(),
   badge: _enum(["none", "community", "official"]),
+  badgeGrantedAt: string2().nullable(),
   isPrivate: boolean2(),
   mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
   createdAt: string2(),
@@ -2898,4 +2873,25 @@ var profileSchema = object({
 });
 var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
 var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
-var accountProfile
+var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
+var commentSchema = object({ id: number2(), parentCommentId: number2().nullable(), text: string2(), createdAt: string2(), author: profileSchema });
+var postSchema = object({
+  id: number2(),
+  text: string2(),
+  slug: string2().nullable(),
+  createdAt: string2(),
+  editedAt: string2().nullable(),
+  author: profileSchema,
+  images: array(object({ id: number2(), url: string2(), altText: string2() })),
+  likeCount: number2(),
+  commentCount: number2(),
+  repostCount: number2(),
+  viewerLiked: boolean2(),
+  viewerReposted: boolean2(),
+  viewerBookmarked: boolean2(),
+  comments: array(commentSchema)
+});
+var storyReactionSchema = _enum(["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDC4F"]);
+var storySchema = object({ id: number2(), text: string2().nullable(), imageUrl: string2().nullable(), createdAt: string2(), expiresAt: string2(), author: profileSchema, viewerReaction: storyReactionSchema.nullable(), visibility: string2(), bgColor: string2().nullable() });
+var writeResponse = object({ status: _enum(["ok", "blocked", "error"]), message: string2().nullable(), id: number2().nullable(), slug: string2().nullable().optional() });
+var authResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), token: string2().nullable(), profile: accountProfileSchema.nullable() });

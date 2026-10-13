@@ -1,24 +1,3 @@
-Schema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, continent: continentSchema, lastDeactivatedAt: string2().nullable() });
-var commentSchema = object({ id: number2(), parentCommentId: number2().nullable(), text: string2(), createdAt: string2(), author: profileSchema });
-var postSchema = object({
-  id: number2(),
-  text: string2(),
-  createdAt: string2(),
-  editedAt: string2().nullable(),
-  author: profileSchema,
-  images: array(object({ id: number2(), url: string2(), altText: string2() })),
-  likeCount: number2(),
-  commentCount: number2(),
-  repostCount: number2(),
-  viewerLiked: boolean2(),
-  viewerReposted: boolean2(),
-  viewerBookmarked: boolean2(),
-  comments: array(commentSchema)
-});
-var storyReactionSchema = _enum(["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDC4F"]);
-var storySchema = object({ id: number2(), text: string2().nullable(), imageUrl: string2().nullable(), createdAt: string2(), expiresAt: string2(), author: profileSchema, viewerReaction: storyReactionSchema.nullable(), visibility: string2(), bgColor: string2().nullable() });
-var writeResponse = object({ status: _enum(["ok", "blocked", "error"]), message: string2().nullable(), id: number2().nullable() });
-var authResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), token: string2().nullable(), profile: accountProfileSchema.nullable() });
 var recoveryResponse = object({ status: _enum(["ok", "error"]), message: string2(), recoveryCode: string2().nullable() });
 var profileUpdateResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), profile: accountProfileSchema.nullable(), nextEditableAt: string2().nullable() });
 var colorThemeResponse = object({ status: _enum(["ok", "error"]), message: string2(), profile: accountProfileSchema.nullable(), nextChangeAt: string2().nullable() });
@@ -113,7 +92,7 @@ async function authenticatedProfile(ctx, token) {
 }
 async function publicProfile(ctx, row, viewerId) {
   const hidden = row.isPrivate && row.id !== viewerId;
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
 }
 async function accountProfile(ctx, row) {
   return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
@@ -258,7 +237,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
   ]);
   const commentsVisible = commentsRaw.filter(({ author }) => isActiveProfile(author) && !hiddenIds.has(author.id));
   const images = await Promise.all(imagesRaw.map(async (row) => ({ ...row, url: await ctx.blobs.getUrl(row.blobKey) })));
-  return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId) }))) })));
+  return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, slug: post.slug ?? null, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId) }))) })));
 }
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
@@ -476,7 +455,7 @@ var Actions = {
       return { status: "error", message: "That account could not be found." };
     if (target.badge === args.badge)
       return { status: "ok", message: args.badge === "none" ? `@${target.handle} has no badge to remove.` : `@${target.handle} already has the ${args.badge} badge.` };
-    await db.update(profiles).set({ badge: args.badge }).where(eq(profiles.id, target.id));
+    await db.update(profiles).set({ badge: args.badge, badgeGrantedAt: args.badge === "none" ? null : new Date }).where(eq(profiles.id, target.id));
     ctx.invalidateQueries();
     const label = args.badge === "none" ? "removed" : args.badge === "official" ? "marked as official" : "marked as a community member";
     return { status: "ok", message: `@${target.handle} has been ${label}.` };
@@ -487,8 +466,9 @@ var Actions = {
       return { status: "error", message: "Please log in again.", profile: null, nextChangeAt: null };
     if (viewer.themeColor === args.color)
       return { status: "ok", message: "That color is already active.", profile: await accountProfile(ctx, viewer), nextChangeAt: viewer.themeChangedAt ? new Date(viewer.themeChangedAt.getTime() + 30 * 86400000).toISOString() : null };
+    const hasGoldenBadge = viewer.badge === "official";
     const next = viewer.themeChangedAt ? new Date(viewer.themeChangedAt.getTime() + 30 * 86400000) : null;
-    if (next && next.getTime() > Date.now())
+    if (!hasGoldenBadge && next && next.getTime() > Date.now())
       return { status: "error", message: "You can choose a new app color once every 30 days.", profile: await accountProfile(ctx, viewer), nextChangeAt: next.toISOString() };
     const changedAt = new Date;
     const [updated] = await ctx.db().update(profiles).set({ themeColor: args.color, themeChangedAt: changedAt }).where(eq(profiles.id, viewer.id)).returning();
@@ -523,6 +503,21 @@ var Actions = {
       return { posts: [] };
     const followed = await ctx.db().select({ id: follows.followingId }).from(follows).innerJoin(profiles, eq(follows.followingId, profiles.id)).where(and(eq(follows.followerId, viewer.id), eq(profiles.isPrivate, false)));
     return { posts: await loadPosts(ctx, viewer.id, [viewer.id, ...followed.map((x) => x.id)], args.limit) };
+  } }),
+  getPost: defineAction({ request: object({ token: string2(), postId: string2() }), response: object({ post: postSchema.nullable() }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { post: null };
+    const db = ctx.db();
+    const isNumeric = /^\d+$/.test(args.postId);
+    const [postRow] = await db.select().from(posts).where(isNumeric ? eq(posts.id, Number(args.postId)) : eq(posts.slug, args.postId)).limit(1);
+    if (!postRow)
+      return { post: null };
+    if (!await canAccessPost(ctx, viewer.id, postRow.id))
+      return { post: null };
+    const posts2 = await loadPosts(ctx, viewer.id, [postRow.authorId], 50);
+    const post = posts2.find((p) => p.id === String(postRow.id)) ?? null;
+    return { post };
   } }),
   getProfile: defineAction({ request: object({ token: string2(), profileId: number2().int().positive() }), response: object({ profile: profileSchema.nullable(), postCount: number2(), followerCount: number2(), followingCount: number2(), viewerFollowing: boolean2(), viewerBlocked: boolean2(), blockedByTarget: boolean2(), privateView: boolean2(), posts: array(postSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -580,6 +575,13 @@ var Actions = {
     }
     const db = ctx.db();
     const [post] = await db.insert(posts).values({ authorId: author.id, text }).returning({ id: posts.id });
+    let newSlug = null;
+    if (post) {
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const rand = Math.random().toString(36).slice(2, 6);
+      newSlug = `${author.handle}-${dateStr}-${rand}`;
+      await db.update(posts).set({ slug: newSlug }).where(eq(posts.id, post.id));
+    }
     if (!post)
       return { status: "error", message: "Your post could not be saved.", id: null };
     for (let index = 0;index < args.photos.length; index += 1) {
@@ -596,7 +598,7 @@ var Actions = {
     if (savedPost)
       await queueGoogleSync(ctx, "posts", String(savedPost.id), "upsert", postSheetRow(savedPost));
     ctx.invalidateQueries();
-    return { status: "ok", message: null, id: post.id };
+    return { status: "ok", message: null, id: post.id, slug: newSlug };
   } }),
   editPost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), text: string2().max(12000) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -628,6 +630,23 @@ var Actions = {
     await ctx.db().delete(posts).where(eq(posts.id, args.postId));
     ctx.invalidateQueries();
     return { status: "ok", message: null, id: args.postId };
+  } }),
+  deleteComment: defineAction({ request: object({ token: string2(), commentId: number2().int().positive() }), response: writeResponse, async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { status: "error", message: "Please log in again.", id: null };
+    const db = ctx.db();
+    const [comment] = await db.select().from(comments).where(eq(comments.id, args.commentId)).limit(1);
+    if (!comment)
+      return { status: "error", message: "Comment not found.", id: null };
+    const [post] = await db.select({ authorId: posts.authorId }).from(posts).where(eq(posts.id, comment.postId)).limit(1);
+    const isAuthor = comment.authorId === viewer.id;
+    const isPostOwner = post?.authorId === viewer.id;
+    if (!isAuthor && !isPostOwner)
+      return { status: "error", message: "You can only delete your own comments.", id: null };
+    await db.delete(comments).where(or(eq(comments.id, args.commentId), eq(comments.parentCommentId, args.commentId)));
+    ctx.invalidateQueries();
+    return { status: "ok", message: null, id: args.commentId };
   } }),
   addComment: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), parentCommentId: number2().int().positive().nullable().default(null), text: string2().trim().min(1).max(3000) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
