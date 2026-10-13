@@ -1,4 +1,6 @@
-
+ngth ?? 1));
+      const updated = await runCli(["sheets", "spreadsheets", "values", "update", "--params", JSON.stringify({ spreadsheetId, range: `${tab}!A1:${endColumn}${Math.max(1, rows.length)}`, valueInputOption: "USER_ENTERED" }), "--json", JSON.stringify({ majorDimension: "ROWS", values: rows })]);
+      if (!updated.ok)
         return { ok: false, spreadsheetId, spreadsheetUrl, error: updated.error ?? `The ${tab} tab could not be prepared.` };
     }
     const verified = await runCli(["sheets", "spreadsheets", "get", "--params", JSON.stringify({ spreadsheetId, fields: "spreadsheetId,spreadsheetUrl,sheets.properties.title" })]);
@@ -33,7 +35,7 @@
     }
   }
 });
-// src/actions.ts
+// ../gola-apk/gola-source/server/src/actions.ts
 var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
 var profileSchema = object({
   id: number2(),
@@ -416,7 +418,7 @@ var Actions = {
       return { status: "error", message: "An account already uses that email. Log in instead.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, handle)).limit(1))[0])
       return { status: "error", message: "That username is already taken.", token: null, profile: null };
-    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", approvalStatus: "pending", continent: "AS" }).returning();
+    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", approvalStatus: "approved", continent: "AS" }).returning();
     if (!created)
       return { status: "error", message: "The account could not be created.", token: null, profile: null };
     const token = await createSession(ctx, created.id);
@@ -1115,7 +1117,7 @@ var Actions = {
           break;
         }
       }
-      const [created] = await db.insert(profiles).values({ email: discordEmail?.toLowerCase() ?? null, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "pending", continent: "AS" }).returning();
+      const [created] = await db.insert(profiles).values({ email: discordEmail?.toLowerCase() ?? null, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "approved", continent: "AS" }).returning();
       if (!created)
         return fail("The account could not be created.");
       profile = created;
@@ -1167,7 +1169,7 @@ var Actions = {
           break;
         }
       }
-      const [created] = await db.insert(profiles).values({ email: googleEmail, displayName: googleName.slice(0, 40), handle, googleSub: sub, approvalStatus: "pending", continent: "AS" }).returning();
+      const [created] = await db.insert(profiles).values({ email: googleEmail, displayName: googleName.slice(0, 40), handle, googleSub: sub, approvalStatus: "approved", continent: "AS" }).returning();
       if (!created)
         return fail("The account could not be created.");
       profile = created;
