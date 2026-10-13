@@ -2348,6 +2348,10 @@ var profiles = sqliteTable("profiles", {
   lastDeactivatedAt: integer2("last_deactivated_at", { mode: "timestamp_ms" }),
   profileUpdatedAt: integer2("profile_updated_at", { mode: "timestamp_ms" }),
   approvalStatus: text("approval_status", { enum: ["pending", "approved", "declined"] }).notNull().default("approved"),
+  violationCount: integer2("violation_count").notNull().default(0),
+  fakeReportCount: integer2("fake_report_count").notNull().default(0),
+  reportingSuspended: integer2("reporting_suspended", { mode: "boolean" }).notNull().default(false),
+  postRestrictedUntil: integer2("post_restricted_until", { mode: "timestamp_ms" }),
   mentionPrivacy: text("mention_privacy", { enum: ["everyone", "peopleIFollow", "off"] }).notNull().default("everyone"),
   discordUserId: text("discord_user_id"),
   googleSub: text("google_sub"),
@@ -2894,15 +2898,12 @@ async function blockedIdsFor(ctx, viewerId) {
 function mentionedHandles(text) {
   return [...new Set(Array.from(text.matchAll(/@([a-z0-9_]{3,24})/giu), (match) => (match[1] ?? "").toLowerCase()).filter(Boolean))];
 }
-async function notifyMentions(ctx, actorId, text, postId, commentId) {
-  const handles = mentionedHandles(text);
-  if (!handles.length)
-    return;
+async function triageReport(ctx, reportId) {
   const db = ctx.db();
-  const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
-  for (const person of people) {
-    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
-      continue;
-    await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
-    const n = await pushName(ctx, actorId);
-    sendPushNotification(ctx, person.id, `${n} 
+  const [report] = await db.select().from(reports).where(eq(reports.id, reportId)).limit(1);
+  if (!report || report.status !== "pending")
+    return;
+  let contentText = "";
+  let targetAuthorId = 0;
+  if (report.targetType === "post") {
+    const [post] = await db.select().fro

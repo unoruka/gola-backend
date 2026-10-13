@@ -5763,6 +5763,10 @@ var profiles = sqliteTable("profiles", {
   lastDeactivatedAt: integer2("last_deactivated_at", { mode: "timestamp_ms" }),
   profileUpdatedAt: integer2("profile_updated_at", { mode: "timestamp_ms" }),
   approvalStatus: text("approval_status", { enum: ["pending", "approved", "declined"] }).notNull().default("approved"),
+  violationCount: integer2("violation_count").notNull().default(0),
+  fakeReportCount: integer2("fake_report_count").notNull().default(0),
+  reportingSuspended: integer2("reporting_suspended", { mode: "boolean" }).notNull().default(false),
+  postRestrictedUntil: integer2("post_restricted_until", { mode: "timestamp_ms" }),
   mentionPrivacy: text("mention_privacy", { enum: ["everyone", "peopleIFollow", "off"] }).notNull().default("everyone"),
   discordUserId: text("discord_user_id"),
   googleSub: text("google_sub"),
@@ -6309,6 +6313,74 @@ async function blockedIdsFor(ctx, viewerId) {
 function mentionedHandles(text) {
   return [...new Set(Array.from(text.matchAll(/@([a-z0-9_]{3,24})/giu), (match) => (match[1] ?? "").toLowerCase()).filter(Boolean))];
 }
+async function triageReport(ctx, reportId) {
+  const db = ctx.db();
+  const [report] = await db.select().from(reports).where(eq(reports.id, reportId)).limit(1);
+  if (!report || report.status !== "pending")
+    return;
+  let contentText = "";
+  let targetAuthorId = 0;
+  if (report.targetType === "post") {
+    const [post] = await db.select().from(posts).where(eq(posts.id, report.targetId)).limit(1);
+    if (post) {
+      contentText = post.text || "";
+      targetAuthorId = post.authorId;
+    }
+  } else if (report.targetType === "comment") {
+    const [comment] = await db.select().from(comments).where(eq(comments.id, report.targetId)).limit(1);
+    if (comment) {
+      contentText = comment.text || "";
+      targetAuthorId = comment.authorId;
+    }
+  } else if (report.targetType === "account") {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, report.targetId)).limit(1);
+    if (profile) {
+      contentText = (profile.displayName || "") + " " + (profile.bio || "");
+      targetAuthorId = profile.id;
+    }
+  }
+  if (!contentText.trim()) {
+    await db.update(reports).set({ status: "dismissed", reviewedAt: new Date }).where(eq(reports.id, reportId));
+    return;
+  }
+  const review = await moderateText(ctx, contentText);
+  if (!review.allowed) {
+    await db.update(reports).set({ status: "genuine", reviewedAt: new Date }).where(eq(reports.id, reportId));
+    if (targetAuthorId) {
+      const [violator] = await db.select().from(profiles).where(eq(profiles.id, targetAuthorId)).limit(1);
+      if (violator) {
+        const newCount = (violator.violationCount || 0) + 1;
+        let postRestrictedUntil = null;
+        if (newCount === 2) {
+          postRestrictedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        }
+        await db.update(profiles).set({
+          violationCount: newCount,
+          postRestrictedUntil
+        }).where(eq(profiles.id, targetAuthorId));
+        await db.insert(notifications).values({
+          recipientId: targetAuthorId,
+          actorId: report.reporterId,
+          type: "approval",
+          postId: null
+        });
+      }
+    }
+  } else {
+    const [reporter] = await db.select().from(profiles).where(eq(profiles.id, report.reporterId)).limit(1);
+    if (reporter) {
+      const fakeCount = reporter.fakeReportCount || 0;
+      if (fakeCount >= 2) {
+        await db.update(reports).set({ status: "fake", reviewedAt: new Date }).where(eq(reports.id, reportId));
+        const newFakeCount = fakeCount + 1;
+        await db.update(profiles).set({
+          fakeReportCount: newFakeCount,
+          reportingSuspended: newFakeCount >= 3
+        }).where(eq(profiles.id, report.reporterId));
+      }
+    }
+  }
+}
 async function notifyMentions(ctx, actorId, text, postId, commentId) {
   const handles = mentionedHandles(text);
   if (!handles.length)
@@ -6753,47 +6825,57 @@ var Actions = {
     const ordered = ids.map((id) => people.find((person) => person.id === id)).filter((person) => Boolean(person && isActiveProfile(person)));
     return { privateView: false, profiles: await Promise.all(ordered.map(async (person) => ({ ...await publicProfile(ctx, person, viewer.id), viewerFollowing: allFollows.some((follow) => follow.followerId === viewer.id && follow.followingId === person.id), followerCount: person.isPrivate && person.id !== viewer.id ? 0 : allFollows.filter((follow) => follow.followingId === person.id && activeIds.has(follow.followerId)).length }))) };
   } }),
-  createPost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), text: string2().max(12000), photos: array(object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp", "image/gif"]), filename: string2().max(200).optional() })).max(10) }), response: writeResponse, async handler(ctx, args) {
-    const author = await approvedProfile(ctx, args.token);
-    if (!author)
-      return { status: "error", message: "Please log in again before posting.", id: null };
-    const text = args.text.trim();
-    if (!text && args.photos.length === 0)
-      return { status: "error", message: "Write something or add a photo first.", id: null };
-    if (wordCount(text) > 1000)
-      return { status: "error", message: "Posts can be up to 1,000 words.", id: null };
-    if (text) {
-      const review = await moderateText(ctx, text);
-      if (!review.allowed)
-        return { status: "blocked", message: review.feedback || "Please rewrite this around your own experience or a positive request.", id: null };
+  createPost: defineAction({
+    privileged: [privileged.appendGoogleSheetRow],
+    request: object({ token: string2(), text: string2().max(12000), photos: array(object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp", "image/gif"]), filename: string2().max(200).optional() })).max(10) }),
+    response: writeResponse,
+    async handler(ctx, args) {
+      const author = await approvedProfile(ctx, args.token);
+      if (!author)
+        return { status: "error", message: "Please log in again before posting.", id: null };
+      const db0 = ctx.db();
+      const [posterRow] = await db0.select().from(profiles).where(eq(profiles.id, author.id)).limit(1);
+      if (posterRow?.postRestrictedUntil && new Date(posterRow.postRestrictedUntil).getTime() > Date.now()) {
+        return { status: "error", message: "Your account is temporarily restricted from posting due to community guideline violations.", id: null };
+      }
+      const text = args.text.trim();
+      if (!text && args.photos.length === 0)
+        return { status: "error", message: "Write something or add a photo first.", id: null };
+      if (wordCount(text) > 1000)
+        return { status: "error", message: "Posts can be up to 1,000 words.", id: null };
+      if (text) {
+        const review = await moderateText(ctx, text);
+        if (!review.allowed)
+          return { status: "blocked", message: review.feedback || "Please rewrite this around your own experience or a positive request.", id: null };
+      }
+      const db = ctx.db();
+      const [post] = await db.insert(posts).values({ authorId: author.id, text }).returning({ id: posts.id });
+      let newSlug = null;
+      if (post) {
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        const rand = Math.random().toString(36).slice(2, 6);
+        newSlug = `${author.handle}-${dateStr}-${rand}`;
+        await db.update(posts).set({ slug: newSlug }).where(eq(posts.id, post.id));
+      }
+      if (!post)
+        return { status: "error", message: "Your post could not be saved.", id: null };
+      for (let index = 0;index < args.photos.length; index += 1) {
+        const photo = args.photos[index];
+        if (!photo)
+          continue;
+        const key = `posts/${post.id}/${crypto.randomUUID()}`;
+        await ctx.blobs.put(key, decodeBase64(photo.dataBase64), { contentType: photo.mimeType });
+        await db.insert(postImages).values({ postId: post.id, blobKey: key, position: index, altText: "Photo shared with this post" });
+      }
+      if (text)
+        await notifyMentions(ctx, author.id, text, post.id, null);
+      const [savedPost] = await db.select().from(posts).where(eq(posts.id, post.id)).limit(1);
+      if (savedPost)
+        await queueGoogleSync(ctx, "posts", String(savedPost.id), "upsert", postSheetRow(savedPost));
+      ctx.invalidateQueries();
+      return { status: "ok", message: null, id: post.id, slug: newSlug };
     }
-    const db = ctx.db();
-    const [post] = await db.insert(posts).values({ authorId: author.id, text }).returning({ id: posts.id });
-    let newSlug = null;
-    if (post) {
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const rand = Math.random().toString(36).slice(2, 6);
-      newSlug = `${author.handle}-${dateStr}-${rand}`;
-      await db.update(posts).set({ slug: newSlug }).where(eq(posts.id, post.id));
-    }
-    if (!post)
-      return { status: "error", message: "Your post could not be saved.", id: null };
-    for (let index = 0;index < args.photos.length; index += 1) {
-      const photo = args.photos[index];
-      if (!photo)
-        continue;
-      const key = `posts/${post.id}/${crypto.randomUUID()}`;
-      await ctx.blobs.put(key, decodeBase64(photo.dataBase64), { contentType: photo.mimeType });
-      await db.insert(postImages).values({ postId: post.id, blobKey: key, position: index, altText: "Photo shared with this post" });
-    }
-    if (text)
-      await notifyMentions(ctx, author.id, text, post.id, null);
-    const [savedPost] = await db.select().from(posts).where(eq(posts.id, post.id)).limit(1);
-    if (savedPost)
-      await queueGoogleSync(ctx, "posts", String(savedPost.id), "upsert", postSheetRow(savedPost));
-    ctx.invalidateQueries();
-    return { status: "ok", message: null, id: post.id, slug: newSlug };
-  } }),
+  }),
   editPost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), text: string2().max(12000) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
@@ -7114,39 +7196,69 @@ var Actions = {
     ctx.invalidateQueries();
     return { active: !existing, count: 0 };
   } }),
-  reportUser: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
-    const reporter = await approvedProfile(ctx, args.token);
-    if (!reporter || reporter.id === args.profileId)
-      return { ok: false };
-    const db = ctx.db();
-    const [target] = await db.select().from(profiles).where(eq(profiles.id, args.profileId)).limit(1);
-    if (!target)
-      return { ok: false };
-    await db.insert(reports).values({ reporterId: reporter.id, targetType: "account", targetId: args.profileId, reason: args.reason, details: args.details || null, status: "pending" });
-    return { ok: true };
-  } }),
-  reportPost: defineAction({ request: object({ token: string2(), postId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
-    const reporter = await approvedProfile(ctx, args.token);
-    if (!reporter)
-      return { ok: false };
-    const db = ctx.db();
-    const [post] = await db.select().from(posts).where(eq(posts.id, args.postId)).limit(1);
-    if (!post)
-      return { ok: false };
-    await db.insert(reports).values({ reporterId: reporter.id, targetType: "post", targetId: args.postId, reason: args.reason, details: args.details || null, status: "pending" });
-    return { ok: true };
-  } }),
-  reportComment: defineAction({ request: object({ token: string2(), commentId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
-    const reporter = await approvedProfile(ctx, args.token);
-    if (!reporter)
-      return { ok: false };
-    const db = ctx.db();
-    const [comment] = await db.select().from(comments).where(eq(comments.id, args.commentId)).limit(1);
-    if (!comment)
-      return { ok: false };
-    await db.insert(reports).values({ reporterId: reporter.id, targetType: "comment", targetId: args.commentId, reason: args.reason, details: args.details || null, status: "pending" });
-    return { ok: true };
-  } }),
+  reportUser: defineAction({
+    request: object({ token: string2(), profileId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }),
+    response: object({ ok: boolean2() }),
+    async handler(ctx, args) {
+      const reporter = await approvedProfile(ctx, args.token);
+      if (!reporter || reporter.id === args.profileId)
+        return { ok: false };
+      if (reporter.reportingSuspended)
+        return { ok: false };
+      const db = ctx.db();
+      const [target] = await db.select().from(profiles).where(eq(profiles.id, args.profileId)).limit(1);
+      if (!target)
+        return { ok: false };
+      await db.insert(reports).values({ reporterId: reporter.id, targetType: "account", targetId: args.profileId, reason: args.reason, details: args.details || null, status: "pending" });
+      const [latestReport] = await db.select().from(reports).where(eq(reports.reporterId, reporter.id)).orderBy(desc(reports.id)).limit(1);
+      if (latestReport) {
+        triageReport(ctx, latestReport.id).catch(() => {});
+      }
+      return { ok: true };
+    }
+  }),
+  reportPost: defineAction({
+    request: object({ token: string2(), postId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }),
+    response: object({ ok: boolean2() }),
+    async handler(ctx, args) {
+      const reporter = await approvedProfile(ctx, args.token);
+      if (!reporter)
+        return { ok: false };
+      if (reporter.reportingSuspended)
+        return { ok: false };
+      const db = ctx.db();
+      const [post] = await db.select().from(posts).where(eq(posts.id, args.postId)).limit(1);
+      if (!post)
+        return { ok: false };
+      await db.insert(reports).values({ reporterId: reporter.id, targetType: "post", targetId: args.postId, reason: args.reason, details: args.details || null, status: "pending" });
+      const [latestReport] = await db.select().from(reports).where(eq(reports.reporterId, reporter.id)).orderBy(desc(reports.id)).limit(1);
+      if (latestReport) {
+        triageReport(ctx, latestReport.id).catch(() => {});
+      }
+      return { ok: true };
+    }
+  }),
+  reportComment: defineAction({
+    request: object({ token: string2(), commentId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }),
+    response: object({ ok: boolean2() }),
+    async handler(ctx, args) {
+      const reporter = await approvedProfile(ctx, args.token);
+      if (!reporter)
+        return { ok: false };
+      if (reporter.reportingSuspended)
+        return { ok: false };
+      const db = ctx.db();
+      const [comment] = await db.select().from(comments).where(eq(comments.id, args.commentId)).limit(1);
+      if (!comment)
+        return { ok: false };
+      await db.insert(reports).values({ reporterId: reporter.id, targetType: "comment", targetId: args.commentId, reason: args.reason, details: args.details || null, status: "pending" });
+      const [latestReport] = await db.select().from(reports).where(eq(reports.reporterId, reporter.id)).orderBy(desc(reports.id)).limit(1);
+      if (latestReport) {
+        triageReport(ctx, latestReport.id).catch(() => {});
+      }
+      return { ok: true };
+    }
+  }),
   getBlockedUsers: defineAction({ request: object({ token: string2() }), response: object({ users: array(profileSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
