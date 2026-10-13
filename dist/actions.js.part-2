@@ -1,20 +1,3 @@
-         }
-          }
-        }
-      }
-    }
-    ctx.override({
-      zodSchema,
-      jsonSchema: schema,
-      path: seen.path ?? []
-    });
-  };
-  for (const entry of [...ctx.seen.entries()].reverse()) {
-    flattenRef(entry[0]);
-  }
-  const result = {};
-  if (ctx.target === "draft-2020-12") {
-    result.$schema = "https://json-schema.org/draft/2020-12/schema";
   } else if (ctx.target === "draft-07") {
     result.$schema = "http://json-schema.org/draft-07/schema#";
   } else if (ctx.target === "draft-04") {
@@ -2864,4 +2847,11 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
       return { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: "Connect Google Sheets to Muse, then try again." };
     const createBody = { properties: { title }, sheets: tabs.map(({ tab }) => ({ properties: { title: tab } })) };
     const created = await runCli(["sheets", "spreadsheets", "create", "--json", JSON.stringify(createBody)]);
-    const spreadsheetId = r
+    const spreadsheetId = readString(created.data?.spreadsheetId);
+    const spreadsheetUrl = readString(created.data?.spreadsheetUrl);
+    if (!created.ok || !spreadsheetId)
+      return { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: created.error ?? "The Gola Database spreadsheet could not be created." };
+    for (const { tab, rows } of tabs) {
+      const endColumn = String.fromCharCode(64 + Math.max(1, rows[0]?.length ?? 1));
+      const updated = await runCli(["sheets", "spreadsheets", "values", "update", "--params", JSON.stringify({ spreadsheetId, range: `${tab}!A1:${endColumn}${Math.max(1, rows.length)}`, valueInputOption: "USER_ENTERED" }), "--json", JSON.stringify({ majorDimension: "ROWS", values: rows })]);
+      if (!updated.ok)
