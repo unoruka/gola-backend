@@ -1,70 +1,4 @@
- else if (ctx.target === "draft-04") {
-    result.$schema = "http://json-schema.org/draft-04/schema#";
-  } else if (ctx.target === "openapi-3.0") {}
-  if (ctx.external?.uri) {
-    const id = ctx.external.registry.get(schema)?.id;
-    if (!id)
-      throw new Error("Schema is missing an `id` property");
-    result.$id = ctx.external.uri(id);
-  }
-  Object.assign(result, root.def ?? root.schema);
-  const rootMetaId = ctx.metadataRegistry.get(schema)?.id;
-  if (rootMetaId !== undefined && result.id === rootMetaId)
-    delete result.id;
-  const defs = ctx.external?.defs ?? {};
-  for (const entry of ctx.seen.entries()) {
-    const seen = entry[1];
-    if (seen.def && seen.defId) {
-      if (seen.def.id === seen.defId)
-        delete seen.def.id;
-      defs[seen.defId] = seen.def;
-    }
-  }
-  if (ctx.external) {} else {
-    if (Object.keys(defs).length > 0) {
-      if (ctx.target === "draft-2020-12") {
-        result.$defs = defs;
-      } else {
-        result.definitions = defs;
-      }
-    }
-  }
-  try {
-    const finalized = JSON.parse(JSON.stringify(result));
-    Object.defineProperty(finalized, "~standard", {
-      value: {
-        ...schema["~standard"],
-        jsonSchema: {
-          input: createStandardJSONSchemaMethod(schema, "input", ctx.processors),
-          output: createStandardJSONSchemaMethod(schema, "output", ctx.processors)
-        }
-      },
-      enumerable: false,
-      writable: false
-    });
-    return finalized;
-  } catch (_err) {
-    throw new Error("Error converting schema to JSON.");
-  }
-}
-function isTransforming(_schema, _ctx) {
-  const ctx = _ctx ?? { seen: new Set };
-  if (ctx.seen.has(_schema))
-    return false;
-  ctx.seen.add(_schema);
-  const def = _schema._zod.def;
-  if (def.type === "transform")
-    return true;
-  if (def.type === "array")
-    return isTransforming(def.element, ctx);
-  if (def.type === "set")
-    return isTransforming(def.valueType, ctx);
-  if (def.type === "lazy")
-    return isTransforming(def.getter(), ctx);
-  if (def.type === "promise" || def.type === "optional" || def.type === "nonoptional" || def.type === "nullable" || def.type === "readonly" || def.type === "default" || def.type === "prefault") {
-    return isTransforming(def.innerType, ctx);
-  }
-  if (def.type === "intersection") {
+rsection") {
     return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
   }
   if (def.type === "record" || def.type === "map") {
@@ -2720,6 +2654,17 @@ var bookmarks = sqliteTable("bookmarks", {
   postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
 }, (table) => [primaryKey({ columns: [table.profileId, table.postId] })]);
+var collections = sqliteTable("collections", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  profileId: integer2("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+});
+var collectionPosts = sqliteTable("collection_posts", {
+  collectionId: integer2("collection_id").notNull().references(() => collections.id, { onDelete: "cascade" }),
+  postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [primaryKey({ columns: [table.collectionId, table.postId] })]);
 var reports = sqliteTable("reports", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
@@ -2850,4 +2795,58 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
     if (!created.ok || !spreadsheetId)
       return { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: created.error ?? "The Gola Database spreadsheet could not be created." };
     for (const { tab, rows } of tabs) {
-      const endColumn = String.fromCharCode(64 + Math.max(1, rows[0]?.le
+      const endColumn = String.fromCharCode(64 + Math.max(1, rows[0]?.length ?? 1));
+      const updated = await runCli(["sheets", "spreadsheets", "values", "update", "--params", JSON.stringify({ spreadsheetId, range: `${tab}!A1:${endColumn}${Math.max(1, rows.length)}`, valueInputOption: "USER_ENTERED" }), "--json", JSON.stringify({ majorDimension: "ROWS", values: rows })]);
+      if (!updated.ok)
+        return { ok: false, spreadsheetId, spreadsheetUrl, error: updated.error ?? `The ${tab} tab could not be prepared.` };
+    }
+    const verified = await runCli(["sheets", "spreadsheets", "get", "--params", JSON.stringify({ spreadsheetId, fields: "spreadsheetId,spreadsheetUrl,sheets.properties.title" })]);
+    if (!verified.ok)
+      return { ok: false, spreadsheetId, spreadsheetUrl, error: "The spreadsheet was created, but Gola could not verify it." };
+    return { ok: true, spreadsheetId, spreadsheetUrl: readString(verified.data?.spreadsheetUrl) ?? spreadsheetUrl, error: null };
+  },
+  async appendGoogleSheetRow({ spreadsheetId, tab, values }) {
+    const status = await runCli(["sheets", "status"]);
+    if (!status.ok || status.data?.status !== "connected")
+      return { ok: false, error: "Google Sheets is not connected." };
+    const result = await runCli(["sheets", "spreadsheets", "values", "append", "--params", JSON.stringify({ spreadsheetId, range: `${tab}!A:Z`, valueInputOption: "USER_ENTERED", insertDataOption: "INSERT_ROWS" }), "--json", JSON.stringify({ majorDimension: "ROWS", values: [values] })]);
+    return result.ok ? { ok: true, error: null } : { ok: false, error: result.error ?? "Google Sheets did not accept the update." };
+  },
+  async uploadSourceToDrive({ filename, dataBase64 }) {
+    const status = await runCli(["drive", "status"]);
+    if (!status.ok || status.data?.status !== "connected")
+      return { ok: false, fileUrl: null, error: "Connect Google Drive to Muse, then try again." };
+    const exportDir = "/home/hatch/workspace/gola-exports";
+    await mkdir(exportDir, { recursive: true });
+    const path = join(exportDir, `${crypto.randomUUID()}-${filename.replace(/[^a-zA-Z0-9._-]/gu, "-")}`);
+    try {
+      await writeFile(path, Buffer.from(dataBase64, "base64"));
+      const uploaded = await runCli(["drive", "+upload", path, "--name", filename]);
+      const fileId = readString(uploaded.data?.id);
+      if (!uploaded.ok || !fileId)
+        return { ok: false, fileUrl: null, error: uploaded.error ?? "Google Drive could not save the ZIP." };
+      const details = await runCli(["drive", "files", "get", "--params", JSON.stringify({ fileId, fields: "id,name,webViewLink" })]);
+      return details.ok ? { ok: true, fileUrl: readString(details.data?.webViewLink), error: null } : { ok: true, fileUrl: null, error: null };
+    } finally {
+      await rm(path, { force: true });
+    }
+  }
+});
+// ../gola-apk/gola-source/server/src/actions.ts
+var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
+var profileSchema = object({
+  id: number2(),
+  displayName: string2(),
+  handle: string2(),
+  bio: string2().nullable(),
+  isFounder: boolean2(),
+  badge: _enum(["none", "community", "official"]),
+  isPrivate: boolean2(),
+  mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
+  createdAt: string2(),
+  avatarUrl: string2().nullable(),
+  themeColor: colorChoiceSchema
+});
+var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
+var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
+var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, contin
