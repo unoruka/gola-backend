@@ -1,58 +1,4 @@
-rsection") {
-    return isTransforming(def.left, ctx) || isTransforming(def.right, ctx);
-  }
-  if (def.type === "record" || def.type === "map") {
-    return isTransforming(def.keyType, ctx) || isTransforming(def.valueType, ctx);
-  }
-  if (def.type === "pipe") {
-    if (_schema._zod.traits.has("$ZodCodec"))
-      return true;
-    return isTransforming(def.in, ctx) || isTransforming(def.out, ctx);
-  }
-  if (def.type === "object") {
-    for (const key in def.shape) {
-      if (isTransforming(def.shape[key], ctx))
-        return true;
-    }
-    return false;
-  }
-  if (def.type === "union") {
-    for (const option of def.options) {
-      if (isTransforming(option, ctx))
-        return true;
-    }
-    return false;
-  }
-  if (def.type === "tuple") {
-    for (const item of def.items) {
-      if (isTransforming(item, ctx))
-        return true;
-    }
-    if (def.rest && isTransforming(def.rest, ctx))
-      return true;
-    return false;
-  }
-  return false;
-}
-var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
-  const ctx = initializeContext({ ...params, processors });
-  process2(schema, ctx);
-  extractDefs(ctx, schema);
-  return finalize(ctx, schema);
-};
-var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) => {
-  const { libraryOptions, target } = params ?? {};
-  const ctx = initializeContext({ ...libraryOptions ?? {}, target, io, processors });
-  process2(schema, ctx);
-  extractDefs(ctx, schema);
-  return finalize(ctx, schema);
-};
-// ../gola-apk/gola-source/node_modules/zod/v4/core/json-schema-processors.js
-var formatMap = {
-  guid: "uuid",
-  url: "uri",
-  datetime: "date-time",
-  json_string: "json-string",
+"json-string",
   regex: ""
 };
 var stringProcessor = (schema, ctx, _json, _params) => {
@@ -2833,6 +2779,113 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
   }
 });
 // ../gola-apk/gola-source/server/src/actions.ts
+var fcmTokenCache = null;
+function getFcmServiceAccount() {
+  try {
+    const raw = globalThis.process?.env?.FCM_SERVICE_ACCOUNT;
+    if (!raw)
+      return null;
+    const sa = JSON.parse(raw);
+    if (!sa.project_id || !sa.client_email || !sa.private_key)
+      return null;
+    return sa;
+  } catch {
+    return null;
+  }
+}
+function b64url(data) {
+  const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
+  let bin = "";
+  for (const b of bytes)
+    bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function getFcmAccessToken(sa) {
+  if (fcmTokenCache && Date.now() < fcmTokenCache.expiresAt - 60000) {
+    return fcmTokenCache.token;
+  }
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT", kid: sa.private_key_id ?? "" }));
+    const payload = b64url(JSON.stringify({
+      iss: sa.client_email,
+      scope: "https://www.googleapis.com/auth/firebase.messaging",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600
+    }));
+    const pem = sa.private_key.replace(/\\n/g, `
+`);
+    const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s/g, "");
+    const keyBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey("pkcs8", keyBytes, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+    const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(`${header}.${payload}`));
+    const jwt = `${header}.${payload}.${b64url(new Uint8Array(sig))}`;
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+    });
+    if (!res.ok)
+      return null;
+    const json = await res.json();
+    if (!json.access_token)
+      return null;
+    fcmTokenCache = { token: json.access_token, expiresAt: Date.now() + (json.expires_in ?? 3600) * 1000 };
+    return json.access_token;
+  } catch {
+    return null;
+  }
+}
+async function sendPushNotification(ctx, recipientId, title, body, data) {
+  try {
+    const sa = getFcmServiceAccount();
+    if (!sa)
+      return;
+    const db = ctx.db();
+    const tokens = await db.select({ pushToken: pushTokens.pushToken }).from(pushTokens).where(eq(pushTokens.profileId, recipientId)).limit(10);
+    if (!tokens.length)
+      return;
+    const accessToken = await getFcmAccessToken(sa);
+    if (!accessToken)
+      return;
+    const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
+    await Promise.all(tokens.map(async ({ pushToken }) => {
+      try {
+        await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: {
+              token: pushToken,
+              notification: { title, body },
+              android: {
+                notification: {
+                  channel_id: "gola_alerts",
+                  sound: "gola_chime",
+                  icon: "ic_notification"
+                }
+              },
+              data: { ...data, channel_id: "gola_alerts" }
+            }
+          })
+        });
+      } catch {}
+    }));
+  } catch {}
+}
+async function pushName(ctx, profileId) {
+  try {
+    const db = ctx.db();
+    const [p] = await db.select({ displayName: profiles.displayName }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
+    return p?.displayName || "Someone";
+  } catch {
+    return "Someone";
+  }
+}
 var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
 var profileSchema = object({
   id: number2(),
@@ -2842,11 +2895,4 @@ var profileSchema = object({
   isFounder: boolean2(),
   badge: _enum(["none", "community", "official"]),
   isPrivate: boolean2(),
-  mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
-  createdAt: string2(),
-  avatarUrl: string2().nullable(),
-  themeColor: colorChoiceSchema
-});
-var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
-var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
-var accountProfileSchema = profileSchema.extend({ approvalStatus: _enum(["pending", "approved", "declined"]), profileUpdatedAt: string2().nullable(), themeColor: colorChoiceSchema, themeChangedAt: string2().nullable(), language: languageSchema, contin
+  mentionPrivacy: _enum(["everyone", "peopleIFollow"
