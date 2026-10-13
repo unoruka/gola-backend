@@ -1,4 +1,19 @@
-arks).where(inArray(bookmarks.postId, ownPosts));
+await db.select({ id: comments.id }).from(comments).where(eq(comments.authorId, profile.id));
+  const commentsOnOwnPosts = ownPosts.length ? await db.select({ id: comments.id }).from(comments).where(inArray(comments.postId, ownPosts)) : [];
+  const commentIds = [...new Set([...ownComments, ...commentsOnOwnPosts].map((row) => row.id))];
+  await db.delete(notifications).where(eq(notifications.recipientId, profile.id));
+  await db.delete(notifications).where(eq(notifications.actorId, profile.id));
+  if (ownPosts.length)
+    await db.delete(notifications).where(inArray(notifications.postId, ownPosts));
+  await db.delete(follows).where(eq(follows.followerId, profile.id));
+  await db.delete(follows).where(eq(follows.followingId, profile.id));
+  await db.delete(likes).where(eq(likes.profileId, profile.id));
+  await db.delete(reposts).where(eq(reposts.profileId, profile.id));
+  await db.delete(bookmarks).where(eq(bookmarks.profileId, profile.id));
+  if (ownPosts.length) {
+    await db.delete(likes).where(inArray(likes.postId, ownPosts));
+    await db.delete(reposts).where(inArray(reposts.postId, ownPosts));
+    await db.delete(bookmarks).where(inArray(bookmarks.postId, ownPosts));
     await db.delete(comments).where(inArray(comments.postId, ownPosts));
     await db.delete(postImages).where(inArray(postImages.postId, ownPosts));
   }
@@ -32,7 +47,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
   if (authorIds.length === 0)
     return [];
   const db = ctx.db();
-  let rows = await db.select({ post: posts, author: profiles }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(inArray(posts.authorId, authorIds)).orderBy(desc(posts.createdAt), desc(posts.id)).limit(Math.max(limit, onlyIds?.length ?? 0));
+  let rows = await db.select({ post: posts, author: profiles }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(onlyIds && onlyIds.length > 0 ? and(inArray(posts.authorId, authorIds), inArray(posts.id, onlyIds)) : inArray(posts.authorId, authorIds)).orderBy(desc(posts.createdAt), desc(posts.id)).limit(Math.max(limit, onlyIds?.length ?? 0));
   const hiddenIds = await blockedIdsFor(ctx, viewerId);
   rows = rows.filter((row) => isActiveProfile(row.author) && !hiddenIds.has(row.author.id));
   if (onlyIds)
