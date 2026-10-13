@@ -157,8 +157,8 @@ Bun.serve({
         const thumb = row.thumb_key
           ? `https://gola-backend.onrender.com/blobs/${encodeURIComponent(row.thumb_key)}`
           : "https://gola-backend.onrender.com/icon.png";
-        const pageUrl = `https://gola-backend.onrender.com/p/${postId}`;
-        const appLink = `gola://post/${postId}`;
+        const pageUrl = `https://gola-backend.onrender.com/p/${slugOrId}`;
+        const appLink = `gola://post/${slugOrId}`;
         const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
