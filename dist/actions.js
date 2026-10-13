@@ -5753,6 +5753,7 @@ var profiles = sqliteTable("profiles", {
   avatarBlobKey: text("avatar_blob_key"),
   isFounder: integer2("is_founder", { mode: "boolean" }).notNull().default(false),
   badge: text("badge", { enum: ["none", "community", "official"] }).notNull().default("none"),
+  badgeGrantedAt: integer2("badge_granted_at", { mode: "timestamp_ms" }),
   isPrivate: integer2("is_private", { mode: "boolean" }).notNull().default(false),
   themeColor: text("theme_color", { enum: ["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"] }).notNull().default("teal"),
   themeChangedAt: integer2("theme_changed_at", { mode: "timestamp_ms" }),
@@ -6154,6 +6155,7 @@ var profileSchema = object({
   bio: string2().nullable(),
   isFounder: boolean2(),
   badge: _enum(["none", "community", "official"]),
+  badgeGrantedAt: string2().nullable(),
   isPrivate: boolean2(),
   mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
   createdAt: string2(),
@@ -6278,7 +6280,7 @@ async function authenticatedProfile(ctx, token) {
 }
 async function publicProfile(ctx, row, viewerId) {
   const hidden = row.isPrivate && row.id !== viewerId;
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
 }
 async function accountProfile(ctx, row) {
   return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
@@ -6641,7 +6643,7 @@ var Actions = {
       return { status: "error", message: "That account could not be found." };
     if (target.badge === args.badge)
       return { status: "ok", message: args.badge === "none" ? `@${target.handle} has no badge to remove.` : `@${target.handle} already has the ${args.badge} badge.` };
-    await db.update(profiles).set({ badge: args.badge }).where(eq(profiles.id, target.id));
+    await db.update(profiles).set({ badge: args.badge, badgeGrantedAt: args.badge === "none" ? null : new Date }).where(eq(profiles.id, target.id));
     ctx.invalidateQueries();
     const label = args.badge === "none" ? "removed" : args.badge === "official" ? "marked as official" : "marked as a community member";
     return { status: "ok", message: `@${target.handle} has been ${label}.` };
