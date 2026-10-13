@@ -1,14 +1,4 @@
-
-            if (key in parentSeen.def && JSON.stringify(schema[key]) === JSON.stringify(parentSeen.def[key])) {
-              delete schema[key];
-            }
-          }
-        }
-      }
-    }
-    ctx.override({
-      zodSchema,
-      jsonSchema: schema,
+ jsonSchema: schema,
       path: seen.path ?? []
     });
   };
@@ -2722,7 +2712,9 @@ var stories = sqliteTable("stories", {
   text: text("text"),
   blobKey: text("blob_key"),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
-  expiresAt: integer2("expires_at", { mode: "timestamp_ms" }).notNull()
+  expiresAt: integer2("expires_at", { mode: "timestamp_ms" }).notNull(),
+  visibility: text("visibility").notNull().default("everyone"),
+  bgColor: text("bg_color")
 });
 var storyViews = sqliteTable("story_views", {
   storyId: integer2("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
@@ -2857,4 +2849,9 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
   async googleConnectionStatus({ service }) {
     const result = await runCli([service, "status"]);
     const connected = result.ok && result.data?.status === "connected";
-    return { conne
+    return { connected, message: connected ? `${service === "drive" ? "Google Drive" : "Google Sheets"} is connected.` : `${service === "drive" ? "Google Drive" : "Google Sheets"} needs to be connected in Muse first.` };
+  },
+  async initializeGoogleSheets({ title, tabs }) {
+    const status = await runCli(["sheets", "status"]);
+    if (!status.ok || status.data?.status !== "connected")
+      retur
