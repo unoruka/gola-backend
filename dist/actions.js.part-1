@@ -3252,4 +3252,13 @@ var formatMap = {
   guid: "uuid",
   url: "uri",
   datetime: "date-time",
-  json_string: 
+  json_string: "json-string",
+  regex: ""
+};
+var stringProcessor = (schema, ctx, _json, _params) => {
+  const json = _json;
+  json.type = "string";
+  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod.bag;
+  if (typeof minimum === "number")
+    json.minLength = minimum;
+  if (typeo
