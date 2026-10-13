@@ -5783,6 +5783,7 @@ var posts = sqliteTable("posts", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   authorId: integer2("author_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
+  slug: text("slug"),
   editedAt: integer2("edited_at", { mode: "timestamp_ms" }),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
 });
@@ -6166,6 +6167,7 @@ var commentSchema = object({ id: number2(), parentCommentId: number2().nullable(
 var postSchema = object({
   id: number2(),
   text: string2(),
+  slug: string2().nullable(),
   createdAt: string2(),
   editedAt: string2().nullable(),
   author: profileSchema,
@@ -6421,7 +6423,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
   ]);
   const commentsVisible = commentsRaw.filter(({ author }) => isActiveProfile(author) && !hiddenIds.has(author.id));
   const images = await Promise.all(imagesRaw.map(async (row) => ({ ...row, url: await ctx.blobs.getUrl(row.blobKey) })));
-  return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId) }))) })));
+  return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, slug: post.slug ?? null, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId) }))) })));
 }
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
@@ -6687,18 +6689,19 @@ var Actions = {
     const followed = await ctx.db().select({ id: follows.followingId }).from(follows).innerJoin(profiles, eq(follows.followingId, profiles.id)).where(and(eq(follows.followerId, viewer.id), eq(profiles.isPrivate, false)));
     return { posts: await loadPosts(ctx, viewer.id, [viewer.id, ...followed.map((x) => x.id)], args.limit) };
   } }),
-  getPost: defineAction({ request: object({ token: string2(), postId: number2().int().positive() }), response: object({ post: postSchema.nullable() }), async handler(ctx, args) {
+  getPost: defineAction({ request: object({ token: string2(), postId: string2() }), response: object({ post: postSchema.nullable() }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { post: null };
     const db = ctx.db();
-    const [postRow] = await db.select().from(posts).where(eq(posts.id, args.postId)).limit(1);
+    const isNumeric = /^\d+$/.test(args.postId);
+    const [postRow] = await db.select().from(posts).where(isNumeric ? eq(posts.id, Number(args.postId)) : eq(posts.slug, args.postId)).limit(1);
     if (!postRow)
       return { post: null };
-    if (!await canAccessPost(ctx, viewer.id, args.postId))
+    if (!await canAccessPost(ctx, viewer.id, postRow.id))
       return { post: null };
     const posts2 = await loadPosts(ctx, viewer.id, [postRow.authorId], 50);
-    const post = posts2.find((p) => p.id === String(args.postId)) ?? null;
+    const post = posts2.find((p) => p.id === String(postRow.id)) ?? null;
     return { post };
   } }),
   getProfile: defineAction({ request: object({ token: string2(), profileId: number2().int().positive() }), response: object({ profile: profileSchema.nullable(), postCount: number2(), followerCount: number2(), followingCount: number2(), viewerFollowing: boolean2(), viewerBlocked: boolean2(), blockedByTarget: boolean2(), privateView: boolean2(), posts: array(postSchema) }), async handler(ctx, args) {
@@ -6757,6 +6760,12 @@ var Actions = {
     }
     const db = ctx.db();
     const [post] = await db.insert(posts).values({ authorId: author.id, text }).returning({ id: posts.id });
+    if (post) {
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const rand = Math.random().toString(36).slice(2, 6);
+      const slug = `${author.handle}-${dateStr}-${rand}`;
+      await db.update(posts).set({ slug }).where(eq(posts.id, post.id));
+    }
     if (!post)
       return { status: "error", message: "Your post could not be saved.", id: null };
     for (let index = 0;index < args.photos.length; index += 1) {

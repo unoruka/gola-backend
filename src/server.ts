@@ -128,19 +128,21 @@ Bun.serve({
     // an "Open in Gola" button (custom scheme) for users without the app.
     // Private-account posts show a generic placeholder — never the caption.
     if (req.method === "GET" && url.pathname.startsWith("/p/")) {
-      const postId = url.pathname.slice("/p/".length).split("/")[0];
-      if (!/^\d+$/.test(postId)) {
+      const slugOrId = url.pathname.slice("/p/".length).split("/")[0];
+      if (!slugOrId || !/^[A-Za-z0-9_-]+$/.test(slugOrId)) {
         return new Response("Not found", { status: 404, headers: CORS });
       }
       try {
         const { db } = await import("./db");
         const { sql } = await import("drizzle-orm");
+        // Support both new slugs (hix-20261013-a7f2) and legacy numeric IDs.
+        const isNumeric = /^\d+$/.test(slugOrId);
         const rows = await db.execute(sql`
-          SELECT p.id, p.text, pr.display_name, pr.handle, pr.is_private, pr.is_founder,
+          SELECT p.id, p.text, p.slug, pr.display_name, pr.handle, pr.is_private, pr.is_founder,
                  (SELECT blob_key FROM post_images WHERE post_id = p.id ORDER BY position ASC LIMIT 1) as thumb_key
           FROM posts p
           JOIN profiles pr ON pr.id = p.author_id
-          WHERE p.id = ${Number(postId)}
+          WHERE ${isNumeric ? sql`p.id = ${Number(slugOrId)}` : sql`p.slug = ${slugOrId}`}
           LIMIT 1
         `);
         const row = (rows as unknown as any[])[0];
