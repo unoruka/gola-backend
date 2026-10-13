@@ -6687,6 +6687,20 @@ var Actions = {
     const followed = await ctx.db().select({ id: follows.followingId }).from(follows).innerJoin(profiles, eq(follows.followingId, profiles.id)).where(and(eq(follows.followerId, viewer.id), eq(profiles.isPrivate, false)));
     return { posts: await loadPosts(ctx, viewer.id, [viewer.id, ...followed.map((x) => x.id)], args.limit) };
   } }),
+  getPost: defineAction({ request: object({ token: string2(), postId: number2().int().positive() }), response: object({ post: postSchema.nullable() }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { post: null };
+    const db = ctx.db();
+    const [postRow] = await db.select().from(posts).where(eq(posts.id, args.postId)).limit(1);
+    if (!postRow)
+      return { post: null };
+    if (!await canAccessPost(ctx, viewer.id, args.postId))
+      return { post: null };
+    const posts2 = await loadPosts(ctx, viewer.id, [postRow.authorId], 50);
+    const post = posts2.find((p) => p.id === String(args.postId)) ?? null;
+    return { post };
+  } }),
   getProfile: defineAction({ request: object({ token: string2(), profileId: number2().int().positive() }), response: object({ profile: profileSchema.nullable(), postCount: number2(), followerCount: number2(), followingCount: number2(), viewerFollowing: boolean2(), viewerBlocked: boolean2(), blockedByTarget: boolean2(), privateView: boolean2(), posts: array(postSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
