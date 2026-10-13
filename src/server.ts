@@ -105,6 +105,79 @@ Bun.serve({
       });
     }
 
+    // Android App Links verification — lets gola-backend.onrender.com/p/* URLs
+    // open directly in the Gola app when installed.
+    if (req.method === "GET" && url.pathname === "/.well-known/assetlinks.json") {
+      const assetlinks = [
+        {
+          relation: ["delegate_permission/common.handle_all_urls"],
+          target: {
+            namespace: "android_app",
+            package_name: "com.gola.app",
+            sha256_cert_fingerprints: [
+              "00:97:BC:9E:2E:7D:30:86:56:95:B5:09:42:41:70:6C:30:6E:CA:41:44:CE:D7:1A:F5:12:7E:31:E7:E4:DA:DB",
+            ],
+          },
+        },
+      ];
+      return Response.json(assetlinks, { headers: CORS });
+    }
+
+    // Shared post preview: GET /p/:id serves a tiny HTML page with Open Graph
+    // tags so WhatsApp/Telegram render a clickable preview card. The page has
+    // an "Open in Gola" button (custom scheme) for users without the app.
+    // Private-account posts show a generic placeholder — never the caption.
+    if (req.method === "GET" && url.pathname.startsWith("/p/")) {
+      const postId = url.pathname.slice("/p/".length).split("/")[0];
+      if (!/^\d+$/.test(postId)) {
+        return new Response("Not found", { status: 404, headers: CORS });
+      }
+      try {
+        const { db } = await import("./db");
+        const { sql } = await import("drizzle-orm");
+        const rows = await db.execute(sql`
+          SELECT p.id, p.text, pr.display_name, pr.handle, pr.is_private, pr.is_founder,
+                 (SELECT blob_key FROM post_images WHERE post_id = p.id ORDER BY position ASC LIMIT 1) as thumb_key
+          FROM posts p
+          JOIN profiles pr ON pr.id = p.author_id
+          WHERE p.id = ${Number(postId)}
+          LIMIT 1
+        `);
+        const row = (rows as unknown as any[])[0];
+        if (!row) {
+          return new Response("Not found", { status: 404, headers: CORS });
+        }
+        const isPrivate = !!row.is_private;
+        const title = isPrivate ? "A private post on Gola" : `${row.display_name} on Gola`;
+        const desc = isPrivate
+          ? "This post is private. Open it in the Gola app."
+          : String(row.text || "").slice(0, 200);
+        const thumb = row.thumb_key
+          ? `https://gola-backend.onrender.com/blobs/${encodeURIComponent(row.thumb_key)}`
+          : "https://gola-backend.onrender.com/icon.png";
+        const pageUrl = `https://gola-backend.onrender.com/p/${postId}`;
+        const appLink = `gola://post/${postId}`;
+        const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title>
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="${esc(thumb)}">
+<meta property="og:url" content="${esc(pageUrl)}">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+<style>body{font-family:system-ui,sans-serif;background:#f6f1e7;color:#2b2620;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}.card{background:#fffdf8;border:3px solid #2b2620;border-radius:20px;box-shadow:6px 6px 0 #2b2620;padding:32px;max-width:340px;text-align:center}h1{font-size:20px;margin:0 0 8px}p{font-size:14px;opacity:.75}a{display:inline-block;margin-top:16px;background:#009788;color:#fff;font-weight:700;padding:12px 28px;border-radius:999px;text-decoration:none;border:3px solid #2b2620}</style>
+<script>window.location.replace(${JSON.stringify(appLink)});</script></head>
+<body><div class="card"><h1>${esc(title)}</h1><p>${esc(desc)}</p><a href="${esc(appLink)}">Open in Gola</a></div></body></html>`;
+        return new Response(html, {
+          headers: { ...CORS, "content-type": "text/html; charset=utf-8" },
+        });
+      } catch (e) {
+        console.log("[gola][preview] error:", e instanceof Error ? e.message : e);
+        return new Response("Not found", { status: 404, headers: CORS });
+      }
+    }
+
     if (
       req.method === "POST" &&
       (url.pathname === "/actions" || url.pathname === "/actions/")
