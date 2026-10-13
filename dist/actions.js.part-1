@@ -1,5 +1,5 @@
 // @bun
-// ../gola-apk/gola-source/node_modules/zod/v4/core/core.js
+// ../node_modules/zod/v4/core/core.js
 var _a;
 function $constructor(name, initializer, params) {
   function init(inst, def) {
@@ -74,7 +74,7 @@ function config(newConfig) {
     Object.assign(globalConfig, newConfig);
   return globalConfig;
 }
-// ../gola-apk/gola-source/node_modules/zod/v4/core/util.js
+// ../node_modules/zod/v4/core/util.js
 function getEnumValues(entries) {
   const numericValues = Object.values(entries).filter((v) => typeof v === "number");
   const values = Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
@@ -475,7 +475,7 @@ function issue(...args) {
   return { ...iss };
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/errors.js
+// ../node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -544,7 +544,7 @@ function formatError(error, mapper = (issue) => issue.message) {
   return fieldErrors;
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/parse.js
+// ../node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -621,7 +621,7 @@ var _safeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
 var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 };
-// ../gola-apk/gola-source/node_modules/zod/v4/core/regexes.js
+// ../node_modules/zod/v4/core/regexes.js
 var cuid = /^[cC][0-9a-z]{6,}$/;
 var cuid2 = /^[0-9a-z]+$/;
 var ulid = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
@@ -679,7 +679,7 @@ var _null = /^null$/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/checks.js
+// ../node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -1068,7 +1068,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/doc.js
+// ../node_modules/zod/v4/core/doc.js
 class Doc {
   constructor(args = []) {
     this.content = [];
@@ -1106,14 +1106,14 @@ class Doc {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/versions.js
+// ../node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 4,
   patch: 3
 };
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/schemas.js
+// ../node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -2390,7 +2390,7 @@ function handleRefineResult(result, payload, input, inst) {
     payload.issues.push(issue(_iss));
   }
 }
-// ../gola-apk/gola-source/node_modules/zod/v4/core/registries.js
+// ../node_modules/zod/v4/core/registries.js
 var _a2;
 var $output = Symbol("ZodOutput");
 var $input = Symbol("ZodInput");
@@ -2440,7 +2440,7 @@ function registry() {
 }
 (_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
-// ../gola-apk/gola-source/node_modules/zod/v4/core/api.js
+// ../node_modules/zod/v4/core/api.js
 function _string(Class, params) {
   return new Class({
     type: "string",
@@ -2895,7 +2895,7 @@ function _check(fn, params) {
   ch._zod.check = fn;
   return ch;
 }
-// ../gola-apk/gola-source/node_modules/zod/v4/core/to-json-schema.js
+// ../node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
   let target = params?.target ?? "draft-2020-12";
   if (target === "draft-4")
@@ -3247,7 +3247,7 @@ var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) =
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
-// ../gola-apk/gola-source/node_modules/zod/v4/core/json-schema-processors.js
+// ../node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
   guid: "uuid",
   url: "uri",
@@ -3289,4 +3289,128 @@ var stringProcessor = (schema, ctx, _json, _params) => {
 };
 var numberProcessor = (schema, ctx, _json, _params) => {
   const json = _json;
-  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum
+  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
+  if (typeof format === "string" && format.includes("int"))
+    json.type = "integer";
+  else
+    json.type = "number";
+  const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
+  const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
+  const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
+  if (exMin) {
+    if (legacy) {
+      json.minimum = exclusiveMinimum;
+      json.exclusiveMinimum = true;
+    } else {
+      json.exclusiveMinimum = exclusiveMinimum;
+    }
+  } else if (typeof minimum === "number") {
+    json.minimum = minimum;
+  }
+  if (exMax) {
+    if (legacy) {
+      json.maximum = exclusiveMaximum;
+      json.exclusiveMaximum = true;
+    } else {
+      json.exclusiveMaximum = exclusiveMaximum;
+    }
+  } else if (typeof maximum === "number") {
+    json.maximum = maximum;
+  }
+  if (typeof multipleOf === "number")
+    json.multipleOf = multipleOf;
+};
+var booleanProcessor = (_schema, _ctx, json, _params) => {
+  json.type = "boolean";
+};
+var nullProcessor = (_schema, ctx, json, _params) => {
+  if (ctx.target === "openapi-3.0") {
+    json.type = "string";
+    json.nullable = true;
+    json.enum = [null];
+  } else {
+    json.type = "null";
+  }
+};
+var neverProcessor = (_schema, _ctx, json, _params) => {
+  json.not = {};
+};
+var unknownProcessor = (_schema, _ctx, _json, _params) => {};
+var enumProcessor = (schema, _ctx, json, _params) => {
+  const def = schema._zod.def;
+  const values = getEnumValues(def.entries);
+  if (values.every((v) => typeof v === "number"))
+    json.type = "number";
+  if (values.every((v) => typeof v === "string"))
+    json.type = "string";
+  json.enum = values;
+};
+var literalProcessor = (schema, ctx, json, _params) => {
+  const def = schema._zod.def;
+  const vals = [];
+  for (const val of def.values) {
+    if (val === undefined) {
+      if (ctx.unrepresentable === "throw") {
+        throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+      }
+    } else if (typeof val === "bigint") {
+      if (ctx.unrepresentable === "throw") {
+        throw new Error("BigInt literals cannot be represented in JSON Schema");
+      } else {
+        vals.push(Number(val));
+      }
+    } else {
+      vals.push(val);
+    }
+  }
+  if (vals.length === 0) {} else if (vals.length === 1) {
+    const val = vals[0];
+    json.type = val === null ? "null" : typeof val;
+    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
+      json.enum = [val];
+    } else {
+      json.const = val;
+    }
+  } else {
+    if (vals.every((v) => typeof v === "number"))
+      json.type = "number";
+    if (vals.every((v) => typeof v === "string"))
+      json.type = "string";
+    if (vals.every((v) => typeof v === "boolean"))
+      json.type = "boolean";
+    if (vals.every((v) => v === null))
+      json.type = "null";
+    json.enum = vals;
+  }
+};
+var customProcessor = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Custom types cannot be represented in JSON Schema");
+  }
+};
+var transformProcessor = (_schema, ctx, _json, _params) => {
+  if (ctx.unrepresentable === "throw") {
+    throw new Error("Transforms cannot be represented in JSON Schema");
+  }
+};
+var arrayProcessor = (schema, ctx, _json, params) => {
+  const json = _json;
+  const def = schema._zod.def;
+  const { minimum, maximum } = schema._zod.bag;
+  if (typeof minimum === "number")
+    json.minItems = minimum;
+  if (typeof maximum === "number")
+    json.maxItems = maximum;
+  json.type = "array";
+  json.items = process2(def.element, ctx, {
+    ...params,
+    path: [...params.path, "items"]
+  });
+};
+var objectProcessor = (schema, ctx, _json, params) => {
+  const json = _json;
+  const def = schema._zod.def;
+  json.type = "object";
+  json.properties = {};
+  const shape = def.shape;
+  for (const key 

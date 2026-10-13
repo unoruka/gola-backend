@@ -1,128 +1,4 @@
- } = schema._zod.bag;
-  if (typeof format === "string" && format.includes("int"))
-    json.type = "integer";
-  else
-    json.type = "number";
-  const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
-  const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
-  const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
-  if (exMin) {
-    if (legacy) {
-      json.minimum = exclusiveMinimum;
-      json.exclusiveMinimum = true;
-    } else {
-      json.exclusiveMinimum = exclusiveMinimum;
-    }
-  } else if (typeof minimum === "number") {
-    json.minimum = minimum;
-  }
-  if (exMax) {
-    if (legacy) {
-      json.maximum = exclusiveMaximum;
-      json.exclusiveMaximum = true;
-    } else {
-      json.exclusiveMaximum = exclusiveMaximum;
-    }
-  } else if (typeof maximum === "number") {
-    json.maximum = maximum;
-  }
-  if (typeof multipleOf === "number")
-    json.multipleOf = multipleOf;
-};
-var booleanProcessor = (_schema, _ctx, json, _params) => {
-  json.type = "boolean";
-};
-var nullProcessor = (_schema, ctx, json, _params) => {
-  if (ctx.target === "openapi-3.0") {
-    json.type = "string";
-    json.nullable = true;
-    json.enum = [null];
-  } else {
-    json.type = "null";
-  }
-};
-var neverProcessor = (_schema, _ctx, json, _params) => {
-  json.not = {};
-};
-var unknownProcessor = (_schema, _ctx, _json, _params) => {};
-var enumProcessor = (schema, _ctx, json, _params) => {
-  const def = schema._zod.def;
-  const values = getEnumValues(def.entries);
-  if (values.every((v) => typeof v === "number"))
-    json.type = "number";
-  if (values.every((v) => typeof v === "string"))
-    json.type = "string";
-  json.enum = values;
-};
-var literalProcessor = (schema, ctx, json, _params) => {
-  const def = schema._zod.def;
-  const vals = [];
-  for (const val of def.values) {
-    if (val === undefined) {
-      if (ctx.unrepresentable === "throw") {
-        throw new Error("Literal `undefined` cannot be represented in JSON Schema");
-      }
-    } else if (typeof val === "bigint") {
-      if (ctx.unrepresentable === "throw") {
-        throw new Error("BigInt literals cannot be represented in JSON Schema");
-      } else {
-        vals.push(Number(val));
-      }
-    } else {
-      vals.push(val);
-    }
-  }
-  if (vals.length === 0) {} else if (vals.length === 1) {
-    const val = vals[0];
-    json.type = val === null ? "null" : typeof val;
-    if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
-      json.enum = [val];
-    } else {
-      json.const = val;
-    }
-  } else {
-    if (vals.every((v) => typeof v === "number"))
-      json.type = "number";
-    if (vals.every((v) => typeof v === "string"))
-      json.type = "string";
-    if (vals.every((v) => typeof v === "boolean"))
-      json.type = "boolean";
-    if (vals.every((v) => v === null))
-      json.type = "null";
-    json.enum = vals;
-  }
-};
-var customProcessor = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Custom types cannot be represented in JSON Schema");
-  }
-};
-var transformProcessor = (_schema, ctx, _json, _params) => {
-  if (ctx.unrepresentable === "throw") {
-    throw new Error("Transforms cannot be represented in JSON Schema");
-  }
-};
-var arrayProcessor = (schema, ctx, _json, params) => {
-  const json = _json;
-  const def = schema._zod.def;
-  const { minimum, maximum } = schema._zod.bag;
-  if (typeof minimum === "number")
-    json.minItems = minimum;
-  if (typeof maximum === "number")
-    json.maxItems = maximum;
-  json.type = "array";
-  json.items = process2(def.element, ctx, {
-    ...params,
-    path: [...params.path, "items"]
-  });
-};
-var objectProcessor = (schema, ctx, _json, params) => {
-  const json = _json;
-  const def = schema._zod.def;
-  json.type = "object";
-  json.properties = {};
-  const shape = def.shape;
-  for (const key in shape) {
+in shape) {
     json.properties[key] = process2(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
@@ -248,7 +124,7 @@ var optionalProcessor = (schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/iso.js
+// ../node_modules/zod/v4/classic/iso.js
 var ZodISODateTime = /* @__PURE__ */ $constructor("ZodISODateTime", (inst, def) => {
   $ZodISODateTime.init(inst, def);
   ZodStringFormat.init(inst, def);
@@ -278,7 +154,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/errors.js
+// ../node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -312,7 +188,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/parse.js
+// ../node_modules/zod/v4/classic/parse.js
 var parse3 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -326,7 +202,7 @@ var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/schemas.js
+// ../node_modules/zod/v4/classic/schemas.js
 var _installedGroups = /* @__PURE__ */ new WeakMap;
 function _installLazyMethods(inst, group, methods) {
   const proto = Object.getPrototypeOf(inst);
@@ -1109,7 +985,7 @@ function refine(fn, _params = {}) {
 function superRefine(fn, params) {
   return _superRefine(fn, params);
 }
-// ../gola-apk/gola-source/node_modules/@hatch/space-sdk/dist/server-contract.js
+// ../node_modules/@hatch/space-sdk/dist/server-contract.js
 var PRIVILEGED_CONTRACT_BRAND = "@hatch/space-sdk/privileged-contract/v1";
 var PRIVILEGED_HANDLERS_FORMAT = "hatch-space-privileged-handlers-v1";
 function definePrivilegedContracts(specs) {
@@ -1162,10 +1038,10 @@ function createDefineAction() {
     };
   };
 }
-// ../gola-apk/gola-source/node_modules/@hatch/space-sdk/dist/index.js
+// ../node_modules/@hatch/space-sdk/dist/index.js
 var defineAction = createDefineAction();
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/entity.js
+// ../node_modules/drizzle-orm/entity.js
 var entityKind = Symbol.for("drizzle:entityKind");
 var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
 function is(value, type) {
@@ -1190,7 +1066,7 @@ function is(value, type) {
   return false;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/column.js
+// ../node_modules/drizzle-orm/column.js
 class Column {
   constructor(table, config) {
     this.table = table;
@@ -1240,7 +1116,7 @@ class Column {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/column-builder.js
+// ../node_modules/drizzle-orm/column-builder.js
 class ColumnBuilder {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -1296,21 +1172,21 @@ class ColumnBuilder {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/table.utils.js
+// ../node_modules/drizzle-orm/table.utils.js
 var TableName = Symbol.for("drizzle:Name");
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/tracing-utils.js
+// ../node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../node_modules/drizzle-orm/pg-core/columns/enum.js
 var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
 function isPgEnum(obj) {
   return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/subquery.js
+// ../node_modules/drizzle-orm/subquery.js
 class Subquery {
   static [entityKind] = "Subquery";
   constructor(sql, fields, alias, isWith = false, usedTables = []) {
@@ -1325,10 +1201,10 @@ class Subquery {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/version.js
+// ../node_modules/drizzle-orm/version.js
 var version2 = "0.45.2";
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/tracing.js
+// ../node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -1355,10 +1231,10 @@ var tracer = {
   }
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/view-common.js
+// ../node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/table.js
+// ../node_modules/drizzle-orm/table.js
 var Schema = Symbol.for("drizzle:Schema");
 var Columns = Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
@@ -1396,7 +1272,7 @@ class Table {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/sql.js
+// ../node_modules/drizzle-orm/sql/sql.js
 function isSQLWrapper(value) {
   return value !== null && value !== undefined && typeof value.getSQL === "function";
 }
@@ -1759,7 +1635,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/utils.js
+// ../node_modules/drizzle-orm/utils.js
 function getColumnNameAndConfig(a, b) {
   return {
     name: typeof a === "string" && a.length > 0 ? a : "",
@@ -1768,7 +1644,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder;
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -1828,7 +1704,7 @@ function isNull(value) {
   return sql`${value} is null`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/expressions/select.js
+// ../node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -1836,7 +1712,7 @@ function desc(column) {
   return sql`${column} desc`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/foreign-keys.js
+// ../node_modules/drizzle-orm/sqlite-core/foreign-keys.js
 class ForeignKeyBuilder {
   static [entityKind] = "SQLiteForeignKeyBuilder";
   reference;
@@ -1890,12 +1766,12 @@ class ForeignKey {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/unique-constraint.js
+// ../node_modules/drizzle-orm/sqlite-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/common.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/common.js
 class SQLiteColumnBuilder extends ColumnBuilder {
   static [entityKind] = "SQLiteColumnBuilder";
   foreignKeyConfigs = [];
@@ -1946,7 +1822,7 @@ class SQLiteColumn extends Column {
   static [entityKind] = "SQLiteColumn";
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/blob.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/blob.js
 class SQLiteBigIntBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBigIntBuilder";
   constructor(name) {
@@ -2034,7 +1910,7 @@ function blob(a, b) {
   return new SQLiteBlobBufferBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/custom.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/custom.js
 class SQLiteCustomColumnBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -2075,7 +1951,7 @@ function customType(customTypeParams) {
   };
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/integer.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/integer.js
 class SQLiteBaseIntegerBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBaseIntegerBuilder";
   constructor(name, dataType, columnType) {
@@ -2177,7 +2053,7 @@ function integer2(a, b) {
   return new SQLiteIntegerBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/numeric.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/numeric.js
 class SQLiteNumericBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteNumericBuilder";
   constructor(name) {
@@ -2247,7 +2123,7 @@ function numeric(a, b) {
   return mode === "number" ? new SQLiteNumericNumberBuilder(name) : mode === "bigint" ? new SQLiteNumericBigIntBuilder(name) : new SQLiteNumericBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/real.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/real.js
 class SQLiteRealBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteRealBuilder";
   constructor(name) {
@@ -2268,7 +2144,7 @@ function real(name) {
   return new SQLiteRealBuilder(name ?? "");
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/text.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/text.js
 class SQLiteTextBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteTextBuilder";
   constructor(name, config) {
@@ -2323,7 +2199,7 @@ function text(a, b = {}) {
   return new SQLiteTextBuilder(name, config);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/all.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/all.js
 function getSQLiteColumnBuilders() {
   return {
     blob,
@@ -2335,7 +2211,7 @@ function getSQLiteColumnBuilders() {
   };
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/table.js
+// ../node_modules/drizzle-orm/sqlite-core/table.js
 var InlineForeignKeys = Symbol.for("drizzle:SQLiteInlineForeignKeys");
 
 class SQLiteTable extends Table {
@@ -2369,7 +2245,7 @@ var sqliteTable = (name, columns, extraConfig) => {
   return sqliteTableBase(name, columns, extraConfig);
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/indexes.js
+// ../node_modules/drizzle-orm/sqlite-core/indexes.js
 class IndexBuilderOn {
   constructor(name, unique) {
     this.name = name;
@@ -2415,7 +2291,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(name, true);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/primary-keys.js
+// ../node_modules/drizzle-orm/sqlite-core/primary-keys.js
 function primaryKey(...config) {
   if (config[0].columns) {
     return new PrimaryKeyBuilder(config[0].columns, config[0].name);
@@ -2450,7 +2326,7 @@ class PrimaryKey {
   }
 }
 
-// ../gola-apk/gola-source/server/src/schema.ts
+// src/schema.ts
 var profiles = sqliteTable("profiles", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   displayName: text("display_name").notNull(),
@@ -2576,14 +2452,6 @@ var collectionPosts = sqliteTable("collection_posts", {
   postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
 }, (table) => [primaryKey({ columns: [table.collectionId, table.postId] })]);
-var reports = sqliteTable("reports", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  targetType: text("target_type", { enum: ["post", "comment"] }).notNull(),
-  targetId: integer2("target_id").notNull(),
-  reason: text("reason").notNull(),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [uniqueIndex("reports_reporter_target_unique").on(table.reporterId, table.targetType, table.targetId)]);
 var conversations = sqliteTable("conversations", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   userLowId: integer2("user_low_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
@@ -2633,8 +2501,22 @@ var googleSyncQueue = sqliteTable("google_sync_queue", {
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
   syncedAt: integer2("synced_at", { mode: "timestamp_ms" })
 }, (table) => [index("google_sync_queue_status_idx").on(table.status)]);
+var reports = sqliteTable("reports", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  targetType: text("target_type", { enum: ["post", "account", "comment"] }).notNull(),
+  targetId: integer2("target_id").notNull(),
+  reason: text("reason").notNull(),
+  details: text("details"),
+  status: text("status", { enum: ["pending", "genuine", "fake", "dismissed"] }).notNull().default("pending"),
+  reviewedAt: integer2("reviewed_at", { mode: "timestamp_ms" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [
+  index("reports_status_idx").on(table.status),
+  index("reports_reporter_idx").on(table.reporterId)
+]);
 
-// ../gola-apk/gola-source/server/src/privileged.ts
+// src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
 var privileged = definePrivilegedContracts({
@@ -2743,7 +2625,7 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
     }
   }
 });
-// ../gola-apk/gola-source/server/src/actions.ts
+// src/actions.ts
 var fcmTokenCache = null;
 function getFcmServiceAccount() {
   try {
@@ -2895,4 +2777,132 @@ var storyReactionSchema = _enum(["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D",
 var storySchema = object({ id: number2(), text: string2().nullable(), imageUrl: string2().nullable(), createdAt: string2(), expiresAt: string2(), author: profileSchema, viewerReaction: storyReactionSchema.nullable(), visibility: string2(), bgColor: string2().nullable() });
 var writeResponse = object({ status: _enum(["ok", "blocked", "error"]), message: string2().nullable(), id: number2().nullable(), slug: string2().nullable().optional() });
 var authResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), token: string2().nullable(), profile: accountProfileSchema.nullable() });
-var re
+var recoveryResponse = object({ status: _enum(["ok", "error"]), message: string2(), recoveryCode: string2().nullable() });
+var profileUpdateResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), profile: accountProfileSchema.nullable(), nextEditableAt: string2().nullable() });
+var colorThemeResponse = object({ status: _enum(["ok", "error"]), message: string2(), profile: accountProfileSchema.nullable(), nextChangeAt: string2().nullable() });
+var preferenceResponse = object({ status: _enum(["ok", "error"]), message: string2(), profile: accountProfileSchema.nullable() });
+var toggleResponse = object({ active: boolean2(), count: number2() });
+var connectionProfileSchema = profileSchema.extend({ viewerFollowing: boolean2(), followerCount: number2() });
+var moderationSchema = object({ allowed: boolean2(), feedback: string2() });
+var visibleNotificationTypeSchema = _enum(["like", "comment", "follow", "repost", "story_reaction", "mention", "reply", "approval"]);
+function decodeBase64(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0;i < binary.length; i += 1)
+    bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function bytesToBase64(bytes) {
+  let value = "";
+  for (const byte of bytes)
+    value += String.fromCharCode(byte);
+  return btoa(value);
+}
+function wordCount(value) {
+  return value.trim() ? value.trim().split(/\s+/u).length : 0;
+}
+async function sha256(value) {
+  return bytesToBase64(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))));
+}
+function normalizeRecoveryCode(value) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/gu, "");
+}
+function createRecoveryCode() {
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const value = Array.from(bytes, (byte) => alphabet[byte % alphabet.length] ?? "2").join("");
+  return `GOLA-${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}`;
+}
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256);
+  return `120000.${bytesToBase64(salt)}.${bytesToBase64(new Uint8Array(bits))}`;
+}
+async function verifyPassword(password, stored) {
+  const [iterationsText, saltText, expected] = stored.split(".");
+  const iterations = Number(iterationsText);
+  if (!iterations || !saltText || !expected)
+    return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = bytesToBase64(new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: decodeBase64(saltText), iterations }, key, 256)));
+  if (bits.length !== expected.length)
+    return false;
+  let difference = 0;
+  for (let i = 0;i < bits.length; i += 1)
+    difference |= bits.charCodeAt(i) ^ expected.charCodeAt(i);
+  return difference === 0;
+}
+async function createSession(ctx, profileId) {
+  const raw = bytesToBase64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/gu, "");
+  await ctx.db().insert(sessions).values({ profileId, tokenHash: await sha256(raw), expiresAt: new Date(Date.now() + 30 * 86400000) });
+  return raw;
+}
+function isActiveProfile(row) {
+  return !row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now();
+}
+function isApprovedProfile(row) {
+  return row.approvalStatus === "approved";
+}
+async function approvedProfile(ctx, token) {
+  const profile = await authenticatedProfile(ctx, token);
+  return profile && isApprovedProfile(profile) ? profile : null;
+}
+async function mentionAllowed(ctx, actorId, person) {
+  if (person.mentionPrivacy === "off")
+    return false;
+  if (person.mentionPrivacy === "peopleIFollow") {
+    const [link] = await ctx.db().select({ followerId: follows.followerId }).from(follows).where(and(eq(follows.followerId, person.id), eq(follows.followingId, actorId))).limit(1);
+    if (!link)
+      return false;
+  }
+  return true;
+}
+async function profileForSession(ctx, token) {
+  if (!token)
+    return null;
+  const rows = await ctx.db().select({ session: sessions, profile: profiles }).from(sessions).innerJoin(profiles, eq(sessions.profileId, profiles.id)).where(eq(sessions.tokenHash, await sha256(token))).limit(1);
+  const row = rows[0];
+  return row && row.session.expiresAt.getTime() > Date.now() ? row.profile : null;
+}
+async function authenticatedProfile(ctx, token) {
+  const profile = await profileForSession(ctx, token);
+  return profile && isActiveProfile(profile) ? profile : null;
+}
+async function publicProfile(ctx, row, viewerId) {
+  const hidden = row.isPrivate && row.id !== viewerId;
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
+}
+async function accountProfile(ctx, row) {
+  return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
+}
+async function canAccessPost(ctx, viewerId, postId) {
+  const [row] = await ctx.db().select({ authorId: posts.authorId, isPrivate: profiles.isPrivate, deactivatedUntil: profiles.deactivatedUntil }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(eq(posts.id, postId)).limit(1);
+  return Boolean(row && (!row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now()) && (row.authorId === viewerId || !row.isPrivate && !await blockedPair(ctx, viewerId, row.authorId)));
+}
+async function moderateText(ctx, text) {
+  return ctx.inference.complete(`Review this social post for a kindness-first community. Block attacks, criticism aimed at a person, insults, stereotypes, dehumanization, threats, racism, discrimination, dog whistles, and praise of harm. Allow supportive speech, neutral information, first-person feelings, constructive self-reflection, and discussion condemning racism. If blocked, give one calm sentence helping the writer rephrase around their own experience or a positive request. If allowed, feedback is empty. Text: ${JSON.stringify(text)}`, { schema: moderationSchema, timeout_secs: 30 });
+}
+async function blockedPair(ctx, a, b) {
+  const rows = await ctx.db().select().from(blocks).where(and(inArray(blocks.blockerId, [a, b]), inArray(blocks.blockedId, [a, b])));
+  return rows.some((row) => row.blockerId === a && row.blockedId === b || row.blockerId === b && row.blockedId === a);
+}
+async function blockedIdsFor(ctx, viewerId) {
+  const rows = await ctx.db().select().from(blocks).where(eq(blocks.blockerId, viewerId));
+  return new Set(rows.map((row) => row.blockedId));
+}
+function mentionedHandles(text) {
+  return [...new Set(Array.from(text.matchAll(/@([a-z0-9_]{3,24})/giu), (match) => (match[1] ?? "").toLowerCase()).filter(Boolean))];
+}
+async function notifyMentions(ctx, actorId, text, postId, commentId) {
+  const handles = mentionedHandles(text);
+  if (!handles.length)
+    return;
+  const db = ctx.db();
+  const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
+  for (const person of people) {
+    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
+      continue;
+    await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
+    const n = await pushName(ctx, actorId);
+    sendPushNotification(ctx, person.id, `${n} 

@@ -1,132 +1,4 @@
-coveryResponse = object({ status: _enum(["ok", "error"]), message: string2(), recoveryCode: string2().nullable() });
-var profileUpdateResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), profile: accountProfileSchema.nullable(), nextEditableAt: string2().nullable() });
-var colorThemeResponse = object({ status: _enum(["ok", "error"]), message: string2(), profile: accountProfileSchema.nullable(), nextChangeAt: string2().nullable() });
-var preferenceResponse = object({ status: _enum(["ok", "error"]), message: string2(), profile: accountProfileSchema.nullable() });
-var toggleResponse = object({ active: boolean2(), count: number2() });
-var connectionProfileSchema = profileSchema.extend({ viewerFollowing: boolean2(), followerCount: number2() });
-var moderationSchema = object({ allowed: boolean2(), feedback: string2() });
-var visibleNotificationTypeSchema = _enum(["like", "comment", "follow", "repost", "story_reaction", "mention", "reply", "approval"]);
-function decodeBase64(value) {
-  const binary = atob(value);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0;i < binary.length; i += 1)
-    bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-function bytesToBase64(bytes) {
-  let value = "";
-  for (const byte of bytes)
-    value += String.fromCharCode(byte);
-  return btoa(value);
-}
-function wordCount(value) {
-  return value.trim() ? value.trim().split(/\s+/u).length : 0;
-}
-async function sha256(value) {
-  return bytesToBase64(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))));
-}
-function normalizeRecoveryCode(value) {
-  return value.toUpperCase().replace(/[^A-Z0-9]/gu, "");
-}
-function createRecoveryCode() {
-  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  const value = Array.from(bytes, (byte) => alphabet[byte % alphabet.length] ?? "2").join("");
-  return `GOLA-${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}`;
-}
-async function hashPassword(password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256);
-  return `120000.${bytesToBase64(salt)}.${bytesToBase64(new Uint8Array(bits))}`;
-}
-async function verifyPassword(password, stored) {
-  const [iterationsText, saltText, expected] = stored.split(".");
-  const iterations = Number(iterationsText);
-  if (!iterations || !saltText || !expected)
-    return false;
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = bytesToBase64(new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: decodeBase64(saltText), iterations }, key, 256)));
-  if (bits.length !== expected.length)
-    return false;
-  let difference = 0;
-  for (let i = 0;i < bits.length; i += 1)
-    difference |= bits.charCodeAt(i) ^ expected.charCodeAt(i);
-  return difference === 0;
-}
-async function createSession(ctx, profileId) {
-  const raw = bytesToBase64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/gu, "");
-  await ctx.db().insert(sessions).values({ profileId, tokenHash: await sha256(raw), expiresAt: new Date(Date.now() + 30 * 86400000) });
-  return raw;
-}
-function isActiveProfile(row) {
-  return !row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now();
-}
-function isApprovedProfile(row) {
-  return row.approvalStatus === "approved";
-}
-async function approvedProfile(ctx, token) {
-  const profile = await authenticatedProfile(ctx, token);
-  return profile && isApprovedProfile(profile) ? profile : null;
-}
-async function mentionAllowed(ctx, actorId, person) {
-  if (person.mentionPrivacy === "off")
-    return false;
-  if (person.mentionPrivacy === "peopleIFollow") {
-    const [link] = await ctx.db().select({ followerId: follows.followerId }).from(follows).where(and(eq(follows.followerId, person.id), eq(follows.followingId, actorId))).limit(1);
-    if (!link)
-      return false;
-  }
-  return true;
-}
-async function profileForSession(ctx, token) {
-  if (!token)
-    return null;
-  const rows = await ctx.db().select({ session: sessions, profile: profiles }).from(sessions).innerJoin(profiles, eq(sessions.profileId, profiles.id)).where(eq(sessions.tokenHash, await sha256(token))).limit(1);
-  const row = rows[0];
-  return row && row.session.expiresAt.getTime() > Date.now() ? row.profile : null;
-}
-async function authenticatedProfile(ctx, token) {
-  const profile = await profileForSession(ctx, token);
-  return profile && isActiveProfile(profile) ? profile : null;
-}
-async function publicProfile(ctx, row, viewerId) {
-  const hidden = row.isPrivate && row.id !== viewerId;
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
-}
-async function accountProfile(ctx, row) {
-  return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
-}
-async function canAccessPost(ctx, viewerId, postId) {
-  const [row] = await ctx.db().select({ authorId: posts.authorId, isPrivate: profiles.isPrivate, deactivatedUntil: profiles.deactivatedUntil }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(eq(posts.id, postId)).limit(1);
-  return Boolean(row && (!row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now()) && (row.authorId === viewerId || !row.isPrivate && !await blockedPair(ctx, viewerId, row.authorId)));
-}
-async function moderateText(ctx, text) {
-  return ctx.inference.complete(`Review this social post for a kindness-first community. Block attacks, criticism aimed at a person, insults, stereotypes, dehumanization, threats, racism, discrimination, dog whistles, and praise of harm. Allow supportive speech, neutral information, first-person feelings, constructive self-reflection, and discussion condemning racism. If blocked, give one calm sentence helping the writer rephrase around their own experience or a positive request. If allowed, feedback is empty. Text: ${JSON.stringify(text)}`, { schema: moderationSchema, timeout_secs: 30 });
-}
-async function blockedPair(ctx, a, b) {
-  const rows = await ctx.db().select().from(blocks).where(and(inArray(blocks.blockerId, [a, b]), inArray(blocks.blockedId, [a, b])));
-  return rows.some((row) => row.blockerId === a && row.blockedId === b || row.blockerId === b && row.blockedId === a);
-}
-async function blockedIdsFor(ctx, viewerId) {
-  const rows = await ctx.db().select().from(blocks).where(eq(blocks.blockerId, viewerId));
-  return new Set(rows.map((row) => row.blockedId));
-}
-function mentionedHandles(text) {
-  return [...new Set(Array.from(text.matchAll(/@([a-z0-9_]{3,24})/giu), (match) => (match[1] ?? "").toLowerCase()).filter(Boolean))];
-}
-async function notifyMentions(ctx, actorId, text, postId, commentId) {
-  const handles = mentionedHandles(text);
-  if (!handles.length)
-    return;
-  const db = ctx.db();
-  const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
-  for (const person of people) {
-    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
-      continue;
-    await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
-    const n = await pushName(ctx, actorId);
-    sendPushNotification(ctx, person.id, `${n} mentioned you`, text.slice(0, 100), { type: "mention", postId: String(postId) });
+mentioned you`, text.slice(0, 100), { type: "mention", postId: String(postId) });
   }
 }
 var sheetValuesSchema = array(union([string2(), number2(), boolean2(), _null3()]));
@@ -919,6 +791,54 @@ var Actions = {
     }
     ctx.invalidateQueries();
     return { active: !existing, count: 0 };
+  } }),
+  reportUser: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
+    const reporter = await approvedProfile(ctx, args.token);
+    if (!reporter || reporter.id === args.profileId)
+      return { ok: false };
+    const db = ctx.db();
+    const [target] = await db.select().from(profiles).where(eq(profiles.id, args.profileId)).limit(1);
+    if (!target)
+      return { ok: false };
+    await db.insert(reports).values({ reporterId: reporter.id, targetType: "account", targetId: args.profileId, reason: args.reason, details: args.details || null, status: "pending" });
+    return { ok: true };
+  } }),
+  reportPost: defineAction({ request: object({ token: string2(), postId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
+    const reporter = await approvedProfile(ctx, args.token);
+    if (!reporter)
+      return { ok: false };
+    const db = ctx.db();
+    const [post] = await db.select().from(posts).where(eq(posts.id, args.postId)).limit(1);
+    if (!post)
+      return { ok: false };
+    await db.insert(reports).values({ reporterId: reporter.id, targetType: "post", targetId: args.postId, reason: args.reason, details: args.details || null, status: "pending" });
+    return { ok: true };
+  } }),
+  reportComment: defineAction({ request: object({ token: string2(), commentId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
+    const reporter = await approvedProfile(ctx, args.token);
+    if (!reporter)
+      return { ok: false };
+    const db = ctx.db();
+    const [comment] = await db.select().from(comments).where(eq(comments.id, args.commentId)).limit(1);
+    if (!comment)
+      return { ok: false };
+    await db.insert(reports).values({ reporterId: reporter.id, targetType: "comment", targetId: args.commentId, reason: args.reason, details: args.details || null, status: "pending" });
+    return { ok: true };
+  } }),
+  getBlockedUsers: defineAction({ request: object({ token: string2() }), response: object({ users: array(profileSchema) }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { users: [] };
+    const db = ctx.db();
+    const blockedIds = await blockedIdsFor(ctx, viewer.id);
+    if (blockedIds.size === 0)
+      return { users: [] };
+    const rows = await db.select().from(profiles).where(inArray(profiles.id, [...blockedIds]));
+    const users = [];
+    for (const row of rows) {
+      users.push(await publicProfile(ctx, row, viewer.id));
+    }
+    return { users };
   } }),
   createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable(), visibility: _enum(["everyone", "followers", "only_me"]).default("everyone"), bgColor: string2().regex(/^#[0-9a-fA-F]{6}$/).nullable().default(null) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);

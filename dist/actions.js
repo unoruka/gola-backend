@@ -1,5 +1,5 @@
 // @bun
-// ../gola-apk/gola-source/node_modules/zod/v4/core/core.js
+// ../node_modules/zod/v4/core/core.js
 var _a;
 function $constructor(name, initializer, params) {
   function init(inst, def) {
@@ -74,7 +74,7 @@ function config(newConfig) {
     Object.assign(globalConfig, newConfig);
   return globalConfig;
 }
-// ../gola-apk/gola-source/node_modules/zod/v4/core/util.js
+// ../node_modules/zod/v4/core/util.js
 function getEnumValues(entries) {
   const numericValues = Object.values(entries).filter((v) => typeof v === "number");
   const values = Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
@@ -475,7 +475,7 @@ function issue(...args) {
   return { ...iss };
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/errors.js
+// ../node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -544,7 +544,7 @@ function formatError(error, mapper = (issue) => issue.message) {
   return fieldErrors;
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/parse.js
+// ../node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -621,7 +621,7 @@ var _safeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
 var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 };
-// ../gola-apk/gola-source/node_modules/zod/v4/core/regexes.js
+// ../node_modules/zod/v4/core/regexes.js
 var cuid = /^[cC][0-9a-z]{6,}$/;
 var cuid2 = /^[0-9a-z]+$/;
 var ulid = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
@@ -679,7 +679,7 @@ var _null = /^null$/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/checks.js
+// ../node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -1068,7 +1068,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/doc.js
+// ../node_modules/zod/v4/core/doc.js
 class Doc {
   constructor(args = []) {
     this.content = [];
@@ -1106,14 +1106,14 @@ class Doc {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/versions.js
+// ../node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 4,
   patch: 3
 };
 
-// ../gola-apk/gola-source/node_modules/zod/v4/core/schemas.js
+// ../node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -2390,7 +2390,7 @@ function handleRefineResult(result, payload, input, inst) {
     payload.issues.push(issue(_iss));
   }
 }
-// ../gola-apk/gola-source/node_modules/zod/v4/core/registries.js
+// ../node_modules/zod/v4/core/registries.js
 var _a2;
 var $output = Symbol("ZodOutput");
 var $input = Symbol("ZodInput");
@@ -2440,7 +2440,7 @@ function registry() {
 }
 (_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
-// ../gola-apk/gola-source/node_modules/zod/v4/core/api.js
+// ../node_modules/zod/v4/core/api.js
 function _string(Class, params) {
   return new Class({
     type: "string",
@@ -2895,7 +2895,7 @@ function _check(fn, params) {
   ch._zod.check = fn;
   return ch;
 }
-// ../gola-apk/gola-source/node_modules/zod/v4/core/to-json-schema.js
+// ../node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
   let target = params?.target ?? "draft-2020-12";
   if (target === "draft-4")
@@ -3247,7 +3247,7 @@ var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) =
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
-// ../gola-apk/gola-source/node_modules/zod/v4/core/json-schema-processors.js
+// ../node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
   guid: "uuid",
   url: "uri",
@@ -3539,7 +3539,7 @@ var optionalProcessor = (schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/iso.js
+// ../node_modules/zod/v4/classic/iso.js
 var ZodISODateTime = /* @__PURE__ */ $constructor("ZodISODateTime", (inst, def) => {
   $ZodISODateTime.init(inst, def);
   ZodStringFormat.init(inst, def);
@@ -3569,7 +3569,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/errors.js
+// ../node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -3603,7 +3603,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/parse.js
+// ../node_modules/zod/v4/classic/parse.js
 var parse3 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -3617,7 +3617,7 @@ var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// ../gola-apk/gola-source/node_modules/zod/v4/classic/schemas.js
+// ../node_modules/zod/v4/classic/schemas.js
 var _installedGroups = /* @__PURE__ */ new WeakMap;
 function _installLazyMethods(inst, group, methods) {
   const proto = Object.getPrototypeOf(inst);
@@ -4400,7 +4400,7 @@ function refine(fn, _params = {}) {
 function superRefine(fn, params) {
   return _superRefine(fn, params);
 }
-// ../gola-apk/gola-source/node_modules/@hatch/space-sdk/dist/server-contract.js
+// ../node_modules/@hatch/space-sdk/dist/server-contract.js
 var PRIVILEGED_CONTRACT_BRAND = "@hatch/space-sdk/privileged-contract/v1";
 var PRIVILEGED_HANDLERS_FORMAT = "hatch-space-privileged-handlers-v1";
 function definePrivilegedContracts(specs) {
@@ -4453,10 +4453,10 @@ function createDefineAction() {
     };
   };
 }
-// ../gola-apk/gola-source/node_modules/@hatch/space-sdk/dist/index.js
+// ../node_modules/@hatch/space-sdk/dist/index.js
 var defineAction = createDefineAction();
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/entity.js
+// ../node_modules/drizzle-orm/entity.js
 var entityKind = Symbol.for("drizzle:entityKind");
 var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
 function is(value, type) {
@@ -4481,7 +4481,7 @@ function is(value, type) {
   return false;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/column.js
+// ../node_modules/drizzle-orm/column.js
 class Column {
   constructor(table, config) {
     this.table = table;
@@ -4531,7 +4531,7 @@ class Column {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/column-builder.js
+// ../node_modules/drizzle-orm/column-builder.js
 class ColumnBuilder {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -4587,21 +4587,21 @@ class ColumnBuilder {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/table.utils.js
+// ../node_modules/drizzle-orm/table.utils.js
 var TableName = Symbol.for("drizzle:Name");
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/tracing-utils.js
+// ../node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../node_modules/drizzle-orm/pg-core/columns/enum.js
 var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
 function isPgEnum(obj) {
   return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/subquery.js
+// ../node_modules/drizzle-orm/subquery.js
 class Subquery {
   static [entityKind] = "Subquery";
   constructor(sql, fields, alias, isWith = false, usedTables = []) {
@@ -4616,10 +4616,10 @@ class Subquery {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/version.js
+// ../node_modules/drizzle-orm/version.js
 var version2 = "0.45.2";
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/tracing.js
+// ../node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -4646,10 +4646,10 @@ var tracer = {
   }
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/view-common.js
+// ../node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/table.js
+// ../node_modules/drizzle-orm/table.js
 var Schema = Symbol.for("drizzle:Schema");
 var Columns = Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
@@ -4687,7 +4687,7 @@ class Table {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/sql.js
+// ../node_modules/drizzle-orm/sql/sql.js
 function isSQLWrapper(value) {
   return value !== null && value !== undefined && typeof value.getSQL === "function";
 }
@@ -5050,7 +5050,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/utils.js
+// ../node_modules/drizzle-orm/utils.js
 function getColumnNameAndConfig(a, b) {
   return {
     name: typeof a === "string" && a.length > 0 ? a : "",
@@ -5059,7 +5059,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder;
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -5119,7 +5119,7 @@ function isNull(value) {
   return sql`${value} is null`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/expressions/select.js
+// ../node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -5127,7 +5127,7 @@ function desc(column) {
   return sql`${column} desc`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/foreign-keys.js
+// ../node_modules/drizzle-orm/sqlite-core/foreign-keys.js
 class ForeignKeyBuilder {
   static [entityKind] = "SQLiteForeignKeyBuilder";
   reference;
@@ -5181,12 +5181,12 @@ class ForeignKey {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/unique-constraint.js
+// ../node_modules/drizzle-orm/sqlite-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/common.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/common.js
 class SQLiteColumnBuilder extends ColumnBuilder {
   static [entityKind] = "SQLiteColumnBuilder";
   foreignKeyConfigs = [];
@@ -5237,7 +5237,7 @@ class SQLiteColumn extends Column {
   static [entityKind] = "SQLiteColumn";
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/blob.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/blob.js
 class SQLiteBigIntBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBigIntBuilder";
   constructor(name) {
@@ -5325,7 +5325,7 @@ function blob(a, b) {
   return new SQLiteBlobBufferBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/custom.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/custom.js
 class SQLiteCustomColumnBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -5366,7 +5366,7 @@ function customType(customTypeParams) {
   };
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/integer.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/integer.js
 class SQLiteBaseIntegerBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBaseIntegerBuilder";
   constructor(name, dataType, columnType) {
@@ -5468,7 +5468,7 @@ function integer2(a, b) {
   return new SQLiteIntegerBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/numeric.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/numeric.js
 class SQLiteNumericBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteNumericBuilder";
   constructor(name) {
@@ -5538,7 +5538,7 @@ function numeric(a, b) {
   return mode === "number" ? new SQLiteNumericNumberBuilder(name) : mode === "bigint" ? new SQLiteNumericBigIntBuilder(name) : new SQLiteNumericBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/real.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/real.js
 class SQLiteRealBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteRealBuilder";
   constructor(name) {
@@ -5559,7 +5559,7 @@ function real(name) {
   return new SQLiteRealBuilder(name ?? "");
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/text.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/text.js
 class SQLiteTextBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteTextBuilder";
   constructor(name, config) {
@@ -5614,7 +5614,7 @@ function text(a, b = {}) {
   return new SQLiteTextBuilder(name, config);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/all.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/all.js
 function getSQLiteColumnBuilders() {
   return {
     blob,
@@ -5626,7 +5626,7 @@ function getSQLiteColumnBuilders() {
   };
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/table.js
+// ../node_modules/drizzle-orm/sqlite-core/table.js
 var InlineForeignKeys = Symbol.for("drizzle:SQLiteInlineForeignKeys");
 
 class SQLiteTable extends Table {
@@ -5660,7 +5660,7 @@ var sqliteTable = (name, columns, extraConfig) => {
   return sqliteTableBase(name, columns, extraConfig);
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/indexes.js
+// ../node_modules/drizzle-orm/sqlite-core/indexes.js
 class IndexBuilderOn {
   constructor(name, unique) {
     this.name = name;
@@ -5706,7 +5706,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(name, true);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/primary-keys.js
+// ../node_modules/drizzle-orm/sqlite-core/primary-keys.js
 function primaryKey(...config) {
   if (config[0].columns) {
     return new PrimaryKeyBuilder(config[0].columns, config[0].name);
@@ -5741,7 +5741,7 @@ class PrimaryKey {
   }
 }
 
-// ../gola-apk/gola-source/server/src/schema.ts
+// src/schema.ts
 var profiles = sqliteTable("profiles", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   displayName: text("display_name").notNull(),
@@ -5867,14 +5867,6 @@ var collectionPosts = sqliteTable("collection_posts", {
   postId: integer2("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
 }, (table) => [primaryKey({ columns: [table.collectionId, table.postId] })]);
-var reports = sqliteTable("reports", {
-  id: integer2("id").primaryKey({ autoIncrement: true }),
-  reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
-  targetType: text("target_type", { enum: ["post", "comment"] }).notNull(),
-  targetId: integer2("target_id").notNull(),
-  reason: text("reason").notNull(),
-  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
-}, (table) => [uniqueIndex("reports_reporter_target_unique").on(table.reporterId, table.targetType, table.targetId)]);
 var conversations = sqliteTable("conversations", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   userLowId: integer2("user_low_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
@@ -5924,8 +5916,22 @@ var googleSyncQueue = sqliteTable("google_sync_queue", {
   createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date),
   syncedAt: integer2("synced_at", { mode: "timestamp_ms" })
 }, (table) => [index("google_sync_queue_status_idx").on(table.status)]);
+var reports = sqliteTable("reports", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  reporterId: integer2("reporter_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  targetType: text("target_type", { enum: ["post", "account", "comment"] }).notNull(),
+  targetId: integer2("target_id").notNull(),
+  reason: text("reason").notNull(),
+  details: text("details"),
+  status: text("status", { enum: ["pending", "genuine", "fake", "dismissed"] }).notNull().default("pending"),
+  reviewedAt: integer2("reviewed_at", { mode: "timestamp_ms" }),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date)
+}, (table) => [
+  index("reports_status_idx").on(table.status),
+  index("reports_reporter_idx").on(table.reporterId)
+]);
 
-// ../gola-apk/gola-source/server/src/privileged.ts
+// src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
 var privileged = definePrivilegedContracts({
@@ -6034,7 +6040,7 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
     }
   }
 });
-// ../gola-apk/gola-source/server/src/actions.ts
+// src/actions.ts
 var fcmTokenCache = null;
 function getFcmServiceAccount() {
   try {
@@ -7107,6 +7113,54 @@ var Actions = {
     }
     ctx.invalidateQueries();
     return { active: !existing, count: 0 };
+  } }),
+  reportUser: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
+    const reporter = await approvedProfile(ctx, args.token);
+    if (!reporter || reporter.id === args.profileId)
+      return { ok: false };
+    const db = ctx.db();
+    const [target] = await db.select().from(profiles).where(eq(profiles.id, args.profileId)).limit(1);
+    if (!target)
+      return { ok: false };
+    await db.insert(reports).values({ reporterId: reporter.id, targetType: "account", targetId: args.profileId, reason: args.reason, details: args.details || null, status: "pending" });
+    return { ok: true };
+  } }),
+  reportPost: defineAction({ request: object({ token: string2(), postId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
+    const reporter = await approvedProfile(ctx, args.token);
+    if (!reporter)
+      return { ok: false };
+    const db = ctx.db();
+    const [post] = await db.select().from(posts).where(eq(posts.id, args.postId)).limit(1);
+    if (!post)
+      return { ok: false };
+    await db.insert(reports).values({ reporterId: reporter.id, targetType: "post", targetId: args.postId, reason: args.reason, details: args.details || null, status: "pending" });
+    return { ok: true };
+  } }),
+  reportComment: defineAction({ request: object({ token: string2(), commentId: number2().int().positive(), reason: string2().max(50), details: string2().max(500).optional() }), response: object({ ok: boolean2() }), async handler(ctx, args) {
+    const reporter = await approvedProfile(ctx, args.token);
+    if (!reporter)
+      return { ok: false };
+    const db = ctx.db();
+    const [comment] = await db.select().from(comments).where(eq(comments.id, args.commentId)).limit(1);
+    if (!comment)
+      return { ok: false };
+    await db.insert(reports).values({ reporterId: reporter.id, targetType: "comment", targetId: args.commentId, reason: args.reason, details: args.details || null, status: "pending" });
+    return { ok: true };
+  } }),
+  getBlockedUsers: defineAction({ request: object({ token: string2() }), response: object({ users: array(profileSchema) }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { users: [] };
+    const db = ctx.db();
+    const blockedIds = await blockedIdsFor(ctx, viewer.id);
+    if (blockedIds.size === 0)
+      return { users: [] };
+    const rows = await db.select().from(profiles).where(inArray(profiles.id, [...blockedIds]));
+    const users = [];
+    for (const row of rows) {
+      users.push(await publicProfile(ctx, row, viewer.id));
+    }
+    return { users };
   } }),
   createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable(), visibility: _enum(["everyone", "followers", "only_me"]).default("everyone"), bgColor: string2().regex(/^#[0-9a-fA-F]{6}$/).nullable().default(null) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
