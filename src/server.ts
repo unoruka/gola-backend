@@ -72,15 +72,14 @@ Bun.serve({
 
     if (req.method === "GET" && url.pathname.startsWith("/blobs/")) {
       const key = decodeURIComponent(url.pathname.slice("/blobs/".length));
-      const path = blobStore.pathFor(key);
-      if (!path) {
+      const blob = await blobStore.read(key);
+      if (!blob) {
         return new Response("Not found", { status: 404, headers: CORS });
       }
-      const meta = blobStore.metaFor(key);
-      return new Response(Bun.file(path), {
+      return new Response(blob.bytes as unknown as BodyInit, {
         headers: {
           ...CORS,
-          "content-type": meta?.contentType ?? "application/octet-stream",
+          "content-type": blob.contentType,
           "cache-control": "public, max-age=31536000, immutable",
         },
       });

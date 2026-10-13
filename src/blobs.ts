@@ -1,19 +1,21 @@
-// Filesystem blob store (replaces the Muse artifact runtime blob storage).
-// Files live under <data>/blobs/<key>; served over HTTP at /blobs/<key>.
-import { mkdir, writeFile, rm } from "node:fs/promises";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, normalize, dirname } from "node:path";
-import { DATA_DIR } from "./db";
+// Durable blob store (replaces the filesystem blob storage).
+//
+// Render's free-tier filesystem is ephemeral: every deploy/restart wiped
+// <data>/blobs, deleting all uploaded avatars and post photos. Blobs now
+// live in the `blobs` table (migration 0022) in Turso, which is permanent.
+// Served over HTTP at /blobs/<key> exactly as before, so no client change
+// is needed. Local SQLite fallback keeps working with the same code.
+import { sqliteTable, text, integer, blob } from "drizzle-orm/sqlite-core";
+import { eq, like } from "drizzle-orm";
+import { db } from "./db";
 
-const BLOBS_DIR = join(DATA_DIR, "blobs");
-
-function safeKey(key: string): string {
-  const n = normalize(key).replace(/^(\.\.([/\\]|$))+/, "");
-  if (n.includes("..") || n.startsWith("/") || n.startsWith("\\") || n === "") {
-    throw new Error(`Invalid blob key: ${key}`);
-  }
-  return n;
-}
+const blobs = sqliteTable("blobs", {
+  key: text("key").primaryKey(),
+  data: blob("data", { mode: "buffer" }).notNull(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
 
 function toBytes(data: string | ArrayBuffer | ArrayBufferView | Blob): Uint8Array {
   if (typeof data === "string") return new TextEncoder().encode(data);
@@ -29,74 +31,90 @@ export interface BlobMeta {
   size: number;
 }
 
+export interface BlobRead {
+  bytes: Uint8Array;
+  contentType: string;
+}
+
 export const blobStore = {
   async put(
     key: string,
     data: string | ArrayBuffer | ArrayBufferView | Blob,
     options?: { contentType?: string }
   ): Promise<void> {
-    const rel = safeKey(key);
-    const path = join(BLOBS_DIR, rel);
-    await mkdir(dirname(path), { recursive: true });
+    if (!key || key.includes("..") || key.startsWith("/")) {
+      throw new Error(`Invalid blob key: ${key}`);
+    }
     const bytes =
       data instanceof Blob ? new Uint8Array(await data.arrayBuffer()) : toBytes(data);
-    await writeFile(path, bytes);
-    const meta: BlobMeta = {
+    const row = {
+      key,
+      data: Buffer.from(bytes),
       contentType: options?.contentType ?? "application/octet-stream",
       size: bytes.length,
+      createdAt: Date.now(),
     };
-    await writeFile(path + ".meta.json", JSON.stringify(meta));
+    await db
+      .insert(blobs)
+      .values(row)
+      .onConflictDoUpdate({
+        target: blobs.key,
+        set: {
+          data: row.data,
+          contentType: row.contentType,
+          size: row.size,
+          createdAt: row.createdAt,
+        },
+      });
   },
 
-  /** Absolute filesystem path, or null when the blob does not exist. */
-  pathFor(key: string): string | null {
+  /** Raw bytes + content type, or null when the blob does not exist. */
+  async read(key: string): Promise<BlobRead | null> {
     try {
-      const p = join(BLOBS_DIR, safeKey(key));
-      return existsSync(p) ? p : null;
+      const rows = await db
+        .select({ data: blobs.data, contentType: blobs.contentType })
+        .from(blobs)
+        .where(eq(blobs.key, key))
+        .limit(1);
+      const row = rows[0];
+      if (!row) return null;
+      return { bytes: new Uint8Array(row.data), contentType: row.contentType };
     } catch {
       return null;
     }
   },
 
-  metaFor(key: string): BlobMeta | null {
+  async meta(key: string): Promise<BlobMeta | null> {
     try {
-      return JSON.parse(
-        readFileSync(join(BLOBS_DIR, safeKey(key)) + ".meta.json", "utf8")
-      ) as BlobMeta;
+      const rows = await db
+        .select({ contentType: blobs.contentType, size: blobs.size })
+        .from(blobs)
+        .where(eq(blobs.key, key))
+        .limit(1);
+      const row = rows[0];
+      return row ? { contentType: row.contentType, size: row.size } : null;
     } catch {
       return null;
     }
   },
 
   async delete(key: string): Promise<void> {
-    const rel = safeKey(key);
-    const p = join(BLOBS_DIR, rel);
-    await rm(p, { force: true });
-    await rm(p + ".meta.json", { force: true });
+    try {
+      await db.delete(blobs).where(eq(blobs.key, key));
+    } catch {
+      /* ignore */
+    }
   },
 
   async list(prefix = ""): Promise<string[]> {
-    const out: string[] = [];
-    const walk = (dir: string, rel: string) => {
-      let entries: string[] = [];
-      try {
-        entries = readdirSync(dir);
-      } catch {
-        return;
-      }
-      for (const e of entries) {
-        if (e.endsWith(".meta.json")) continue;
-        const full = join(dir, e);
-        const r = rel ? `${rel}/${e}` : e;
-        try {
-          if (statSync(full).isDirectory()) walk(full, r);
-          else if (!prefix || r.startsWith(prefix)) out.push(r);
-        } catch {
-          /* ignore */
-        }
-      }
-    };
-    walk(BLOBS_DIR, "");
-    return out;
+    try {
+      const base = db.select({ key: blobs.key }).from(blobs);
+      const rows = await (prefix
+        ? base.where(like(blobs.key, `${prefix}%`))
+        : base);
+      return rows.map((r) => r.key);
+    } catch {
+      return [];
+    }
   },
 };

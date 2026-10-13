@@ -58,7 +58,7 @@ export function createCtx(baseUrl: string): CtxShim {
           .join("/")}`,
       delete: (key) => blobStore.delete(key),
       head: async (key) => {
-        const meta = blobStore.metaFor(key);
+        const meta = await blobStore.meta(key);
         if (!meta) return null;
         return {
           key,
