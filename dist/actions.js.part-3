@@ -1,4 +1,4 @@
-ait db.delete(bookmarks).where(inArray(bookmarks.postId, ownPosts));
+arks).where(inArray(bookmarks.postId, ownPosts));
     await db.delete(comments).where(inArray(comments.postId, ownPosts));
     await db.delete(postImages).where(inArray(postImages.postId, ownPosts));
   }
