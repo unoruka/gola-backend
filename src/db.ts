@@ -37,6 +37,33 @@ export const db = drizzle(client);
 export type StandaloneDb = typeof db;
 export const isTurso = usingTurso;
 
+/** SQLite has no ADD COLUMN IF NOT EXISTS. For ALTER TABLE ... ADD [COLUMN]
+ *  statements, skip when the column is already there — a migration that was
+ *  half-applied (crash between statements, before it was recorded) can then
+ *  be safely retried instead of killing the boot with "duplicate column". */
+async function skipIfColumnExists(stmt: string): Promise<boolean> {
+  const m = stmt.match(
+    /^\s*ALTER\s+TABLE\s+[`"\[]?(\w+)[`"\]]?\s+ADD\s+(?:COLUMN\s+)?[`"\[]?(\w+)/i
+  );
+  if (!m) return false;
+  const [, table, column] = m;
+  try {
+    const info = await client.execute(`PRAGMA table_info("${table}")`);
+    const exists = info.rows.some(
+      (r) => String((r as Record<string, unknown>).name) === column
+    );
+    if (exists) {
+      console.log(
+        `[gola][migrate] column ${table}.${column} already exists, skipping`
+      );
+      return true;
+    }
+  } catch {
+    /* if we can't inspect the table, run the statement and fail loudly */
+  }
+  return false;
+}
+
 /** Run any drizzle/*.sql migrations that have not been applied yet. */
 export async function runMigrations(): Promise<void> {
   const { readdirSync, readFileSync } = await import("node:fs");
@@ -54,6 +81,7 @@ export async function runMigrations(): Promise<void> {
     const sql = readFileSync(join(dir, f), "utf8");
     // Split multi-statement files; libSQL executes one statement at a time.
     for (const stmt of sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
+      if (await skipIfColumnExists(stmt)) continue;
       await client.execute(stmt);
     }
     await client.execute({
