@@ -6215,6 +6215,9 @@ async function pushName(ctx, profileId) {
   }
 }
 var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
+var LATEST_APP_VERSION = "2.0.0";
+var LATEST_APP_URL = "https://github.com/unoruka/gola-backend/releases/latest";
+var LATEST_APP_NOTES = "";
 var profileSchema = object({
   id: number2(),
   displayName: string2(),
@@ -6912,6 +6915,12 @@ var Actions = {
     if (!target || !isActiveProfile(target))
       return { profileId: null };
     return { profileId: target.id };
+  } }),
+  getLatestVersion: defineAction({ request: object({ token: string2() }), response: object({ version: string2(), url: string2(), notes: string2() }), async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { version: "", url: "", notes: "" };
+    return { version: LATEST_APP_VERSION, url: LATEST_APP_URL, notes: LATEST_APP_NOTES };
   } }),
   listProfileConnections: defineAction({ request: object({ token: string2(), profileId: number2().int().positive(), kind: _enum(["followers", "following"]) }), response: object({ privateView: boolean2(), profiles: array(connectionProfileSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);

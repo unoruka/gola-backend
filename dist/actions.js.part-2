@@ -2479,6 +2479,9 @@ async function pushName(ctx, profileId) {
   }
 }
 var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky", "blue", "indigo", "violet", "pink", "rose", "slate"]);
+var LATEST_APP_VERSION = "2.0.0";
+var LATEST_APP_URL = "https://github.com/unoruka/gola-backend/releases/latest";
+var LATEST_APP_NOTES = "";
 var profileSchema = object({
   id: number2(),
   displayName: string2(),
@@ -2811,5 +2814,4 @@ async function deleteAccountData(ctx, profile) {
   if (ownPosts.length) {
     await db.delete(likes).where(inArray(likes.postId, ownPosts));
     await db.delete(reposts).where(inArray(reposts.postId, ownPosts));
-    await db.delete(bookmarks).where(inArray(bookmarks.postId, ownPosts));
-    await db.delete(comments).where(inArray(comments.postId, ownPosts));
+    aw
