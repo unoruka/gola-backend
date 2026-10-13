@@ -1,4 +1,26 @@
-bKey, ...postImages2.map((row) => row.blobKey), ...ownStories.map((row) => row.blobKey)].filter((key) => Boolean(key));
+
+    await db.delete(postImages).where(inArray(postImages.postId, ownPosts));
+  }
+  await db.delete(comments).where(eq(comments.authorId, profile.id));
+  await db.delete(reports).where(eq(reports.reporterId, profile.id));
+  if (ownPosts.length)
+    await db.delete(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, ownPosts)));
+  if (commentIds.length)
+    await db.delete(reports).where(and(eq(reports.targetType, "comment"), inArray(reports.targetId, commentIds)));
+  await db.delete(storyViews).where(eq(storyViews.viewerId, profile.id));
+  await db.delete(storyReactions).where(eq(storyReactions.reactorId, profile.id));
+  if (ownStories.length) {
+    const storyIds = ownStories.map((row) => row.id);
+    await db.delete(storyViews).where(inArray(storyViews.storyId, storyIds));
+    await db.delete(storyReactions).where(inArray(storyReactions.storyId, storyIds));
+  }
+  await db.delete(stories).where(eq(stories.authorId, profile.id));
+  if (ownPosts.length)
+    await db.delete(posts).where(inArray(posts.id, ownPosts));
+  await db.delete(sessions).where(eq(sessions.profileId, profile.id));
+  await db.delete(pushTokens).where(eq(pushTokens.profileId, profile.id));
+  await db.delete(profiles).where(eq(profiles.id, profile.id));
+  const blobKeys = [profile.avatarBlobKey, ...postImages2.map((row) => row.blobKey), ...ownStories.map((row) => row.blobKey)].filter((key) => Boolean(key));
   for (const key of blobKeys) {
     try {
       await ctx.blobs.delete(key);

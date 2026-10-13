@@ -6227,7 +6227,8 @@ var profileSchema = object({
   mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
   createdAt: string2(),
   avatarUrl: string2().nullable(),
-  themeColor: colorChoiceSchema
+  themeColor: colorChoiceSchema,
+  safetyStatus: _enum(["safe", "caution", "restricted"]).optional()
 });
 var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
 var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
@@ -6347,7 +6348,31 @@ async function authenticatedProfile(ctx, token) {
 }
 async function publicProfile(ctx, row, viewerId) {
   const hidden = row.isPrivate && row.id !== viewerId;
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor };
+  const safetyStatus = await getSafetyStatus(ctx, row.id);
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor, safetyStatus };
+}
+async function getSafetyStatus(ctx, profileId) {
+  const db = ctx.db();
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1);
+  if (!profile)
+    return "safe";
+  if (profile.postRestrictedUntil && new Date(profile.postRestrictedUntil).getTime() > Date.now())
+    return "restricted";
+  if ((profile.violationCount || 0) >= 2)
+    return "restricted";
+  if ((profile.violationCount || 0) >= 1)
+    return "caution";
+  const accountReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "account"), eq(reports.targetId, profileId), eq(reports.status, "pending"))).limit(1);
+  if (accountReports.length > 0)
+    return "caution";
+  const userPosts = await db.select({ id: posts.id }).from(posts).where(eq(posts.authorId, profileId));
+  const postIds = userPosts.map((p) => p.id);
+  if (postIds.length > 0) {
+    const postReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, postIds), eq(reports.status, "pending"))).limit(1);
+    if (postReports.length > 0)
+      return "caution";
+  }
+  return "safe";
 }
 async function accountProfile(ctx, row) {
   return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
