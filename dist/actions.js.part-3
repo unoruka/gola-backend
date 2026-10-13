@@ -1,11 +1,4 @@
-eadString(created.data?.spreadsheetId);
-    const spreadsheetUrl = readString(created.data?.spreadsheetUrl);
-    if (!created.ok || !spreadsheetId)
-      return { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: created.error ?? "The Gola Database spreadsheet could not be created." };
-    for (const { tab, rows } of tabs) {
-      const endColumn = String.fromCharCode(64 + Math.max(1, rows[0]?.length ?? 1));
-      const updated = await runCli(["sheets", "spreadsheets", "values", "update", "--params", JSON.stringify({ spreadsheetId, range: `${tab}!A1:${endColumn}${Math.max(1, rows.length)}`, valueInputOption: "USER_ENTERED" }), "--json", JSON.stringify({ majorDimension: "ROWS", values: rows })]);
-      if (!updated.ok)
+
         return { ok: false, spreadsheetId, spreadsheetUrl, error: updated.error ?? `The ${tab} tab could not be prepared.` };
     }
     const verified = await runCli(["sheets", "spreadsheets", "get", "--params", JSON.stringify({ spreadsheetId, fields: "spreadsheetId,spreadsheetUrl,sheets.properties.title" })]);
@@ -881,6 +874,26 @@ var Actions = {
     const [story] = await ctx.db().insert(stories).values({ authorId: viewer.id, text: args.text || null, blobKey, expiresAt: new Date(Date.now() + 86400000), visibility: args.visibility, bgColor: args.bgColor }).returning({ id: stories.id });
     ctx.invalidateQueries();
     return { status: "ok", message: "Story shared for 24 hours.", id: story?.id ?? null };
+  } }),
+  deleteStory: defineAction({ request: object({ token: string2(), storyId: number2().int().positive() }), response: writeResponse, async handler(ctx, args) {
+    const viewer = await approvedProfile(ctx, args.token);
+    if (!viewer)
+      return { status: "error", message: "Please log in again.", id: null };
+    const db = ctx.db();
+    const [story] = await db.select().from(stories).where(eq(stories.id, args.storyId)).limit(1);
+    if (!story || story.authorId !== viewer.id)
+      return { status: "error", message: "You can only delete your own stories.", id: null };
+    await db.delete(storyViews).where(eq(storyViews.storyId, args.storyId));
+    await db.delete(storyReactions).where(eq(storyReactions.storyId, args.storyId));
+    await db.delete(notifications).where(eq(notifications.storyId, args.storyId));
+    await db.delete(stories).where(eq(stories.id, args.storyId));
+    if (story.blobKey) {
+      try {
+        await ctx.blobs.delete(story.blobKey);
+      } catch {}
+    }
+    ctx.invalidateQueries();
+    return { status: "ok", message: "Story deleted.", id: args.storyId };
   } }),
   recordStoryView: defineAction({ request: object({ token: string2(), storyId: number2().int().positive() }), response: object({ ok: literal(true) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
