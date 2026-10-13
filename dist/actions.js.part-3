@@ -1,6 +1,4 @@
-t result = await runCli([service, "status"]);
-    const connected = result.ok && result.data?.status === "connected";
-    return { connected, message: connected ? `${service === "drive" ? "Google Drive" : "Google Sheets"} is connected.` : `${service === "drive" ? "Google Drive" : "Google Sheets"} needs to be connected in Muse first.` };
+cted, message: connected ? `${service === "drive" ? "Google Drive" : "Google Sheets"} is connected.` : `${service === "drive" ? "Google Drive" : "Google Sheets"} needs to be connected in Muse first.` };
   },
   async initializeGoogleSheets({ title, tabs }) {
     const status = await runCli(["sheets", "status"]);
@@ -540,6 +538,8 @@ var Actions = {
     const [target] = await db.select().from(profiles).where(eq(profiles.id, args.profileId)).limit(1);
     if (!target || !isActiveProfile(target))
       return { status: "error", message: "That account could not be found." };
+    if (target.badge === args.badge)
+      return { status: "ok", message: args.badge === "none" ? `@${target.handle} has no badge to remove.` : `@${target.handle} already has the ${args.badge} badge.` };
     await db.update(profiles).set({ badge: args.badge }).where(eq(profiles.id, target.id));
     ctx.invalidateQueries();
     const label = args.badge === "none" ? "removed" : args.badge === "official" ? "marked as official" : "marked as a community member";
