@@ -6704,7 +6704,7 @@ var Actions = {
     if (!await canAccessPost(ctx, viewer.id, postRow.id))
       return { post: null };
     const posts2 = await loadPosts(ctx, viewer.id, [postRow.authorId], 50);
-    const post = posts2.find((p) => p.id === String(postRow.id)) ?? null;
+    const post = posts2.find((p) => String(p.id) === String(postRow.id)) ?? null;
     return { post };
   } }),
   getProfile: defineAction({ request: object({ token: string2(), profileId: number2().int().positive() }), response: object({ profile: profileSchema.nullable(), postCount: number2(), followerCount: number2(), followingCount: number2(), viewerFollowing: boolean2(), viewerBlocked: boolean2(), blockedByTarget: boolean2(), privateView: boolean2(), posts: array(postSchema) }), async handler(ctx, args) {

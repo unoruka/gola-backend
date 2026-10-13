@@ -3289,4 +3289,4 @@ var stringProcessor = (schema, ctx, _json, _params) => {
 };
 var numberProcessor = (schema, ctx, _json, _params) => {
   const json = _json;
-  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMini
+  const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum
