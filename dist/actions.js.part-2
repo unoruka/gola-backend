@@ -1,13 +1,4 @@
-"json-string",
-  regex: ""
-};
-var stringProcessor = (schema, ctx, _json, _params) => {
-  const json = _json;
-  json.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding } = schema._zod.bag;
-  if (typeof minimum === "number")
-    json.minLength = minimum;
-  if (typeof maximum === "number")
+f maximum === "number")
     json.maxLength = maximum;
   if (format) {
     json.format = formatMap[format] ?? format;
@@ -2782,14 +2773,19 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
 var fcmTokenCache = null;
 function getFcmServiceAccount() {
   try {
-    const raw = globalThis.process?.env?.FCM_SERVICE_ACCOUNT;
-    if (!raw)
+    const raw = typeof process !== "undefined" ? process.env.FCM_SERVICE_ACCOUNT : null;
+    if (!raw) {
+      console.log("[gola][push] FCM_SERVICE_ACCOUNT not set \u2014 pushes disabled");
       return null;
+    }
     const sa = JSON.parse(raw);
-    if (!sa.project_id || !sa.client_email || !sa.private_key)
+    if (!sa.project_id || !sa.client_email || !sa.private_key) {
+      console.log("[gola][push] FCM_SERVICE_ACCOUNT is missing required fields");
       return null;
+    }
     return sa;
-  } catch {
+  } catch (e) {
+    console.log("[gola][push] Failed to parse FCM_SERVICE_ACCOUNT:", e instanceof Error ? e.message : e);
     return null;
   }
 }
@@ -2895,4 +2891,11 @@ var profileSchema = object({
   isFounder: boolean2(),
   badge: _enum(["none", "community", "official"]),
   isPrivate: boolean2(),
-  mentionPrivacy: _enum(["everyone", "peopleIFollow"
+  mentionPrivacy: _enum(["everyone", "peopleIFollow", "off"]),
+  createdAt: string2(),
+  avatarUrl: string2().nullable(),
+  themeColor: colorChoiceSchema
+});
+var languageSchema = _enum(["en", "bn", "hi", "es", "fr", "ar"]);
+var continentSchema = _enum(["AF", "AN", "AS", "EU", "NA", "SA", "OC"]);
+var accountProfile
