@@ -1,9 +1,4 @@
-cted, message: connected ? `${service === "drive" ? "Google Drive" : "Google Sheets"} is connected.` : `${service === "drive" ? "Google Drive" : "Google Sheets"} needs to be connected in Muse first.` };
-  },
-  async initializeGoogleSheets({ title, tabs }) {
-    const status = await runCli(["sheets", "status"]);
-    if (!status.ok || status.data?.status !== "connected")
-      return { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: "Connect Google Sheets to Muse, then try again." };
+n { ok: false, spreadsheetId: null, spreadsheetUrl: null, error: "Connect Google Sheets to Muse, then try again." };
     const createBody = { properties: { title }, sheets: tabs.map(({ tab }) => ({ properties: { title: tab } })) };
     const created = await runCli(["sheets", "spreadsheets", "create", "--json", JSON.stringify(createBody)]);
     const spreadsheetId = readString(created.data?.spreadsheetId);
@@ -82,7 +77,7 @@ var postSchema = object({
   comments: array(commentSchema)
 });
 var storyReactionSchema = _enum(["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDC4F"]);
-var storySchema = object({ id: number2(), text: string2().nullable(), imageUrl: string2().nullable(), createdAt: string2(), expiresAt: string2(), author: profileSchema, viewerReaction: storyReactionSchema.nullable() });
+var storySchema = object({ id: number2(), text: string2().nullable(), imageUrl: string2().nullable(), createdAt: string2(), expiresAt: string2(), author: profileSchema, viewerReaction: storyReactionSchema.nullable(), visibility: string2(), bgColor: string2().nullable() });
 var writeResponse = object({ status: _enum(["ok", "blocked", "error"]), message: string2().nullable(), id: number2().nullable() });
 var authResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), token: string2().nullable(), profile: accountProfileSchema.nullable() });
 var recoveryResponse = object({ status: _enum(["ok", "error"]), message: string2(), recoveryCode: string2().nullable() });
@@ -869,7 +864,7 @@ var Actions = {
     ctx.invalidateQueries();
     return { active: !existing, count: 0 };
   } }),
-  createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable() }), response: writeResponse, async handler(ctx, args) {
+  createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable(), visibility: _enum(["everyone", "followers", "only_me"]).default("everyone"), bgColor: string2().regex(/^#[0-9a-fA-F]{6}$/).nullable().default(null) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
@@ -885,7 +880,7 @@ var Actions = {
       blobKey = `stories/${viewer.id}/${crypto.randomUUID()}`;
       await ctx.blobs.put(blobKey, decodeBase64(args.photo.dataBase64), { contentType: args.photo.mimeType });
     }
-    const [story] = await ctx.db().insert(stories).values({ authorId: viewer.id, text: args.text || null, blobKey, expiresAt: new Date(Date.now() + 86400000) }).returning({ id: stories.id });
+    const [story] = await ctx.db().insert(stories).values({ authorId: viewer.id, text: args.text || null, blobKey, expiresAt: new Date(Date.now() + 86400000), visibility: args.visibility, bgColor: args.bgColor }).returning({ id: stories.id });
     ctx.invalidateQueries();
     return { status: "ok", message: "Story shared for 24 hours.", id: story?.id ?? null };
   } }),
@@ -952,10 +947,11 @@ var Actions = {
     const now = new Date;
     await db.delete(stories).where(lt(stories.expiresAt, now));
     const followed = await db.select({ id: follows.followingId }).from(follows).innerJoin(profiles, eq(follows.followingId, profiles.id)).where(and(eq(follows.followerId, viewer.id), eq(profiles.isPrivate, false)));
-    const rows = (await db.select({ story: stories, author: profiles }).from(stories).innerJoin(profiles, eq(stories.authorId, profiles.id)).where(and(inArray(stories.authorId, [viewer.id, ...followed.map((x) => x.id)]), gt(stories.expiresAt, now))).orderBy(asc(stories.createdAt))).filter(({ author }) => isActiveProfile(author));
+    const followedIds = new Set((await db.select({ id: follows.followingId }).from(follows).where(eq(follows.followerId, viewer.id))).map((x) => x.id));
+    const rows = (await db.select({ story: stories, author: profiles }).from(stories).innerJoin(profiles, eq(stories.authorId, profiles.id)).where(and(inArray(stories.authorId, [viewer.id, ...followed.map((x) => x.id)]), gt(stories.expiresAt, now))).orderBy(asc(stories.createdAt))).filter(({ author }) => isActiveProfile(author)).filter(({ story }) => story.visibility === "everyone" || story.authorId === viewer.id || story.visibility === "followers" && followedIds.has(story.authorId));
     const storyIds = rows.map(({ story }) => story.id);
     const reactions = storyIds.length > 0 ? await db.select().from(storyReactions).where(and(eq(storyReactions.reactorId, viewer.id), inArray(storyReactions.storyId, storyIds))) : [];
-    return { stories: await Promise.all(rows.map(async ({ story, author }) => ({ id: story.id, text: story.text, imageUrl: story.blobKey ? await ctx.blobs.getUrl(story.blobKey) : null, createdAt: story.createdAt.toISOString(), expiresAt: story.expiresAt.toISOString(), author: await publicProfile(ctx, author, viewer.id), viewerReaction: reactions.find((item) => item.storyId === story.id)?.emoji ?? null }))) };
+    return { stories: await Promise.all(rows.map(async ({ story, author }) => ({ id: story.id, text: story.text, imageUrl: story.blobKey ? await ctx.blobs.getUrl(story.blobKey) : null, createdAt: story.createdAt.toISOString(), expiresAt: story.expiresAt.toISOString(), author: await publicProfile(ctx, author, viewer.id), viewerReaction: reactions.find((item) => item.storyId === story.id)?.emoji ?? null, visibility: story.visibility, bgColor: story.bgColor }))) };
   } }),
   explore: defineAction({ request: object({ token: string2(), hashtag: string2().max(60).default("") }), response: object({ hashtags: array(object({ tag: string2(), count: number2() })), posts: array(postSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
