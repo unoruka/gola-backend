@@ -6184,7 +6184,7 @@ var postSchema = object({
 });
 var storyReactionSchema = _enum(["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDE0D", "\uD83D\uDE2E", "\uD83D\uDE22", "\uD83D\uDC4F"]);
 var storySchema = object({ id: number2(), text: string2().nullable(), imageUrl: string2().nullable(), createdAt: string2(), expiresAt: string2(), author: profileSchema, viewerReaction: storyReactionSchema.nullable(), visibility: string2(), bgColor: string2().nullable() });
-var writeResponse = object({ status: _enum(["ok", "blocked", "error"]), message: string2().nullable(), id: number2().nullable() });
+var writeResponse = object({ status: _enum(["ok", "blocked", "error"]), message: string2().nullable(), id: number2().nullable(), slug: string2().nullable().optional() });
 var authResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), token: string2().nullable(), profile: accountProfileSchema.nullable() });
 var recoveryResponse = object({ status: _enum(["ok", "error"]), message: string2(), recoveryCode: string2().nullable() });
 var profileUpdateResponse = object({ status: _enum(["ok", "error"]), message: string2().nullable(), profile: accountProfileSchema.nullable(), nextEditableAt: string2().nullable() });
@@ -6763,11 +6763,12 @@ var Actions = {
     }
     const db = ctx.db();
     const [post] = await db.insert(posts).values({ authorId: author.id, text }).returning({ id: posts.id });
+    let newSlug = null;
     if (post) {
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
       const rand = Math.random().toString(36).slice(2, 6);
-      const slug = `${author.handle}-${dateStr}-${rand}`;
-      await db.update(posts).set({ slug }).where(eq(posts.id, post.id));
+      newSlug = `${author.handle}-${dateStr}-${rand}`;
+      await db.update(posts).set({ slug: newSlug }).where(eq(posts.id, post.id));
     }
     if (!post)
       return { status: "error", message: "Your post could not be saved.", id: null };
@@ -6785,7 +6786,7 @@ var Actions = {
     if (savedPost)
       await queueGoogleSync(ctx, "posts", String(savedPost.id), "upsert", postSheetRow(savedPost));
     ctx.invalidateQueries();
-    return { status: "ok", message: null, id: post.id };
+    return { status: "ok", message: null, id: post.id, slug: newSlug };
   } }),
   editPost: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), postId: number2().int().positive(), text: string2().max(12000) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
