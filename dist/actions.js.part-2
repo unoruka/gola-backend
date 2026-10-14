@@ -2412,31 +2412,53 @@ function classifyOAuthHttpReject(status, bodyText) {
   }
   return { stage: "oauth-http-reject", httpStatus: status, oauthError: sanitizeOAuthErrorCode(code) };
 }
+function classifyNonJsonBody(text) {
+  const trimmed = text.trim();
+  if (trimmed === "")
+    return "body=non-json-empty";
+  if (trimmed.startsWith("<"))
+    return "body=non-json-html";
+  return "body=non-json-text";
+}
+function retryAfterHeaderSuffix(res) {
+  try {
+    const raw = res.headers?.get("retry-after");
+    if (raw == null)
+      return "";
+    const v = raw.trim();
+    if (!/^\d{1,5}$/.test(v))
+      return " header_retry_after=invalid";
+    return ` header_retry_after=${v}`;
+  } catch {
+    return "";
+  }
+}
 async function classifyDiscordReject(res) {
+  const headerSuffix = retryAfterHeaderSuffix(res);
   let text;
   try {
     text = (await res.text()).slice(0, 500);
   } catch {
-    return "body=unreadable";
+    return "body=unreadable" + headerSuffix;
   }
   let data;
   try {
     data = JSON.parse(text);
   } catch {
-    return "body=non-json";
+    return classifyNonJsonBody(text) + headerSuffix;
   }
   if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return "body=json-unexpected";
+    return "body=json-unexpected" + headerSuffix;
   }
   const d = data;
   if (typeof d.retry_after === "number" && Number.isFinite(d.retry_after) && d.retry_after >= 0 && typeof d.message === "string" && /rate.?limited/i.test(d.message)) {
     const global = typeof d.global === "boolean" ? String(d.global) : "unknown";
-    return `body=json-discord-ratelimit retry_after=${d.retry_after} global=${global}`;
+    return `body=json-discord-ratelimit retry_after=${d.retry_after} global=${global}` + headerSuffix;
   }
   if (typeof d.error === "string") {
-    return `body=json-oauth-error error=${sanitizeOAuthErrorCode(d.error)}`;
+    return `body=json-oauth-error error=${sanitizeOAuthErrorCode(d.error)}` + headerSuffix;
   }
-  return "body=json-unexpected";
+  return "body=json-unexpected" + headerSuffix;
 }
 async function getFcmAccessToken(sa) {
   if (fcmTokenCache && Date.now() < fcmTokenCache.expiresAt - 60000) {
@@ -2891,13 +2913,4 @@ async function notifyMentions(ctx, actorId, text, postId, commentId) {
   const db = ctx.db();
   const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
   for (const person of people) {
-    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowed(ctx, actorId, person))
-      continue;
-    await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
-    const n = await pushName(ctx, actorId);
-    sendPushNotification(ctx, person.id, `${n} mentioned you`, text.slice(0, 100), { type: "mention", postId: String(postId) });
-  }
-}
-var sheetValuesSchema = array(union([string2(), number2(), boolean2(), _null3()]));
-var googleSyncStatusSchema = object({ enabled: boolean2(), spreadsheetUrl: string2().nullable(), driveFileUrl: string2().nullable(), lastSyncAt: string2().nullable(), lastError: string2().nullable(), pendingCount: number2(), failedCount: number2() });
-var goo
+    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowe

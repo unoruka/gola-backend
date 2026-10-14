@@ -1,4 +1,13 @@
-gleWriteResponse = object({ status: _enum(["ok", "error"]), message: string2(), url: string2().nullable() });
+d(ctx, actorId, person))
+      continue;
+    await db.insert(notifications).values({ recipientId: person.id, actorId, type: "mention", postId, commentId });
+    const n = await pushName(ctx, actorId);
+    sendPushNotification(ctx, person.id, `${n} mentioned you`, text.slice(0, 100), { type: "mention", postId: String(postId) });
+  }
+}
+var sheetValuesSchema = array(union([string2(), number2(), boolean2(), _null3()]));
+var googleSyncStatusSchema = object({ enabled: boolean2(), spreadsheetUrl: string2().nullable(), driveFileUrl: string2().nullable(), lastSyncAt: string2().nullable(), lastError: string2().nullable(), pendingCount: number2(), failedCount: number2() });
+var googleWriteResponse = object({ status: _enum(["ok", "error"]), message: string2(), url: string2().nullable() });
 function profileSheetRow(profile, operation = "upsert") {
   return [profile.id, profile.displayName, profile.handle, profile.bio, profile.isPrivate, profile.isFounder, isActiveProfile(profile) ? "active" : "deactivated", profile.createdAt.toISOString(), operation, new Date().toISOString()];
 }

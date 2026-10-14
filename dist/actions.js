@@ -6151,31 +6151,53 @@ function classifyOAuthHttpReject(status, bodyText) {
   }
   return { stage: "oauth-http-reject", httpStatus: status, oauthError: sanitizeOAuthErrorCode(code) };
 }
+function classifyNonJsonBody(text) {
+  const trimmed = text.trim();
+  if (trimmed === "")
+    return "body=non-json-empty";
+  if (trimmed.startsWith("<"))
+    return "body=non-json-html";
+  return "body=non-json-text";
+}
+function retryAfterHeaderSuffix(res) {
+  try {
+    const raw = res.headers?.get("retry-after");
+    if (raw == null)
+      return "";
+    const v = raw.trim();
+    if (!/^\d{1,5}$/.test(v))
+      return " header_retry_after=invalid";
+    return ` header_retry_after=${v}`;
+  } catch {
+    return "";
+  }
+}
 async function classifyDiscordReject(res) {
+  const headerSuffix = retryAfterHeaderSuffix(res);
   let text;
   try {
     text = (await res.text()).slice(0, 500);
   } catch {
-    return "body=unreadable";
+    return "body=unreadable" + headerSuffix;
   }
   let data;
   try {
     data = JSON.parse(text);
   } catch {
-    return "body=non-json";
+    return classifyNonJsonBody(text) + headerSuffix;
   }
   if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return "body=json-unexpected";
+    return "body=json-unexpected" + headerSuffix;
   }
   const d = data;
   if (typeof d.retry_after === "number" && Number.isFinite(d.retry_after) && d.retry_after >= 0 && typeof d.message === "string" && /rate.?limited/i.test(d.message)) {
     const global = typeof d.global === "boolean" ? String(d.global) : "unknown";
-    return `body=json-discord-ratelimit retry_after=${d.retry_after} global=${global}`;
+    return `body=json-discord-ratelimit retry_after=${d.retry_after} global=${global}` + headerSuffix;
   }
   if (typeof d.error === "string") {
-    return `body=json-oauth-error error=${sanitizeOAuthErrorCode(d.error)}`;
+    return `body=json-oauth-error error=${sanitizeOAuthErrorCode(d.error)}` + headerSuffix;
   }
-  return "body=json-unexpected";
+  return "body=json-unexpected" + headerSuffix;
 }
 async function getFcmAccessToken(sa) {
   if (fcmTokenCache && Date.now() < fcmTokenCache.expiresAt - 60000) {
