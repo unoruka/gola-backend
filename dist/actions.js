@@ -6151,6 +6151,32 @@ function classifyOAuthHttpReject(status, bodyText) {
   }
   return { stage: "oauth-http-reject", httpStatus: status, oauthError: sanitizeOAuthErrorCode(code) };
 }
+async function classifyDiscordReject(res) {
+  let text;
+  try {
+    text = (await res.text()).slice(0, 500);
+  } catch {
+    return "body=unreadable";
+  }
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return "body=non-json";
+  }
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return "body=json-unexpected";
+  }
+  const d = data;
+  if (typeof d.retry_after === "number" && Number.isFinite(d.retry_after) && d.retry_after >= 0 && typeof d.message === "string" && /rate.?limited/i.test(d.message)) {
+    const global = typeof d.global === "boolean" ? String(d.global) : "unknown";
+    return `body=json-discord-ratelimit retry_after=${d.retry_after} global=${global}`;
+  }
+  if (typeof d.error === "string") {
+    return `body=json-oauth-error error=${sanitizeOAuthErrorCode(d.error)}`;
+  }
+  return "body=json-unexpected";
+}
 async function getFcmAccessToken(sa) {
   if (fcmTokenCache && Date.now() < fcmTokenCache.expiresAt - 60000) {
     return { ok: true, token: fcmTokenCache.token };
@@ -7727,7 +7753,7 @@ var Actions = {
     try {
       const res = await fetch("https://discord.com/api/oauth2/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: "authorization_code", code: args.code, redirect_uri: args.redirectUri }).toString() });
       if (!res.ok) {
-        console.log(`[gola][discord] stage=token-http-reject http=${res.status}`);
+        console.log(`[gola][discord] stage=token-http-reject http=${res.status} ${await classifyDiscordReject(res)}`);
         return fail("Discord sign-in failed. Please try again.");
       }
       const data = await res.json();
@@ -7743,7 +7769,7 @@ var Actions = {
     try {
       const res = await fetch("https://discord.com/api/users/@me", { headers: { Authorization: `Bearer ${accessToken}` } });
       if (!res.ok) {
-        console.log(`[gola][discord] stage=user-http-reject http=${res.status}`);
+        console.log(`[gola][discord] stage=user-http-reject http=${res.status} ${await classifyDiscordReject(res)}`);
         return fail("Discord sign-in failed. Please try again.");
       }
       const data = await res.json();
@@ -7874,6 +7900,7 @@ var Actions = {
 export {
   Actions,
   FCM_OUTCOMES,
+  classifyDiscordReject,
   classifyFcmResponse,
   classifyOAuthHttpReject,
   clearFcmTokenCacheForTests,

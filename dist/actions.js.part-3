@@ -1,4 +1,14 @@
- queueGoogleSync(ctx, tab, recordKey, operation, values) {
+gleWriteResponse = object({ status: _enum(["ok", "error"]), message: string2(), url: string2().nullable() });
+function profileSheetRow(profile, operation = "upsert") {
+  return [profile.id, profile.displayName, profile.handle, profile.bio, profile.isPrivate, profile.isFounder, isActiveProfile(profile) ? "active" : "deactivated", profile.createdAt.toISOString(), operation, new Date().toISOString()];
+}
+function postSheetRow(post, operation = "upsert") {
+  return [post.id, post.authorId, post.text, post.createdAt.toISOString(), post.editedAt?.toISOString() ?? null, operation === "delete" ? "deleted" : "active", operation, new Date().toISOString()];
+}
+function commentSheetRow(comment) {
+  return [comment.id, comment.postId, comment.authorId, comment.parentCommentId, comment.text, comment.createdAt.toISOString(), "upsert", new Date().toISOString()];
+}
+async function queueGoogleSync(ctx, tab, recordKey, operation, values) {
   try {
     const db = ctx.db();
     const [config] = await db.select().from(googleIntegrations).where(eq(googleIntegrations.id, 1)).limit(1);
@@ -1102,7 +1112,7 @@ var Actions = {
     try {
       const res = await fetch("https://discord.com/api/oauth2/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: "authorization_code", code: args.code, redirect_uri: args.redirectUri }).toString() });
       if (!res.ok) {
-        console.log(`[gola][discord] stage=token-http-reject http=${res.status}`);
+        console.log(`[gola][discord] stage=token-http-reject http=${res.status} ${await classifyDiscordReject(res)}`);
         return fail("Discord sign-in failed. Please try again.");
       }
       const data = await res.json();
@@ -1118,7 +1128,7 @@ var Actions = {
     try {
       const res = await fetch("https://discord.com/api/users/@me", { headers: { Authorization: `Bearer ${accessToken}` } });
       if (!res.ok) {
-        console.log(`[gola][discord] stage=user-http-reject http=${res.status}`);
+        console.log(`[gola][discord] stage=user-http-reject http=${res.status} ${await classifyDiscordReject(res)}`);
         return fail("Discord sign-in failed. Please try again.");
       }
       const data = await res.json();
@@ -1249,6 +1259,7 @@ var Actions = {
 export {
   Actions,
   FCM_OUTCOMES,
+  classifyDiscordReject,
   classifyFcmResponse,
   classifyOAuthHttpReject,
   clearFcmTokenCacheForTests,
