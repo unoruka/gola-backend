@@ -6349,33 +6349,51 @@ async function authenticatedProfile(ctx, token) {
   const profile = await profileForSession(ctx, token);
   return profile && isActiveProfile(profile) ? profile : null;
 }
-async function publicProfile(ctx, row, viewerId) {
+async function publicProfile(ctx, row, viewerId, safetyCache) {
   const hidden = row.isPrivate && row.id !== viewerId;
-  const safetyStatus = await getSafetyStatus(ctx, row.id);
+  const safetyStatus = await getSafetyStatus(ctx, row, safetyCache);
   return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor, safetyStatus };
 }
-async function getSafetyStatus(ctx, profileId) {
-  const db = ctx.db();
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1);
-  if (!profile)
+async function getSafetyStatus(ctx, row, safetyCache) {
+  if (!row)
     return "safe";
+  const cached = safetyCache?.get(row.id);
+  if (cached)
+    return cached;
+  const pending = computeSafetyStatus(ctx, row);
+  const tracked = pending.then((status) => status, (err) => {
+    if (safetyCache?.get(row.id) === tracked)
+      safetyCache.delete(row.id);
+    throw err;
+  });
+  safetyCache?.set(row.id, tracked);
+  return tracked;
+}
+async function computeSafetyStatus(ctx, row) {
+  const db = ctx.db();
+  const profile = row;
+  let status = "safe";
   if (profile.postRestrictedUntil && new Date(profile.postRestrictedUntil).getTime() > Date.now())
-    return "restricted";
-  if ((profile.violationCount || 0) >= 2)
-    return "restricted";
-  if ((profile.violationCount || 0) >= 1)
-    return "caution";
-  const accountReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "account"), eq(reports.targetId, profileId), eq(reports.status, "pending"))).limit(1);
-  if (accountReports.length > 0)
-    return "caution";
-  const userPosts = await db.select({ id: posts.id }).from(posts).where(eq(posts.authorId, profileId));
-  const postIds = userPosts.map((p) => p.id);
-  if (postIds.length > 0) {
-    const postReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, postIds), eq(reports.status, "pending"))).limit(1);
-    if (postReports.length > 0)
-      return "caution";
+    status = "restricted";
+  else if ((profile.violationCount || 0) >= 2)
+    status = "restricted";
+  else if ((profile.violationCount || 0) >= 1)
+    status = "caution";
+  else {
+    const accountReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "account"), eq(reports.targetId, profile.id), eq(reports.status, "pending"))).limit(1);
+    if (accountReports.length > 0)
+      status = "caution";
+    else {
+      const userPosts = await db.select({ id: posts.id }).from(posts).where(eq(posts.authorId, profile.id));
+      const postIds = userPosts.map((p) => p.id);
+      if (postIds.length > 0) {
+        const postReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, postIds), eq(reports.status, "pending"))).limit(1);
+        if (postReports.length > 0)
+          status = "caution";
+      }
+    }
   }
-  return "safe";
+  return status;
 }
 async function accountProfile(ctx, row) {
   return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
@@ -6584,6 +6602,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
   if (authorIds.length === 0)
     return [];
   const db = ctx.db();
+  const safetyCache = new Map;
   let rows = await db.select({ post: posts, author: profiles }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(onlyIds && onlyIds.length > 0 ? and(inArray(posts.authorId, authorIds), inArray(posts.id, onlyIds)) : inArray(posts.authorId, authorIds)).orderBy(desc(posts.createdAt), desc(posts.id)).limit(Math.max(limit, onlyIds?.length ?? 0));
   const hiddenIds = await blockedIdsFor(ctx, viewerId);
   rows = rows.filter((row) => isActiveProfile(row.author) && !hiddenIds.has(row.author.id));
@@ -6602,7 +6621,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
   ]);
   const commentsVisible = commentsRaw.filter(({ author }) => isActiveProfile(author) && !hiddenIds.has(author.id));
   const images = await Promise.all(imagesRaw.map(async (row) => ({ ...row, url: await ctx.blobs.getUrl(row.blobKey) })));
-  return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, slug: post.slug ?? null, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId) }))) })));
+  return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, slug: post.slug ?? null, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId, safetyCache), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId, safetyCache) }))) })));
 }
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
@@ -7248,12 +7267,13 @@ var Actions = {
     if (!viewer)
       return { profiles: [] };
     const db = ctx.db();
+    const safetyCache = new Map;
     const [profiles2, follows2] = await Promise.all([db.select().from(profiles).orderBy(asc(profiles.displayName)), db.select().from(follows)]);
     const needle = args.query.trim().toLowerCase().replace(/^@/u, "");
     const activeIds = new Set(profiles2.filter(isActiveProfile).map((person) => person.id));
     const hiddenIds = await blockedIdsFor(ctx, viewer.id);
     const filtered = profiles2.filter((x) => x.id !== viewer.id && isActiveProfile(x) && !hiddenIds.has(x.id)).filter((x) => !needle || x.handle.toLowerCase().includes(needle) || x.displayName.toLowerCase().includes(needle)).slice(0, 30);
-    return { profiles: await Promise.all(filtered.map(async (person) => ({ ...await publicProfile(ctx, person, viewer.id), viewerFollowing: person.isPrivate ? false : follows2.some((f) => f.followerId === viewer.id && f.followingId === person.id), followerCount: person.isPrivate ? 0 : follows2.filter((f) => f.followingId === person.id && activeIds.has(f.followerId)).length }))) };
+    return { profiles: await Promise.all(filtered.map(async (person) => ({ ...await publicProfile(ctx, person, viewer.id, safetyCache), viewerFollowing: person.isPrivate ? false : follows2.some((f) => f.followerId === viewer.id && f.followingId === person.id), followerCount: person.isPrivate ? 0 : follows2.filter((f) => f.followingId === person.id && activeIds.has(f.followerId)).length }))) };
   } }),
   toggleFollow: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ token: string2(), followingId: number2().int().positive() }), response: toggleResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -7284,9 +7304,10 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { unreadCount: 0, notifications: [] };
+    const safetyCache = new Map;
     const hiddenIds = await blockedIdsFor(ctx, viewer.id);
     const rows = (await ctx.db().select({ notification: notifications, actor: profiles }).from(notifications).innerJoin(profiles, eq(notifications.actorId, profiles.id)).where(and(eq(notifications.recipientId, viewer.id), ne(notifications.type, "message"))).orderBy(desc(notifications.createdAt), desc(notifications.id)).limit(args.limit)).filter(({ actor }) => isActiveProfile(actor) && !hiddenIds.has(actor.id));
-    return { unreadCount: rows.filter((x) => x.notification.readAt === null).length, notifications: await Promise.all(rows.map(async ({ notification, actor }) => ({ id: notification.id, type: visibleNotificationTypeSchema.parse(notification.type), postId: notification.postId, commentId: notification.commentId, storyId: notification.storyId, createdAt: notification.createdAt.toISOString(), read: notification.readAt !== null, actor: await publicProfile(ctx, actor, viewer.id) }))) };
+    return { unreadCount: rows.filter((x) => x.notification.readAt === null).length, notifications: await Promise.all(rows.map(async ({ notification, actor }) => ({ id: notification.id, type: visibleNotificationTypeSchema.parse(notification.type), postId: notification.postId, commentId: notification.commentId, storyId: notification.storyId, createdAt: notification.createdAt.toISOString(), read: notification.readAt !== null, actor: await publicProfile(ctx, actor, viewer.id, safetyCache) }))) };
   } }),
   markNotificationsRead: defineAction({ request: object({ token: string2() }), response: object({ ok: literal(true) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -7484,14 +7505,16 @@ var Actions = {
     const [story] = await db.select().from(stories).where(eq(stories.id, args.storyId)).limit(1);
     if (!story || story.authorId !== viewer.id)
       return { ownerOnly: false, views: [] };
+    const safetyCache = new Map;
     const [viewRows, reactions] = await Promise.all([db.select({ view: storyViews, profile: profiles }).from(storyViews).innerJoin(profiles, eq(storyViews.viewerId, profiles.id)).where(eq(storyViews.storyId, args.storyId)).orderBy(desc(storyViews.viewedAt)), db.select().from(storyReactions).where(eq(storyReactions.storyId, args.storyId))]);
-    return { ownerOnly: true, views: await Promise.all(viewRows.filter(({ profile }) => isActiveProfile(profile)).map(async ({ view, profile }) => ({ viewer: await publicProfile(ctx, profile, viewer.id), viewedAt: view.viewedAt.toISOString(), reaction: reactions.find((item) => item.reactorId === profile.id)?.emoji ?? null }))) };
+    return { ownerOnly: true, views: await Promise.all(viewRows.filter(({ profile }) => isActiveProfile(profile)).map(async ({ view, profile }) => ({ viewer: await publicProfile(ctx, profile, viewer.id, safetyCache), viewedAt: view.viewedAt.toISOString(), reaction: reactions.find((item) => item.reactorId === profile.id)?.emoji ?? null }))) };
   } }),
   listStories: defineAction({ request: object({ token: string2() }), response: object({ stories: array(storySchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { stories: [] };
     const db = ctx.db();
+    const safetyCache = new Map;
     const now = new Date;
     await db.delete(stories).where(lt(stories.expiresAt, now));
     const followed = await db.select({ id: follows.followingId }).from(follows).innerJoin(profiles, eq(follows.followingId, profiles.id)).where(and(eq(follows.followerId, viewer.id), eq(profiles.isPrivate, false)));
@@ -7499,7 +7522,7 @@ var Actions = {
     const rows = (await db.select({ story: stories, author: profiles }).from(stories).innerJoin(profiles, eq(stories.authorId, profiles.id)).where(and(inArray(stories.authorId, [viewer.id, ...followed.map((x) => x.id)]), gt(stories.expiresAt, now))).orderBy(asc(stories.createdAt))).filter(({ author }) => isActiveProfile(author)).filter(({ story }) => story.visibility === "everyone" || story.authorId === viewer.id || story.visibility === "followers" && followedIds.has(story.authorId));
     const storyIds = rows.map(({ story }) => story.id);
     const reactions = storyIds.length > 0 ? await db.select().from(storyReactions).where(and(eq(storyReactions.reactorId, viewer.id), inArray(storyReactions.storyId, storyIds))) : [];
-    return { stories: await Promise.all(rows.map(async ({ story, author }) => ({ id: story.id, text: story.text, imageUrl: story.blobKey ? await ctx.blobs.getUrl(story.blobKey) : null, createdAt: story.createdAt.toISOString(), expiresAt: story.expiresAt.toISOString(), author: await publicProfile(ctx, author, viewer.id), viewerReaction: reactions.find((item) => item.storyId === story.id)?.emoji ?? null, visibility: story.visibility, bgColor: story.bgColor }))) };
+    return { stories: await Promise.all(rows.map(async ({ story, author }) => ({ id: story.id, text: story.text, imageUrl: story.blobKey ? await ctx.blobs.getUrl(story.blobKey) : null, createdAt: story.createdAt.toISOString(), expiresAt: story.expiresAt.toISOString(), author: await publicProfile(ctx, author, viewer.id, safetyCache), viewerReaction: reactions.find((item) => item.storyId === story.id)?.emoji ?? null, visibility: story.visibility, bgColor: story.bgColor }))) };
   } }),
   explore: defineAction({ request: object({ token: string2(), hashtag: string2().max(60).default("") }), response: object({ hashtags: array(object({ tag: string2(), count: number2() })), posts: array(postSchema) }), async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
