@@ -1,22 +1,4 @@
- return exactOptional(this);
-    },
-    nullable() {
-      return nullable(this);
-    },
-    nullish() {
-      return optional(nullable(this));
-    },
-    nonoptional(params) {
-      return nonoptional(this, params);
-    },
-    array() {
-      return array(this);
-    },
-    or(arg) {
-      return union([this, arg]);
-    },
-    and(arg) {
-      return intersection(this, arg);
+rsection(this, arg);
     },
     transform(tx) {
       return pipe(this, transform(tx));
@@ -682,7 +664,7 @@ function refine(fn, _params = {}) {
 function superRefine(fn, params) {
   return _superRefine(fn, params);
 }
-// ../gola-apk/gola-source/node_modules/@hatch/space-sdk/dist/server-contract.js
+// ../node_modules/@hatch/space-sdk/dist/server-contract.js
 var PRIVILEGED_CONTRACT_BRAND = "@hatch/space-sdk/privileged-contract/v1";
 var PRIVILEGED_HANDLERS_FORMAT = "hatch-space-privileged-handlers-v1";
 function definePrivilegedContracts(specs) {
@@ -735,10 +717,10 @@ function createDefineAction() {
     };
   };
 }
-// ../gola-apk/gola-source/node_modules/@hatch/space-sdk/dist/index.js
+// ../node_modules/@hatch/space-sdk/dist/index.js
 var defineAction = createDefineAction();
 
-// ../gola-apk/gola-source/server/src/moderation/wordlists.ts
+// src/moderation/wordlists.ts
 var WORD_LISTS = {
   en: ["2g1c", "2 girls 1 cup", "acrotomophilia", "alabama hot pocket", "alaskan pipeline", "anal", "anilingus", "anus", "apeshit", "arsehole", "ass", "asshole", "assmunch", "auto erotic", "autoerotic", "babeland", "baby batter", "baby juice", "ball gag", "ball gravy", "ball kicking", "ball licking", "ball sack", "ball sucking", "bangbros", "bangbus", "bareback", "barely legal", "barenaked", "bastard", "bastardo", "bastinado", "bbw", "bdsm", "beaner", "beaners", "beaver cleaver", "beaver lips", "beastiality", "bestiality", "big black", "big breasts", "big knockers", "big tits", "bimbos", "birdlock", "bitch", "bitches", "black cock", "blonde action", "blonde on blonde action", "blowjob", "blow job", "blow your load", "blue waffle", "blumpkin", "bollocks", "bondage", "boner", "boob", "boobs", "booty call", "brown showers", "brunette action", "bukkake", "bulldyke", "bullet vibe", "bullshit", "bung hole", "bunghole", "busty", "butt", "buttcheeks", "butthole", "camel toe", "camgirl", "camslut", "camwhore", "carpet muncher", "carpetmuncher", "chocolate rosebuds", "cialis", "circlejerk", "cleveland steamer", "clit", "clitoris", "clover clamps", "clusterfuck", "cock", "cocks", "coprolagnia", "coprophilia", "cornhole", "coon", "coons", "creampie", "cum", "cumming", "cumshot", "cumshots", "cunnilingus", "cunt", "darkie", "date rape", "daterape", "deep throat", "deepthroat", "dendrophilia", "dick", "dildo", "dingleberry", "dingleberries", "dirty pillows", "dirty sanchez", "doggie style", "doggiestyle", "doggy style", "doggystyle", "dog style", "dolcett", "domination", "dominatrix", "dommes", "donkey punch", "double dong", "double penetration", "dp action", "dry hump", "dvda", "eat my ass", "ecchi", "ejaculation", "erotic", "erotism", "escort", "eunuch", "fag", "faggot", "fecal", "felch", "fellatio", "feltch", "female squirting", "femdom", "figging", "fingerbang", "fingering", "fisting", "foot fetish", "footjob", "frotting", "fuck", "fuck buttons", "fuckin", "fucking", "fucktards", "fudge packer", "fudgepacker", "futanari", "gangbang", "gang bang", "gay sex", "genitals", "giant cock", "girl on", "girl on top", "girls gone wild", "goatcx", "goatse", "god damn", "gokkun", "golden shower", "goodpoop", "goo girl", "goregasm", "grope", "group sex", "g-spot", "guro", "hand job", "handjob", "hard core", "hardcore", "hentai", "homoerotic", "honkey", "hooker", "horny", "hot carl", "hot chick", "how to kill", "how to murder", "huge fat", "humping", "incest", "intercourse", "jack off", "jail bait", "jailbait", "jelly donut", "jerk off", "jigaboo", "jiggaboo", "jiggerboo", "jizz", "juggs", "kike", "kinbaku", "kinkster", "kinky", "knobbing", "leather restraint", "leather straight jacket", "lemon party", "livesex", "lolita", "lovemaking", "make me come", "male squirting", "masturbate", "masturbating", "masturbation", "menage a trois", "milf", "missionary position", "mong", "motherfucker", "mound of venus", "mr hands", "muff diver", "muffdiving", "nambla", "nawashi", "negro", "neonazi", "nigga", "nigger", "nig nog", "nimphomania", "nipple", "nipples", "nsfw", "nsfw images", "nude", "nudity", "nutten", "nympho", "nymphomania", "octopussy", "omorashi", "one cup two girls", "one guy one jar", "orgasm", "orgy", "paedophile", "paki", "panties", "panty", "pedobear", "pedophile", "pegging", "penis", "phone sex", "piece of shit", "pikey", "pissing", "piss pig", "pisspig", "playboy", "pleasure chest", "pole smoker", "ponyplay", "poof", "poon", "poontang", "punany", "poop chute", "poopchute", "porn", "porno", "pornography", "prince albert piercing", "pthc", "pubes", "pussy", "queaf", "queef", "quim", "raghead", "raging boner", "rape", "raping", "rapist", "rectum", "reverse cowgirl", "rimjob", "rimming", "rosy palm", "rosy palm and her 5 sisters", "rusty trombone", "sadism", "santorum", "scat", "schlong", "scissoring", "semen", "sex", "sexcam", "sexo", "sexy", "sexual", "sexually", "sexuality", "shaved beaver", "shaved pussy", "shemale", "shibari", "shit", "shitblimp", "shitty", "shota", "shrimping", "skeet", "slanteye", "slut", "s&m", "smut", "snatch", "snowballing", "sodomize", "sodomy", "spastic", "spic", "splooge", "splooge moose", "spooge", "spread legs", "spunk", "strap on", "strapon", "strappado", "strip club", "style doggy", "suck", "sucks", "suicide girls", "sultry women", "swastika", "swinger", "tainted love", "taste my", "tea bagging", "threesome", "throating", "thumbzilla", "tied up", "tight white", "tit", "tits", "titties", "titty", "tongue in a", "topless", "tosser", "towelhead", "tranny", "tribadism", "tub girl", "tubgirl", "tushy", "twat", "twink", "twinkie", "two girls one cup", "undressing", "upskirt", "urethra play", "urophilia", "vagina", "venus mound", "viagra", "vibrator", "violet wand", "vorarephilia", "voyeur", "voyeurweb", "voyuer", "vulva", "wank", "wetback", "wet dream", "white power", "whore", "worldsex", "wrapping men", "wrinkled starfish", "xx", "xxx", "yaoi", "yellow showers", "yiffy", "zoophilia"],
   hi: ["aand", "aandu", "balatkar", "balatkari", "behen chod", "beti chod", "bhadva", "bhadve", "bhandve", "bhangi", "bhootni ke", "bhosad", "bhosadi ke", "boobe", "chakke", "chinaal", "chinki", "chod", "chodu", "chodu bhagat", "chooche", "choochi", "choope", "choot", "choot ke baal", "chootia", "chootiya", "chuche", "chuchi", "chudaap", "chudai khanaa", "chudam chudai", "chude", "chut", "chut ka chuha", "chut ka churan", "chut ka mail", "chut ke baal", "chut ke dhakkan", "chut maarli", "chutad", "chutadd", "chutan", "chutia", "chutiya", "gaand", "gaandfat", "gaandmasti", "gaandufad", "gandfattu", "gandu", "gashti", "gasti", "ghassa", "ghasti", "gucchi", "gucchu", "harami", "haramzade", "hawas", "hawas ke pujari", "hijda", "hijra", "jhant", "jhant chaatu", "jhant ka keeda", "jhant ke baal", "jhant ke pissu", "jhantu", "kamine", "kaminey", "kanjar", "kutta", "kutta kamina", "kutte ki aulad", "kutte ki jat", "kuttiya", "loda", "lodu", "lund", "lund choos", "lund ka bakkal", "lund khajoor", "lundtopi", "lundure", "maa ki chut", "maal", "madar chod", "madarchod", "madhavchod", "mooh mein le", "mutth", "mutthal", "najayaz", "najayaz aulaad", "najayaz paidaish", "paki", "pataka", "patakha", "raand", "randaap", "randi", "randi rona", "saala", "saala kutta", "saali kutti", "saali randi", "suar", "suar ke lund", "suar ki aulad", "tatte", "tatti", "teri maa ka bhosada", "teri maa ka boba chusu", "teri maa ki behenchod", "teri maa ki chut", "tharak", "tharki", "tu chuda"],
@@ -747,7 +729,7 @@ var WORD_LISTS = {
   ar: ["\u0633\u0643\u0633", "\u0637\u064A\u0632", "\u0634\u0631\u062C", "\u0644\u0639\u0642", "\u0644\u062D\u0633", "\u0645\u0635", "\u062A\u0645\u0635", "\u0628\u064A\u0636\u0627\u0646", "\u062B\u062F\u064A", "\u0628\u0632", "\u0628\u0632\u0627\u0632", "\u062D\u0644\u0645\u0629", "\u0645\u0641\u0644\u0642\u0633\u0629", "\u0628\u0638\u0631", "\u0643\u0633", "\u0641\u0631\u062C", "\u0634\u0647\u0648\u0629", "\u0634\u0627\u0630", "\u0645\u0628\u0627\u062F\u0644", "\u0639\u0627\u0647\u0631\u0629", "\u062C\u0645\u0627\u0639", "\u0642\u0636\u064A\u0628", "\u0632\u0628", "\u0644\u0648\u0637\u064A", "\u0644\u0648\u0627\u0637", "\u0633\u062D\u0627\u0642", "\u0633\u062D\u0627\u0642\u064A\u0629", "\u0627\u063A\u062A\u0635\u0627\u0628", "\u062E\u0646\u062B\u064A", "\u0627\u062D\u062A\u0644\u0627\u0645", "\u0646\u064A\u0643", "\u0645\u062A\u0646\u0627\u0643", "\u0645\u062A\u0646\u0627\u0643\u0629", "\u0634\u0631\u0645\u0648\u0637\u0629", "\u0639\u0631\u0635", "\u062E\u0648\u0644", "\u0642\u062D\u0628\u0629", "\u0644\u0628\u0648\u0629"]
 };
 
-// ../gola-apk/gola-source/server/src/moderation/wordlist.ts
+// src/moderation/wordlist.ts
 var wordSets = new Map;
 function getSet(lang) {
   let set = wordSets.get(lang);
@@ -795,7 +777,7 @@ function detectSpam(text) {
   return null;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/entity.js
+// ../node_modules/drizzle-orm/entity.js
 var entityKind = Symbol.for("drizzle:entityKind");
 var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
 function is(value, type) {
@@ -820,7 +802,7 @@ function is(value, type) {
   return false;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/column.js
+// ../node_modules/drizzle-orm/column.js
 class Column {
   constructor(table, config) {
     this.table = table;
@@ -870,7 +852,7 @@ class Column {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/column-builder.js
+// ../node_modules/drizzle-orm/column-builder.js
 class ColumnBuilder {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -926,21 +908,21 @@ class ColumnBuilder {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/table.utils.js
+// ../node_modules/drizzle-orm/table.utils.js
 var TableName = Symbol.for("drizzle:Name");
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/tracing-utils.js
+// ../node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../node_modules/drizzle-orm/pg-core/columns/enum.js
 var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
 function isPgEnum(obj) {
   return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/subquery.js
+// ../node_modules/drizzle-orm/subquery.js
 class Subquery {
   static [entityKind] = "Subquery";
   constructor(sql, fields, alias, isWith = false, usedTables = []) {
@@ -955,10 +937,10 @@ class Subquery {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/version.js
+// ../node_modules/drizzle-orm/version.js
 var version2 = "0.45.2";
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/tracing.js
+// ../node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -985,10 +967,10 @@ var tracer = {
   }
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/view-common.js
+// ../node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/table.js
+// ../node_modules/drizzle-orm/table.js
 var Schema = Symbol.for("drizzle:Schema");
 var Columns = Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
@@ -1026,7 +1008,7 @@ class Table {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/sql.js
+// ../node_modules/drizzle-orm/sql/sql.js
 function isSQLWrapper(value) {
   return value !== null && value !== undefined && typeof value.getSQL === "function";
 }
@@ -1389,7 +1371,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/utils.js
+// ../node_modules/drizzle-orm/utils.js
 function getColumnNameAndConfig(a, b) {
   return {
     name: typeof a === "string" && a.length > 0 ? a : "",
@@ -1398,7 +1380,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder;
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -1458,7 +1440,7 @@ function isNull(value) {
   return sql`${value} is null`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sql/expressions/select.js
+// ../node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -1466,7 +1448,7 @@ function desc(column) {
   return sql`${column} desc`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/foreign-keys.js
+// ../node_modules/drizzle-orm/sqlite-core/foreign-keys.js
 class ForeignKeyBuilder {
   static [entityKind] = "SQLiteForeignKeyBuilder";
   reference;
@@ -1520,12 +1502,12 @@ class ForeignKey {
   }
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/unique-constraint.js
+// ../node_modules/drizzle-orm/sqlite-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/common.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/common.js
 class SQLiteColumnBuilder extends ColumnBuilder {
   static [entityKind] = "SQLiteColumnBuilder";
   foreignKeyConfigs = [];
@@ -1576,7 +1558,7 @@ class SQLiteColumn extends Column {
   static [entityKind] = "SQLiteColumn";
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/blob.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/blob.js
 class SQLiteBigIntBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBigIntBuilder";
   constructor(name) {
@@ -1664,7 +1646,7 @@ function blob(a, b) {
   return new SQLiteBlobBufferBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/custom.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/custom.js
 class SQLiteCustomColumnBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -1705,7 +1687,7 @@ function customType(customTypeParams) {
   };
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/integer.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/integer.js
 class SQLiteBaseIntegerBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBaseIntegerBuilder";
   constructor(name, dataType, columnType) {
@@ -1807,7 +1789,7 @@ function integer2(a, b) {
   return new SQLiteIntegerBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/numeric.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/numeric.js
 class SQLiteNumericBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteNumericBuilder";
   constructor(name) {
@@ -1877,7 +1859,7 @@ function numeric(a, b) {
   return mode === "number" ? new SQLiteNumericNumberBuilder(name) : mode === "bigint" ? new SQLiteNumericBigIntBuilder(name) : new SQLiteNumericBuilder(name);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/real.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/real.js
 class SQLiteRealBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteRealBuilder";
   constructor(name) {
@@ -1898,7 +1880,7 @@ function real(name) {
   return new SQLiteRealBuilder(name ?? "");
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/text.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/text.js
 class SQLiteTextBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteTextBuilder";
   constructor(name, config) {
@@ -1953,7 +1935,7 @@ function text(a, b = {}) {
   return new SQLiteTextBuilder(name, config);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/columns/all.js
+// ../node_modules/drizzle-orm/sqlite-core/columns/all.js
 function getSQLiteColumnBuilders() {
   return {
     blob,
@@ -1965,7 +1947,7 @@ function getSQLiteColumnBuilders() {
   };
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/table.js
+// ../node_modules/drizzle-orm/sqlite-core/table.js
 var InlineForeignKeys = Symbol.for("drizzle:SQLiteInlineForeignKeys");
 
 class SQLiteTable extends Table {
@@ -1999,7 +1981,7 @@ var sqliteTable = (name, columns, extraConfig) => {
   return sqliteTableBase(name, columns, extraConfig);
 };
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/indexes.js
+// ../node_modules/drizzle-orm/sqlite-core/indexes.js
 class IndexBuilderOn {
   constructor(name, unique) {
     this.name = name;
@@ -2045,7 +2027,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(name, true);
 }
 
-// ../gola-apk/gola-source/node_modules/drizzle-orm/sqlite-core/primary-keys.js
+// ../node_modules/drizzle-orm/sqlite-core/primary-keys.js
 function primaryKey(...config) {
   if (config[0].columns) {
     return new PrimaryKeyBuilder(config[0].columns, config[0].name);
@@ -2080,7 +2062,7 @@ class PrimaryKey {
   }
 }
 
-// ../gola-apk/gola-source/server/src/schema.ts
+// src/schema.ts
 var profiles = sqliteTable("profiles", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   displayName: text("display_name").notNull(),
@@ -2274,7 +2256,7 @@ var reports = sqliteTable("reports", {
   index("reports_reporter_idx").on(table.reporterId)
 ]);
 
-// ../gola-apk/gola-source/server/src/privileged.ts
+// src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
 var privileged = definePrivilegedContracts({
@@ -2383,7 +2365,7 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
     }
   }
 });
-// ../gola-apk/gola-source/server/src/actions.ts
+// src/actions.ts
 var fcmTokenCache = null;
 function getFcmServiceAccount() {
   try {
@@ -2447,22 +2429,61 @@ async function getFcmAccessToken(sa) {
     return null;
   }
 }
+var FCM_OUTCOMES = [
+  "ok",
+  "no-service-account",
+  "no-tokens",
+  "oauth-failed",
+  "unregistered",
+  "invalid-argument",
+  "auth-error",
+  "quota-exceeded",
+  "server-error",
+  "network-error",
+  "unknown-error"
+];
+function classifyFcmResponse(status, bodyText) {
+  if (status >= 200 && status < 300) {
+    return /UNREGISTERED/i.test(bodyText) ? "unregistered" : "ok";
+  }
+  if (status === 404)
+    return "unregistered";
+  if (status === 400)
+    return "invalid-argument";
+  if (status === 401 || status === 403)
+    return "auth-error";
+  if (status === 429)
+    return "quota-exceeded";
+  if (status >= 500)
+    return "server-error";
+  return "unknown-error";
+}
+function logPushOutcome(outcome, status) {
+  const http = status === undefined ? "-" : String(status);
+  console.log(`[gola][push] send outcome=${outcome} http=${http}`);
+}
 async function sendPushNotification(ctx, recipientId, title, body, data) {
   try {
     const sa = getFcmServiceAccount();
-    if (!sa)
+    if (!sa) {
+      logPushOutcome("no-service-account");
       return;
+    }
     const db = ctx.db();
     const tokens = await db.select({ pushToken: pushTokens.pushToken }).from(pushTokens).where(eq(pushTokens.profileId, recipientId)).limit(10);
-    if (!tokens.length)
+    if (!tokens.length) {
+      logPushOutcome("no-tokens");
       return;
+    }
     const accessToken = await getFcmAccessToken(sa);
-    if (!accessToken)
+    if (!accessToken) {
+      logPushOutcome("oauth-failed");
       return;
+    }
     const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
     await Promise.all(tokens.map(async ({ pushToken }) => {
       try {
-        await fetch(url, {
+        const res = await fetch(url, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -2483,9 +2504,20 @@ async function sendPushNotification(ctx, recipientId, title, body, data) {
             }
           })
         });
-      } catch {}
+        let bodyText = "";
+        try {
+          bodyText = (await res.text()).slice(0, 300);
+        } catch {
+          bodyText = "";
+        }
+        logPushOutcome(classifyFcmResponse(res.status, bodyText));
+      } catch {
+        logPushOutcome("network-error");
+      }
     }));
-  } catch {}
+  } catch {
+    logPushOutcome("unknown-error");
+  }
 }
 async function pushName(ctx, profileId) {
   try {
@@ -2825,10 +2857,4 @@ async function queueGoogleSync(ctx, tab, recordKey, operation, values) {
       }
     } catch {
       const message = "Google Sheets is temporarily unreachable. This update is queued for retry.";
-      await db.batch([db.update(googleSyncQueue).set({ status: "failed", error: message }).where(eq(googleSyncQueue.id, job.id)), db.update(googleIntegrations).set({ lastError: message, updatedAt: new Date }).where(eq(googleIntegrations.id, 1))]);
-    }
-    ctx.invalidateQueries();
-  } catch {}
-}
-async function deleteAccountData(ctx, profile) {
-  const db = 
+      await db.batch([db.update(googleSyncQueue).set({ status: "failed", error: message }).where(eq(googleSyncQueue.id, job.id)), db.update(googleIntegrations).set({ lastError: message, updatedAt: ne
