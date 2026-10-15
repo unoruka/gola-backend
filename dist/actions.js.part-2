@@ -1,4 +1,160 @@
-   return pipe(this, transform(tx));
+> {
+        inst.issues.push(issue);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
+      }
+    },
+    addIssues: {
+      value: (issues) => {
+        inst.issues.push(...issues);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
+      }
+    },
+    isEmpty: {
+      get() {
+        return inst.issues.length === 0;
+      }
+    }
+  });
+};
+var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
+  Parent: Error
+});
+
+// ../gola-client-stage/server/node_modules/zod/v4/classic/parse.js
+var parse3 = /* @__PURE__ */ _parse(ZodRealError);
+var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
+var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
+var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
+var encode = /* @__PURE__ */ _encode(ZodRealError);
+var decode = /* @__PURE__ */ _decode(ZodRealError);
+var encodeAsync = /* @__PURE__ */ _encodeAsync(ZodRealError);
+var decodeAsync = /* @__PURE__ */ _decodeAsync(ZodRealError);
+var safeEncode = /* @__PURE__ */ _safeEncode(ZodRealError);
+var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
+var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
+var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
+
+// ../gola-client-stage/server/node_modules/zod/v4/classic/schemas.js
+var _installedGroups = /* @__PURE__ */ new WeakMap;
+function _installLazyMethods(inst, group, methods) {
+  const proto = Object.getPrototypeOf(inst);
+  let installed = _installedGroups.get(proto);
+  if (!installed) {
+    installed = new Set;
+    _installedGroups.set(proto, installed);
+  }
+  if (installed.has(group))
+    return;
+  installed.add(group);
+  for (const key in methods) {
+    const fn = methods[key];
+    Object.defineProperty(proto, key, {
+      configurable: true,
+      enumerable: false,
+      get() {
+        const bound = fn.bind(this);
+        Object.defineProperty(this, key, {
+          configurable: true,
+          writable: true,
+          enumerable: true,
+          value: bound
+        });
+        return bound;
+      },
+      set(v) {
+        Object.defineProperty(this, key, {
+          configurable: true,
+          writable: true,
+          enumerable: true,
+          value: v
+        });
+      }
+    });
+  }
+}
+var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
+  $ZodType.init(inst, def);
+  Object.assign(inst["~standard"], {
+    jsonSchema: {
+      input: createStandardJSONSchemaMethod(inst, "input"),
+      output: createStandardJSONSchemaMethod(inst, "output")
+    }
+  });
+  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
+  inst.def = def;
+  inst.type = def.type;
+  Object.defineProperty(inst, "_def", { value: def });
+  inst.parse = (data, params) => parse3(inst, data, params, { callee: inst.parse });
+  inst.safeParse = (data, params) => safeParse2(inst, data, params);
+  inst.parseAsync = async (data, params) => parseAsync2(inst, data, params, { callee: inst.parseAsync });
+  inst.safeParseAsync = async (data, params) => safeParseAsync2(inst, data, params);
+  inst.spa = inst.safeParseAsync;
+  inst.encode = (data, params) => encode(inst, data, params);
+  inst.decode = (data, params) => decode(inst, data, params);
+  inst.encodeAsync = async (data, params) => encodeAsync(inst, data, params);
+  inst.decodeAsync = async (data, params) => decodeAsync(inst, data, params);
+  inst.safeEncode = (data, params) => safeEncode(inst, data, params);
+  inst.safeDecode = (data, params) => safeDecode(inst, data, params);
+  inst.safeEncodeAsync = async (data, params) => safeEncodeAsync(inst, data, params);
+  inst.safeDecodeAsync = async (data, params) => safeDecodeAsync(inst, data, params);
+  _installLazyMethods(inst, "ZodType", {
+    check(...chks) {
+      const def = this.def;
+      return this.clone(mergeDefs(def, {
+        checks: [
+          ...def.checks ?? [],
+          ...chks.map((ch) => typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch)
+        ]
+      }), { parent: true });
+    },
+    with(...chks) {
+      return this.check(...chks);
+    },
+    clone(def, params) {
+      return clone(this, def, params);
+    },
+    brand() {
+      return this;
+    },
+    register(reg, meta) {
+      reg.add(this, meta);
+      return this;
+    },
+    refine(check, params) {
+      return this.check(refine(check, params));
+    },
+    superRefine(refinement, params) {
+      return this.check(superRefine(refinement, params));
+    },
+    overwrite(fn) {
+      return this.check(_overwrite(fn));
+    },
+    optional() {
+      return optional(this);
+    },
+    exactOptional() {
+      return exactOptional(this);
+    },
+    nullable() {
+      return nullable(this);
+    },
+    nullish() {
+      return optional(nullable(this));
+    },
+    nonoptional(params) {
+      return nonoptional(this, params);
+    },
+    array() {
+      return array(this);
+    },
+    or(arg) {
+      return union([this, arg]);
+    },
+    and(arg) {
+      return intersection(this, arg);
+    },
+    transform(tx) {
+      return pipe(this, transform(tx));
     },
     default(d) {
       return _default(this, d);
@@ -661,7 +817,7 @@ function refine(fn, _params = {}) {
 function superRefine(fn, params) {
   return _superRefine(fn, params);
 }
-// node_modules/@hatch/space-sdk/dist/server-contract.js
+// ../gola-client-stage/server/node_modules/@hatch/space-sdk/dist/server-contract.js
 var PRIVILEGED_CONTRACT_BRAND = "@hatch/space-sdk/privileged-contract/v1";
 var PRIVILEGED_HANDLERS_FORMAT = "hatch-space-privileged-handlers-v1";
 function definePrivilegedContracts(specs) {
@@ -714,10 +870,10 @@ function createDefineAction() {
     };
   };
 }
-// node_modules/@hatch/space-sdk/dist/index.js
+// ../gola-client-stage/server/node_modules/@hatch/space-sdk/dist/index.js
 var defineAction = createDefineAction();
 
-// server/src/moderation/wordlists.ts
+// ../gola-client-stage/server/src/moderation/wordlists.ts
 var WORD_LISTS = {
   en: ["2g1c", "2 girls 1 cup", "acrotomophilia", "alabama hot pocket", "alaskan pipeline", "anal", "anilingus", "anus", "apeshit", "arsehole", "ass", "asshole", "assmunch", "auto erotic", "autoerotic", "babeland", "baby batter", "baby juice", "ball gag", "ball gravy", "ball kicking", "ball licking", "ball sack", "ball sucking", "bangbros", "bangbus", "bareback", "barely legal", "barenaked", "bastard", "bastardo", "bastinado", "bbw", "bdsm", "beaner", "beaners", "beaver cleaver", "beaver lips", "beastiality", "bestiality", "big black", "big breasts", "big knockers", "big tits", "bimbos", "birdlock", "bitch", "bitches", "black cock", "blonde action", "blonde on blonde action", "blowjob", "blow job", "blow your load", "blue waffle", "blumpkin", "bollocks", "bondage", "boner", "boob", "boobs", "booty call", "brown showers", "brunette action", "bukkake", "bulldyke", "bullet vibe", "bullshit", "bung hole", "bunghole", "busty", "butt", "buttcheeks", "butthole", "camel toe", "camgirl", "camslut", "camwhore", "carpet muncher", "carpetmuncher", "chocolate rosebuds", "cialis", "circlejerk", "cleveland steamer", "clit", "clitoris", "clover clamps", "clusterfuck", "cock", "cocks", "coprolagnia", "coprophilia", "cornhole", "coon", "coons", "creampie", "cum", "cumming", "cumshot", "cumshots", "cunnilingus", "cunt", "darkie", "date rape", "daterape", "deep throat", "deepthroat", "dendrophilia", "dick", "dildo", "dingleberry", "dingleberries", "dirty pillows", "dirty sanchez", "doggie style", "doggiestyle", "doggy style", "doggystyle", "dog style", "dolcett", "domination", "dominatrix", "dommes", "donkey punch", "double dong", "double penetration", "dp action", "dry hump", "dvda", "eat my ass", "ecchi", "ejaculation", "erotic", "erotism", "escort", "eunuch", "fag", "faggot", "fecal", "felch", "fellatio", "feltch", "female squirting", "femdom", "figging", "fingerbang", "fingering", "fisting", "foot fetish", "footjob", "frotting", "fuck", "fuck buttons", "fuckin", "fucking", "fucktards", "fudge packer", "fudgepacker", "futanari", "gangbang", "gang bang", "gay sex", "genitals", "giant cock", "girl on", "girl on top", "girls gone wild", "goatcx", "goatse", "god damn", "gokkun", "golden shower", "goodpoop", "goo girl", "goregasm", "grope", "group sex", "g-spot", "guro", "hand job", "handjob", "hard core", "hardcore", "hentai", "homoerotic", "honkey", "hooker", "horny", "hot carl", "hot chick", "how to kill", "how to murder", "huge fat", "humping", "incest", "intercourse", "jack off", "jail bait", "jailbait", "jelly donut", "jerk off", "jigaboo", "jiggaboo", "jiggerboo", "jizz", "juggs", "kike", "kinbaku", "kinkster", "kinky", "knobbing", "leather restraint", "leather straight jacket", "lemon party", "livesex", "lolita", "lovemaking", "make me come", "male squirting", "masturbate", "masturbating", "masturbation", "menage a trois", "milf", "missionary position", "mong", "motherfucker", "mound of venus", "mr hands", "muff diver", "muffdiving", "nambla", "nawashi", "negro", "neonazi", "nigga", "nigger", "nig nog", "nimphomania", "nipple", "nipples", "nsfw", "nsfw images", "nude", "nudity", "nutten", "nympho", "nymphomania", "octopussy", "omorashi", "one cup two girls", "one guy one jar", "orgasm", "orgy", "paedophile", "paki", "panties", "panty", "pedobear", "pedophile", "pegging", "penis", "phone sex", "piece of shit", "pikey", "pissing", "piss pig", "pisspig", "playboy", "pleasure chest", "pole smoker", "ponyplay", "poof", "poon", "poontang", "punany", "poop chute", "poopchute", "porn", "porno", "pornography", "prince albert piercing", "pthc", "pubes", "pussy", "queaf", "queef", "quim", "raghead", "raging boner", "rape", "raping", "rapist", "rectum", "reverse cowgirl", "rimjob", "rimming", "rosy palm", "rosy palm and her 5 sisters", "rusty trombone", "sadism", "santorum", "scat", "schlong", "scissoring", "semen", "sex", "sexcam", "sexo", "sexy", "sexual", "sexually", "sexuality", "shaved beaver", "shaved pussy", "shemale", "shibari", "shit", "shitblimp", "shitty", "shota", "shrimping", "skeet", "slanteye", "slut", "s&m", "smut", "snatch", "snowballing", "sodomize", "sodomy", "spastic", "spic", "splooge", "splooge moose", "spooge", "spread legs", "spunk", "strap on", "strapon", "strappado", "strip club", "style doggy", "suck", "sucks", "suicide girls", "sultry women", "swastika", "swinger", "tainted love", "taste my", "tea bagging", "threesome", "throating", "thumbzilla", "tied up", "tight white", "tit", "tits", "titties", "titty", "tongue in a", "topless", "tosser", "towelhead", "tranny", "tribadism", "tub girl", "tubgirl", "tushy", "twat", "twink", "twinkie", "two girls one cup", "undressing", "upskirt", "urethra play", "urophilia", "vagina", "venus mound", "viagra", "vibrator", "violet wand", "vorarephilia", "voyeur", "voyeurweb", "voyuer", "vulva", "wank", "wetback", "wet dream", "white power", "whore", "worldsex", "wrapping men", "wrinkled starfish", "xx", "xxx", "yaoi", "yellow showers", "yiffy", "zoophilia"],
   hi: ["aand", "aandu", "balatkar", "balatkari", "behen chod", "beti chod", "bhadva", "bhadve", "bhandve", "bhangi", "bhootni ke", "bhosad", "bhosadi ke", "boobe", "chakke", "chinaal", "chinki", "chod", "chodu", "chodu bhagat", "chooche", "choochi", "choope", "choot", "choot ke baal", "chootia", "chootiya", "chuche", "chuchi", "chudaap", "chudai khanaa", "chudam chudai", "chude", "chut", "chut ka chuha", "chut ka churan", "chut ka mail", "chut ke baal", "chut ke dhakkan", "chut maarli", "chutad", "chutadd", "chutan", "chutia", "chutiya", "gaand", "gaandfat", "gaandmasti", "gaandufad", "gandfattu", "gandu", "gashti", "gasti", "ghassa", "ghasti", "gucchi", "gucchu", "harami", "haramzade", "hawas", "hawas ke pujari", "hijda", "hijra", "jhant", "jhant chaatu", "jhant ka keeda", "jhant ke baal", "jhant ke pissu", "jhantu", "kamine", "kaminey", "kanjar", "kutta", "kutta kamina", "kutte ki aulad", "kutte ki jat", "kuttiya", "loda", "lodu", "lund", "lund choos", "lund ka bakkal", "lund khajoor", "lundtopi", "lundure", "maa ki chut", "maal", "madar chod", "madarchod", "madhavchod", "mooh mein le", "mutth", "mutthal", "najayaz", "najayaz aulaad", "najayaz paidaish", "paki", "pataka", "patakha", "raand", "randaap", "randi", "randi rona", "saala", "saala kutta", "saali kutti", "saali randi", "suar", "suar ke lund", "suar ki aulad", "tatte", "tatti", "teri maa ka bhosada", "teri maa ka boba chusu", "teri maa ki behenchod", "teri maa ki chut", "tharak", "tharki", "tu chuda"],
@@ -726,7 +882,7 @@ var WORD_LISTS = {
   ar: ["\u0633\u0643\u0633", "\u0637\u064A\u0632", "\u0634\u0631\u062C", "\u0644\u0639\u0642", "\u0644\u062D\u0633", "\u0645\u0635", "\u062A\u0645\u0635", "\u0628\u064A\u0636\u0627\u0646", "\u062B\u062F\u064A", "\u0628\u0632", "\u0628\u0632\u0627\u0632", "\u062D\u0644\u0645\u0629", "\u0645\u0641\u0644\u0642\u0633\u0629", "\u0628\u0638\u0631", "\u0643\u0633", "\u0641\u0631\u062C", "\u0634\u0647\u0648\u0629", "\u0634\u0627\u0630", "\u0645\u0628\u0627\u062F\u0644", "\u0639\u0627\u0647\u0631\u0629", "\u062C\u0645\u0627\u0639", "\u0642\u0636\u064A\u0628", "\u0632\u0628", "\u0644\u0648\u0637\u064A", "\u0644\u0648\u0627\u0637", "\u0633\u062D\u0627\u0642", "\u0633\u062D\u0627\u0642\u064A\u0629", "\u0627\u063A\u062A\u0635\u0627\u0628", "\u062E\u0646\u062B\u064A", "\u0627\u062D\u062A\u0644\u0627\u0645", "\u0646\u064A\u0643", "\u0645\u062A\u0646\u0627\u0643", "\u0645\u062A\u0646\u0627\u0643\u0629", "\u0634\u0631\u0645\u0648\u0637\u0629", "\u0639\u0631\u0635", "\u062E\u0648\u0644", "\u0642\u062D\u0628\u0629", "\u0644\u0628\u0648\u0629"]
 };
 
-// server/src/moderation/wordlist.ts
+// ../gola-client-stage/server/src/moderation/wordlist.ts
 var wordSets = new Map;
 function getSet(lang) {
   let set = wordSets.get(lang);
@@ -774,7 +930,7 @@ function detectSpam(text) {
   return null;
 }
 
-// node_modules/drizzle-orm/entity.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/entity.js
 var entityKind = Symbol.for("drizzle:entityKind");
 var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
 function is(value, type) {
@@ -799,7 +955,7 @@ function is(value, type) {
   return false;
 }
 
-// node_modules/drizzle-orm/column.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/column.js
 class Column {
   constructor(table, config) {
     this.table = table;
@@ -849,7 +1005,7 @@ class Column {
   }
 }
 
-// node_modules/drizzle-orm/column-builder.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/column-builder.js
 class ColumnBuilder {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -905,21 +1061,21 @@ class ColumnBuilder {
   }
 }
 
-// node_modules/drizzle-orm/table.utils.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/table.utils.js
 var TableName = Symbol.for("drizzle:Name");
 
-// node_modules/drizzle-orm/tracing-utils.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/pg-core/columns/enum.js
 var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
 function isPgEnum(obj) {
   return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
 }
 
-// node_modules/drizzle-orm/subquery.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/subquery.js
 class Subquery {
   static [entityKind] = "Subquery";
   constructor(sql, fields, alias, isWith = false, usedTables = []) {
@@ -934,10 +1090,10 @@ class Subquery {
   }
 }
 
-// node_modules/drizzle-orm/version.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/version.js
 var version2 = "0.45.2";
 
-// node_modules/drizzle-orm/tracing.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -964,10 +1120,10 @@ var tracer = {
   }
 };
 
-// node_modules/drizzle-orm/view-common.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
 
-// node_modules/drizzle-orm/table.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/table.js
 var Schema = Symbol.for("drizzle:Schema");
 var Columns = Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
@@ -1005,7 +1161,7 @@ class Table {
   }
 }
 
-// node_modules/drizzle-orm/sql/sql.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sql/sql.js
 function isSQLWrapper(value) {
   return value !== null && value !== undefined && typeof value.getSQL === "function";
 }
@@ -1368,7 +1524,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// node_modules/drizzle-orm/utils.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/utils.js
 function getColumnNameAndConfig(a, b) {
   return {
     name: typeof a === "string" && a.length > 0 ? a : "",
@@ -1377,7 +1533,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder;
 
-// node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -1437,7 +1593,7 @@ function isNull(value) {
   return sql`${value} is null`;
 }
 
-// node_modules/drizzle-orm/sql/expressions/select.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -1445,7 +1601,7 @@ function desc(column) {
   return sql`${column} desc`;
 }
 
-// node_modules/drizzle-orm/sqlite-core/foreign-keys.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/foreign-keys.js
 class ForeignKeyBuilder {
   static [entityKind] = "SQLiteForeignKeyBuilder";
   reference;
@@ -1499,12 +1655,12 @@ class ForeignKey {
   }
 }
 
-// node_modules/drizzle-orm/sqlite-core/unique-constraint.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/common.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/common.js
 class SQLiteColumnBuilder extends ColumnBuilder {
   static [entityKind] = "SQLiteColumnBuilder";
   foreignKeyConfigs = [];
@@ -1555,7 +1711,7 @@ class SQLiteColumn extends Column {
   static [entityKind] = "SQLiteColumn";
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/blob.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/blob.js
 class SQLiteBigIntBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBigIntBuilder";
   constructor(name) {
@@ -1643,7 +1799,7 @@ function blob(a, b) {
   return new SQLiteBlobBufferBuilder(name);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/custom.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/custom.js
 class SQLiteCustomColumnBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -1684,7 +1840,7 @@ function customType(customTypeParams) {
   };
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/integer.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/integer.js
 class SQLiteBaseIntegerBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBaseIntegerBuilder";
   constructor(name, dataType, columnType) {
@@ -1786,7 +1942,7 @@ function integer2(a, b) {
   return new SQLiteIntegerBuilder(name);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/numeric.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/numeric.js
 class SQLiteNumericBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteNumericBuilder";
   constructor(name) {
@@ -1856,7 +2012,7 @@ function numeric(a, b) {
   return mode === "number" ? new SQLiteNumericNumberBuilder(name) : mode === "bigint" ? new SQLiteNumericBigIntBuilder(name) : new SQLiteNumericBuilder(name);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/real.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/real.js
 class SQLiteRealBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteRealBuilder";
   constructor(name) {
@@ -1877,7 +2033,7 @@ function real(name) {
   return new SQLiteRealBuilder(name ?? "");
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/text.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/text.js
 class SQLiteTextBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteTextBuilder";
   constructor(name, config) {
@@ -1932,7 +2088,7 @@ function text(a, b = {}) {
   return new SQLiteTextBuilder(name, config);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/all.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/columns/all.js
 function getSQLiteColumnBuilders() {
   return {
     blob,
@@ -1944,7 +2100,7 @@ function getSQLiteColumnBuilders() {
   };
 }
 
-// node_modules/drizzle-orm/sqlite-core/table.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/table.js
 var InlineForeignKeys = Symbol.for("drizzle:SQLiteInlineForeignKeys");
 
 class SQLiteTable extends Table {
@@ -1978,7 +2134,7 @@ var sqliteTable = (name, columns, extraConfig) => {
   return sqliteTableBase(name, columns, extraConfig);
 };
 
-// node_modules/drizzle-orm/sqlite-core/indexes.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/indexes.js
 class IndexBuilderOn {
   constructor(name, unique) {
     this.name = name;
@@ -2024,7 +2180,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(name, true);
 }
 
-// node_modules/drizzle-orm/sqlite-core/primary-keys.js
+// ../gola-client-stage/server/node_modules/drizzle-orm/sqlite-core/primary-keys.js
 function primaryKey(...config) {
   if (config[0].columns) {
     return new PrimaryKeyBuilder(config[0].columns, config[0].name);
@@ -2059,7 +2215,7 @@ class PrimaryKey {
   }
 }
 
-// server/src/schema.ts
+// ../gola-client-stage/server/src/schema.ts
 var profiles = sqliteTable("profiles", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   displayName: text("display_name").notNull(),
@@ -2253,7 +2409,7 @@ var reports = sqliteTable("reports", {
   index("reports_reporter_idx").on(table.reporterId)
 ]);
 
-// server/src/privileged.ts
+// ../gola-client-stage/server/src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
 var privileged = definePrivilegedContracts({
@@ -2362,7 +2518,7 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
     }
   }
 });
-// server/src/actions.ts
+// ../gola-client-stage/server/src/actions.ts
 var fcmTokenCache = null;
 function getFcmServiceAccount() {
   try {
@@ -2704,213 +2860,4 @@ function createRecoveryCode() {
 async function hashPassword(password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256);
-  return `120000.${bytesToBase64(salt)}.${bytesToBase64(new Uint8Array(bits))}`;
-}
-async function verifyPassword(password, stored) {
-  const [iterationsText, saltText, expected] = stored.split(".");
-  const iterations = Number(iterationsText);
-  if (!iterations || !saltText || !expected)
-    return false;
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = bytesToBase64(new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: decodeBase64(saltText), iterations }, key, 256)));
-  if (bits.length !== expected.length)
-    return false;
-  let difference = 0;
-  for (let i = 0;i < bits.length; i += 1)
-    difference |= bits.charCodeAt(i) ^ expected.charCodeAt(i);
-  return difference === 0;
-}
-async function createSession(ctx, profileId) {
-  const raw = bytesToBase64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/gu, "");
-  await ctx.db().insert(sessions).values({ profileId, tokenHash: await sha256(raw), expiresAt: new Date(Date.now() + 30 * 86400000) });
-  return raw;
-}
-function isActiveProfile(row) {
-  return !row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now();
-}
-function isApprovedProfile(row) {
-  return row.approvalStatus === "approved";
-}
-async function approvedProfile(ctx, token) {
-  const profile = await authenticatedProfile(ctx, token);
-  return profile && isApprovedProfile(profile) ? profile : null;
-}
-async function mentionAllowed(ctx, actorId, person) {
-  if (person.mentionPrivacy === "off")
-    return false;
-  if (person.mentionPrivacy === "peopleIFollow") {
-    const [link] = await ctx.db().select({ followerId: follows.followerId }).from(follows).where(and(eq(follows.followerId, person.id), eq(follows.followingId, actorId))).limit(1);
-    if (!link)
-      return false;
-  }
-  return true;
-}
-async function profileForSession(ctx, token) {
-  if (!token)
-    return null;
-  const rows = await ctx.db().select({ session: sessions, profile: profiles }).from(sessions).innerJoin(profiles, eq(sessions.profileId, profiles.id)).where(eq(sessions.tokenHash, await sha256(token))).limit(1);
-  const row = rows[0];
-  return row && row.session.expiresAt.getTime() > Date.now() ? row.profile : null;
-}
-async function authenticatedProfile(ctx, token) {
-  const profile = await profileForSession(ctx, token);
-  return profile && isActiveProfile(profile) ? profile : null;
-}
-async function publicProfile(ctx, row, viewerId, safetyCache) {
-  const hidden = row.isPrivate && row.id !== viewerId;
-  const safetyStatus = await getSafetyStatus(ctx, row, safetyCache);
-  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor, safetyStatus };
-}
-async function getSafetyStatus(ctx, row, safetyCache) {
-  if (!row)
-    return "safe";
-  const cached = safetyCache?.get(row.id);
-  if (cached)
-    return cached;
-  const pending = computeSafetyStatus(ctx, row);
-  const tracked = pending.then((status) => status, (err) => {
-    if (safetyCache?.get(row.id) === tracked)
-      safetyCache.delete(row.id);
-    throw err;
-  });
-  safetyCache?.set(row.id, tracked);
-  return tracked;
-}
-async function computeSafetyStatus(ctx, row) {
-  const db = ctx.db();
-  const profile = row;
-  let status = "safe";
-  if (profile.postRestrictedUntil && new Date(profile.postRestrictedUntil).getTime() > Date.now())
-    status = "restricted";
-  else if ((profile.violationCount || 0) >= 2)
-    status = "restricted";
-  else if ((profile.violationCount || 0) >= 1)
-    status = "caution";
-  else {
-    const accountReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "account"), eq(reports.targetId, profile.id), eq(reports.status, "pending"))).limit(1);
-    if (accountReports.length > 0)
-      status = "caution";
-    else {
-      const userPosts = await db.select({ id: posts.id }).from(posts).where(eq(posts.authorId, profile.id));
-      const postIds = userPosts.map((p) => p.id);
-      if (postIds.length > 0) {
-        const postReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, postIds), eq(reports.status, "pending"))).limit(1);
-        if (postReports.length > 0)
-          status = "caution";
-      }
-    }
-  }
-  return status;
-}
-async function accountProfile(ctx, row) {
-  return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
-}
-async function canAccessPost(ctx, viewerId, postId) {
-  const [row] = await ctx.db().select({ authorId: posts.authorId, isPrivate: profiles.isPrivate, deactivatedUntil: profiles.deactivatedUntil }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(eq(posts.id, postId)).limit(1);
-  return Boolean(row && (!row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now()) && (row.authorId === viewerId || !row.isPrivate && !await blockedPair(ctx, viewerId, row.authorId)));
-}
-async function moderateText(ctx, text) {
-  const banned = findBannedWordAny(text);
-  if (banned) {
-    return { allowed: false, feedback: "Please remove the inappropriate language and try again." };
-  }
-  const spam = detectSpam(text);
-  if (spam) {
-    const messages = {
-      excessive_caps: "Please don't use excessive capital letters.",
-      repeated_chars: "Please don't use excessive repeated characters.",
-      excessive_emoji: "Please use fewer emoji.",
-      link_spam: "Please don't post multiple links."
-    };
-    return { allowed: false, feedback: messages[spam] || "This looks like spam. Please revise." };
-  }
-  return ctx.inference.complete(`Review this social post for a kindness-first community. Block attacks, criticism aimed at a person, insults, stereotypes, dehumanization, threats, racism, discrimination, dog whistles, and praise of harm. Allow supportive speech, neutral information, first-person feelings, constructive self-reflection, and discussion condemning racism. If blocked, give one calm sentence helping the writer rephrase around their own experience or a positive request. If allowed, feedback is empty. Text: ${JSON.stringify(text)}`, { schema: moderationSchema, timeout_secs: 30 });
-}
-async function blockedPair(ctx, a, b) {
-  const rows = await ctx.db().select().from(blocks).where(and(inArray(blocks.blockerId, [a, b]), inArray(blocks.blockedId, [a, b])));
-  return rows.some((row) => row.blockerId === a && row.blockedId === b || row.blockerId === b && row.blockedId === a);
-}
-async function blockedIdsFor(ctx, viewerId) {
-  const rows = await ctx.db().select().from(blocks).where(eq(blocks.blockerId, viewerId));
-  return new Set(rows.map((row) => row.blockedId));
-}
-function mentionedHandles(text) {
-  return [...new Set(Array.from(text.matchAll(/@([a-z0-9_]{3,24})/giu), (match) => (match[1] ?? "").toLowerCase()).filter(Boolean))];
-}
-async function triageReport(ctx, reportId) {
-  const db = ctx.db();
-  const [report] = await db.select().from(reports).where(eq(reports.id, reportId)).limit(1);
-  if (!report || report.status !== "pending")
-    return;
-  let contentText = "";
-  let targetAuthorId = 0;
-  if (report.targetType === "post") {
-    const [post] = await db.select().from(posts).where(eq(posts.id, report.targetId)).limit(1);
-    if (post) {
-      contentText = post.text || "";
-      targetAuthorId = post.authorId;
-    }
-  } else if (report.targetType === "comment") {
-    const [comment] = await db.select().from(comments).where(eq(comments.id, report.targetId)).limit(1);
-    if (comment) {
-      contentText = comment.text || "";
-      targetAuthorId = comment.authorId;
-    }
-  } else if (report.targetType === "account") {
-    const [profile] = await db.select().from(profiles).where(eq(profiles.id, report.targetId)).limit(1);
-    if (profile) {
-      contentText = (profile.displayName || "") + " " + (profile.bio || "");
-      targetAuthorId = profile.id;
-    }
-  }
-  if (!contentText.trim()) {
-    await db.update(reports).set({ status: "dismissed", reviewedAt: new Date }).where(eq(reports.id, reportId));
-    return;
-  }
-  const review = await moderateText(ctx, contentText);
-  if (!review.allowed) {
-    await db.update(reports).set({ status: "genuine", reviewedAt: new Date }).where(eq(reports.id, reportId));
-    if (targetAuthorId) {
-      const [violator] = await db.select().from(profiles).where(eq(profiles.id, targetAuthorId)).limit(1);
-      if (violator) {
-        const newCount = (violator.violationCount || 0) + 1;
-        let postRestrictedUntil = null;
-        if (newCount === 2) {
-          postRestrictedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        }
-        await db.update(profiles).set({
-          violationCount: newCount,
-          postRestrictedUntil
-        }).where(eq(profiles.id, targetAuthorId));
-        await db.insert(notifications).values({
-          recipientId: targetAuthorId,
-          actorId: report.reporterId,
-          type: "approval",
-          postId: null
-        });
-      }
-    }
-  } else {
-    const [reporter] = await db.select().from(profiles).where(eq(profiles.id, report.reporterId)).limit(1);
-    if (reporter) {
-      const fakeCount = reporter.fakeReportCount || 0;
-      if (fakeCount >= 2) {
-        await db.update(reports).set({ status: "fake", reviewedAt: new Date }).where(eq(reports.id, reportId));
-        const newFakeCount = fakeCount + 1;
-        await db.update(profiles).set({
-          fakeReportCount: newFakeCount,
-          reportingSuspended: newFakeCount >= 3
-        }).where(eq(profiles.id, report.reporterId));
-      }
-    }
-  }
-}
-async function notifyMentions(ctx, actorId, text, postId, commentId) {
-  const handles = mentionedHandles(text);
-  if (!handles.length)
-    return;
-  const db = ctx.db();
-  const people = await db.select().from(profiles).where(inArray(profiles.handle, handles));
-  for (const person of people) {
-    if (person.id === actorId || !isActiveProfile(person) || await blockedPair(ctx, actorId, person.id) || !await mentionAllowe
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 
