@@ -18,6 +18,7 @@ function isAction(value: unknown): boolean {
 import { createCtx } from "./ctx";
 import { runMigrations } from "./db";
 import { blobStore } from "./blobs";
+import { maintenanceGate } from "./maintenance";
 
 await runMigrations();
 
@@ -62,6 +63,13 @@ Bun.serve({
     if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS });
     }
+
+    // Temporary maintenance gate (approved 2026-10-16; local only).
+    // Runs before every route handler below — including /health, which the
+    // gate itself exempts. Pure function: zero database writes, so no
+    // account, session, recovery-key, or data changes are possible through it.
+    const gate = maintenanceGate(req.method, url.pathname, { headers: CORS });
+    if (gate) return gate;
 
     if (req.method === "GET" && url.pathname === "/health") {
       return Response.json(
