@@ -1,9 +1,4 @@
-}, key, 256);
-  return `120000.${bytesToBase64(salt)}.${bytesToBase64(new Uint8Array(bits))}`;
-}
-async function verifyPassword(password, stored) {
-  const [iterationsText, saltText, expected] = stored.split(".");
-  const iterations = Number(iterationsText);
+
   if (!iterations || !saltText || !expected)
     return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
@@ -430,11 +425,13 @@ var Actions = {
     const handle = args.handle.toLowerCase().replace(/^@/u, "");
     if (!/^[a-z0-9_]+$/u.test(handle))
       return { status: "error", message: "Use only letters, numbers, and underscores in your username.", token: null, profile: null };
+    if (RESERVED_HANDLES.has(handle))
+      return { status: "error", message: "That username is reserved. Please choose another one.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, email)).limit(1))[0])
       return { status: "error", message: "An account already uses that email. Log in instead.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, handle)).limit(1))[0])
       return { status: "error", message: "That username is already taken.", token: null, profile: null };
-    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", approvalStatus: "approved", continent: "AS" }).returning();
+    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: false, approvalStatus: "approved", continent: "AS" }).returning();
     if (!created)
       return { status: "error", message: "The account could not be created.", token: null, profile: null };
     const token = await createSession(ctx, created.id);
@@ -504,6 +501,8 @@ var Actions = {
     const viewer = await profileForSession(ctx, args.token);
     if (!viewer || args.confirmation !== "DELETE")
       return { status: "error", message: "The account could not be deleted. Please log in again." };
+    if (viewer.isFounder)
+      return { status: "error", message: "Founder accounts cannot be permanently deleted." };
     await queueGoogleSync(ctx, "users", String(viewer.id), "delete", profileSheetRow(viewer, "delete"));
     await deleteAccountData(ctx, viewer);
     ctx.invalidateQueries();
