@@ -1,4 +1,41 @@
-
+ "story_reaction", "mention", "reply", "approval"]);
+function decodeBase64(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0;i < binary.length; i += 1)
+    bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function bytesToBase64(bytes) {
+  let value = "";
+  for (const byte of bytes)
+    value += String.fromCharCode(byte);
+  return btoa(value);
+}
+function wordCount(value) {
+  return value.trim() ? value.trim().split(/\s+/u).length : 0;
+}
+async function sha256(value) {
+  return bytesToBase64(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))));
+}
+function normalizeRecoveryCode(value) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/gu, "");
+}
+function createRecoveryCode() {
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const value = Array.from(bytes, (byte) => alphabet[byte % alphabet.length] ?? "2").join("");
+  return `GOLA-${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}`;
+}
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256);
+  return `120000.${bytesToBase64(salt)}.${bytesToBase64(new Uint8Array(bits))}`;
+}
+async function verifyPassword(password, stored) {
+  const [iterationsText, saltText, expected] = stored.split(".");
+  const iterations = Number(iterationsText);
   if (!iterations || !saltText || !expected)
     return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
@@ -323,24 +360,6 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
 function trustedOAuthEmail(email, verified) {
   return verified && email ? email.toLowerCase() : null;
 }
-var pwResetBuckets = new Map;
-var PWRESET_LIMIT = 10;
-var PWRESET_WINDOW_MS = 10 * 60 * 1000;
-function throttlePwReset(key) {
-  const now = Date.now();
-  const b = pwResetBuckets.get(key);
-  if (!b || now - b.windowStart > PWRESET_WINDOW_MS) {
-    pwResetBuckets.set(key, { count: 1, windowStart: now });
-    if (pwResetBuckets.size > 5000) {
-      for (const [k, v] of pwResetBuckets)
-        if (now - v.windowStart > PWRESET_WINDOW_MS)
-          pwResetBuckets.delete(k);
-    }
-    return true;
-  }
-  b.count += 1;
-  return b.count <= PWRESET_LIMIT;
-}
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -476,8 +495,7 @@ var Actions = {
     const db = ctx.db();
     const email = args.email.trim().toLowerCase();
     const handle = args.handle.trim().toLowerCase().replace(/^@/u, "");
-    const throttleKey = `pwreset:${email}:${handle}`;
-    if (!throttlePwReset(throttleKey))
+    if (!await checkRateLimit(db, { key: pwResetKey(email, handle), ...PWRESET_LIMIT }))
       return { status: "error", message: "Too many attempts. Please wait a few minutes and try again.", recoveryCode: null };
     const [profile] = await db.select().from(profiles).where(and(eq(profiles.email, email), eq(profiles.handle, handle))).limit(1);
     const suppliedCode = normalizeRecoveryCode(args.recoveryCode ?? "");
@@ -486,7 +504,7 @@ var Actions = {
     if (!profile || !codeValid && !legacyValid)
       return { status: "error", message: "Those recovery details do not match this account.", recoveryCode: null };
     const nextCode = createRecoveryCode();
-    await db.batch([db.update(profiles).set({ passwordHash: await hashPassword(args.newPassword), recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)) }).where(eq(profiles.id, profile.id)), db.delete(sessions).where(eq(sessions.profileId, profile.id))]);
+    await db.batch([db.update(profiles).set({ passwordHash: await hashPassword(args.newPassword), recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)), recoveryCodeAckedAt: null }).where(eq(profiles.id, profile.id)), db.delete(sessions).where(eq(sessions.profileId, profile.id))]);
     ctx.invalidateQueries();
     return { status: "ok", message: "Your password is reset. Save this new recovery key somewhere safe.", recoveryCode: nextCode };
   } }),
@@ -494,10 +512,24 @@ var Actions = {
     const viewer = await authenticatedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", recoveryCode: null };
+    const db = ctx.db();
+    if (!await checkRateLimit(db, { key: recoveryKeyMintKey(viewer.id), ...RECOVERY_MINT_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please try again later.", recoveryCode: null };
     const nextCode = createRecoveryCode();
-    await ctx.db().update(profiles).set({ recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)) }).where(eq(profiles.id, viewer.id));
+    await db.update(profiles).set({ recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)), recoveryCodeAckedAt: null }).where(eq(profiles.id, viewer.id));
     ctx.invalidateQueries();
     return { status: "ok", message: "A new recovery key is ready. Any older recovery key will no longer work.", recoveryCode: nextCode };
+  } }),
+  ackRecoveryCode: defineAction({ request: object({ token: string2() }), response: object({ status: _enum(["ok", "error"]), message: string2() }), async handler(ctx, args) {
+    const viewer = await authenticatedProfile(ctx, args.token);
+    if (!viewer)
+      return { status: "error", message: "Please log in again." };
+    const db = ctx.db();
+    if (!await checkRateLimit(db, { key: ackKey(viewer.id), ...ACK_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please try again later." };
+    await db.update(profiles).set({ recoveryCodeAckedAt: new Date }).where(eq(profiles.id, viewer.id));
+    ctx.invalidateQueries();
+    return { status: "ok", message: "Recovery key saved." };
   } }),
   logoutAccount: defineAction({ request: object({ token: string2() }), response: object({ ok: literal(true) }), async handler(ctx, args) {
     await ctx.db().delete(sessions).where(eq(sessions.tokenHash, await sha256(args.token)));
