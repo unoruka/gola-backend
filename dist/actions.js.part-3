@@ -360,6 +360,7 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
 function trustedOAuthEmail(email, verified) {
   return verified && email ? email.toLowerCase() : null;
 }
+var LEGACY_PASSWORD_RESET_ENABLED = false;
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -500,7 +501,7 @@ var Actions = {
     const [profile] = await db.select().from(profiles).where(and(eq(profiles.email, email), eq(profiles.handle, handle))).limit(1);
     const suppliedCode = normalizeRecoveryCode(args.recoveryCode ?? "");
     const codeValid = profile?.recoveryCodeHash && suppliedCode ? await sha256(suppliedCode) === profile.recoveryCodeHash : false;
-    const legacyValid = Boolean(profile && !profile.isFounder && profile.passwordHash && !profile.recoveryCodeHash && handle === profile.handle);
+    const legacyValid = Boolean(LEGACY_PASSWORD_RESET_ENABLED && profile && !profile.isFounder && profile.passwordHash && !profile.recoveryCodeHash && handle === profile.handle);
     if (!profile || !codeValid && !legacyValid)
       return { status: "error", message: "Those recovery details do not match this account.", recoveryCode: null };
     const nextCode = createRecoveryCode();
