@@ -1,35 +1,4 @@
-onStringifyReplacer, 2);
-      }
-    },
-    addIssues: {
-      value: (issues) => {
-        inst.issues.push(...issues);
-        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
-      }
-    },
-    isEmpty: {
-      get() {
-        return inst.issues.length === 0;
-      }
-    }
-  });
-};
-var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
-  Parent: Error
-});
-
-// ../gola-source/server/node_modules/zod/v4/classic/parse.js
-var parse3 = /* @__PURE__ */ _parse(ZodRealError);
-var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
-var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
-var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
-var encode = /* @__PURE__ */ _encode(ZodRealError);
-var decode = /* @__PURE__ */ _decode(ZodRealError);
-var encodeAsync = /* @__PURE__ */ _encodeAsync(ZodRealError);
-var decodeAsync = /* @__PURE__ */ _decodeAsync(ZodRealError);
-var safeEncode = /* @__PURE__ */ _safeEncode(ZodRealError);
-var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
-var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
+);
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
 // ../gola-source/server/node_modules/zod/v4/classic/schemas.js
@@ -2414,7 +2383,7 @@ var rateLimits = sqliteTable("rate_limits", {
 });
 
 // ../gola-source/server/src/rateLimit.ts
-var LONGEST_WINDOW_MS = 10 * 60 * 1000;
+var LONGEST_WINDOW_MS = 60 * 60 * 1000;
 async function checkRateLimit(db, spec, nowMs = Date.now()) {
   const expiredBefore = nowMs - spec.windowMs;
   const rows = await db.insert(rateLimits).values({ key: spec.key, windowStart: nowMs, count: 1 }).onConflictDoUpdate({
@@ -2439,9 +2408,13 @@ function recoveryKeyMintKey(profileId) {
 function ackKey(profileId) {
   return `rl:ack:${profileId}`;
 }
+function loginKey(email) {
+  return `login:${email.trim().toLowerCase()}`;
+}
 var PWRESET_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
 var RECOVERY_MINT_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 var ACK_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
+var LOGIN_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
 
 // ../gola-source/server/src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
@@ -2863,4 +2836,49 @@ var preferenceResponse = object({ status: _enum(["ok", "error"]), message: strin
 var toggleResponse = object({ active: boolean2(), count: number2() });
 var connectionProfileSchema = profileSchema.extend({ viewerFollowing: boolean2(), followerCount: number2() });
 var moderationSchema = object({ allowed: boolean2(), feedback: string2() });
-var visibleNotificationTypeSchema = _enum(["like", "comment", "follow", "repost",
+var visibleNotificationTypeSchema = _enum(["like", "comment", "follow", "repost", "story_reaction", "mention", "reply", "approval"]);
+function decodeBase64(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0;i < binary.length; i += 1)
+    bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function bytesToBase64(bytes) {
+  let value = "";
+  for (const byte of bytes)
+    value += String.fromCharCode(byte);
+  return btoa(value);
+}
+function wordCount(value) {
+  return value.trim() ? value.trim().split(/\s+/u).length : 0;
+}
+async function sha256(value) {
+  return bytesToBase64(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))));
+}
+function normalizeRecoveryCode(value) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/gu, "");
+}
+function createRecoveryCode() {
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const value = Array.from(bytes, (byte) => alphabet[byte % alphabet.length] ?? "2").join("");
+  return `GOLA-${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}`;
+}
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256);
+  return `120000.${bytesToBase64(salt)}.${bytesToBase64(new Uint8Array(bits))}`;
+}
+async function verifyPassword(password, stored) {
+  const [iterationsText, saltText, expected] = stored.split(".");
+  const iterations = Number(iterationsText);
+  if (!iterations || !saltText || !expected)
+    return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = bytesToBase64(new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: decodeBase64(saltText), iterations }, key, 256)));
+  if (bits.length !== expected.length)
+    return false;
+  let difference = 0;
+  for (let i = 0;i < bits.le

@@ -1,5 +1,5 @@
 // @bun
-// node_modules/zod/v4/core/core.js
+// ../gola-source/server/node_modules/zod/v4/core/core.js
 var _a;
 function $constructor(name, initializer, params) {
   function init(inst, def) {
@@ -74,7 +74,7 @@ function config(newConfig) {
     Object.assign(globalConfig, newConfig);
   return globalConfig;
 }
-// node_modules/zod/v4/core/util.js
+// ../gola-source/server/node_modules/zod/v4/core/util.js
 function getEnumValues(entries) {
   const numericValues = Object.values(entries).filter((v) => typeof v === "number");
   const values = Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
@@ -475,7 +475,7 @@ function issue(...args) {
   return { ...iss };
 }
 
-// node_modules/zod/v4/core/errors.js
+// ../gola-source/server/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -544,7 +544,7 @@ function formatError(error, mapper = (issue) => issue.message) {
   return fieldErrors;
 }
 
-// node_modules/zod/v4/core/parse.js
+// ../gola-source/server/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -621,7 +621,7 @@ var _safeEncodeAsync = (_Err) => async (schema, value, _ctx) => {
 var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 };
-// node_modules/zod/v4/core/regexes.js
+// ../gola-source/server/node_modules/zod/v4/core/regexes.js
 var cuid = /^[cC][0-9a-z]{6,}$/;
 var cuid2 = /^[0-9a-z]+$/;
 var ulid = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
@@ -679,7 +679,7 @@ var _null = /^null$/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// node_modules/zod/v4/core/checks.js
+// ../gola-source/server/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -1068,7 +1068,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// node_modules/zod/v4/core/doc.js
+// ../gola-source/server/node_modules/zod/v4/core/doc.js
 class Doc {
   constructor(args = []) {
     this.content = [];
@@ -1106,14 +1106,14 @@ class Doc {
   }
 }
 
-// node_modules/zod/v4/core/versions.js
+// ../gola-source/server/node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 4,
   patch: 3
 };
 
-// node_modules/zod/v4/core/schemas.js
+// ../gola-source/server/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -2390,7 +2390,7 @@ function handleRefineResult(result, payload, input, inst) {
     payload.issues.push(issue(_iss));
   }
 }
-// node_modules/zod/v4/core/registries.js
+// ../gola-source/server/node_modules/zod/v4/core/registries.js
 var _a2;
 var $output = Symbol("ZodOutput");
 var $input = Symbol("ZodInput");
@@ -2440,7 +2440,7 @@ function registry() {
 }
 (_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
-// node_modules/zod/v4/core/api.js
+// ../gola-source/server/node_modules/zod/v4/core/api.js
 function _string(Class, params) {
   return new Class({
     type: "string",
@@ -2895,7 +2895,7 @@ function _check(fn, params) {
   ch._zod.check = fn;
   return ch;
 }
-// node_modules/zod/v4/core/to-json-schema.js
+// ../gola-source/server/node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
   let target = params?.target ?? "draft-2020-12";
   if (target === "draft-4")
@@ -3247,7 +3247,7 @@ var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) =
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
-// node_modules/zod/v4/core/json-schema-processors.js
+// ../gola-source/server/node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
   guid: "uuid",
   url: "uri",
@@ -3539,7 +3539,7 @@ var optionalProcessor = (schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
-// node_modules/zod/v4/classic/iso.js
+// ../gola-source/server/node_modules/zod/v4/classic/iso.js
 var ZodISODateTime = /* @__PURE__ */ $constructor("ZodISODateTime", (inst, def) => {
   $ZodISODateTime.init(inst, def);
   ZodStringFormat.init(inst, def);
@@ -3569,7 +3569,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// node_modules/zod/v4/classic/errors.js
+// ../gola-source/server/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -3603,7 +3603,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// node_modules/zod/v4/classic/parse.js
+// ../gola-source/server/node_modules/zod/v4/classic/parse.js
 var parse3 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -3617,7 +3617,7 @@ var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// node_modules/zod/v4/classic/schemas.js
+// ../gola-source/server/node_modules/zod/v4/classic/schemas.js
 var _installedGroups = /* @__PURE__ */ new WeakMap;
 function _installLazyMethods(inst, group, methods) {
   const proto = Object.getPrototypeOf(inst);
@@ -4400,7 +4400,7 @@ function refine(fn, _params = {}) {
 function superRefine(fn, params) {
   return _superRefine(fn, params);
 }
-// node_modules/@hatch/space-sdk/dist/server-contract.js
+// ../gola-source/server/node_modules/@hatch/space-sdk/dist/server-contract.js
 var PRIVILEGED_CONTRACT_BRAND = "@hatch/space-sdk/privileged-contract/v1";
 var PRIVILEGED_HANDLERS_FORMAT = "hatch-space-privileged-handlers-v1";
 function definePrivilegedContracts(specs) {
@@ -4453,10 +4453,10 @@ function createDefineAction() {
     };
   };
 }
-// node_modules/@hatch/space-sdk/dist/index.js
+// ../gola-source/server/node_modules/@hatch/space-sdk/dist/index.js
 var defineAction = createDefineAction();
 
-// server/src/moderation/wordlists.ts
+// ../gola-source/server/src/moderation/wordlists.ts
 var WORD_LISTS = {
   en: ["2g1c", "2 girls 1 cup", "acrotomophilia", "alabama hot pocket", "alaskan pipeline", "anal", "anilingus", "anus", "apeshit", "arsehole", "ass", "asshole", "assmunch", "auto erotic", "autoerotic", "babeland", "baby batter", "baby juice", "ball gag", "ball gravy", "ball kicking", "ball licking", "ball sack", "ball sucking", "bangbros", "bangbus", "bareback", "barely legal", "barenaked", "bastard", "bastardo", "bastinado", "bbw", "bdsm", "beaner", "beaners", "beaver cleaver", "beaver lips", "beastiality", "bestiality", "big black", "big breasts", "big knockers", "big tits", "bimbos", "birdlock", "bitch", "bitches", "black cock", "blonde action", "blonde on blonde action", "blowjob", "blow job", "blow your load", "blue waffle", "blumpkin", "bollocks", "bondage", "boner", "boob", "boobs", "booty call", "brown showers", "brunette action", "bukkake", "bulldyke", "bullet vibe", "bullshit", "bung hole", "bunghole", "busty", "butt", "buttcheeks", "butthole", "camel toe", "camgirl", "camslut", "camwhore", "carpet muncher", "carpetmuncher", "chocolate rosebuds", "cialis", "circlejerk", "cleveland steamer", "clit", "clitoris", "clover clamps", "clusterfuck", "cock", "cocks", "coprolagnia", "coprophilia", "cornhole", "coon", "coons", "creampie", "cum", "cumming", "cumshot", "cumshots", "cunnilingus", "cunt", "darkie", "date rape", "daterape", "deep throat", "deepthroat", "dendrophilia", "dick", "dildo", "dingleberry", "dingleberries", "dirty pillows", "dirty sanchez", "doggie style", "doggiestyle", "doggy style", "doggystyle", "dog style", "dolcett", "domination", "dominatrix", "dommes", "donkey punch", "double dong", "double penetration", "dp action", "dry hump", "dvda", "eat my ass", "ecchi", "ejaculation", "erotic", "erotism", "escort", "eunuch", "fag", "faggot", "fecal", "felch", "fellatio", "feltch", "female squirting", "femdom", "figging", "fingerbang", "fingering", "fisting", "foot fetish", "footjob", "frotting", "fuck", "fuck buttons", "fuckin", "fucking", "fucktards", "fudge packer", "fudgepacker", "futanari", "gangbang", "gang bang", "gay sex", "genitals", "giant cock", "girl on", "girl on top", "girls gone wild", "goatcx", "goatse", "god damn", "gokkun", "golden shower", "goodpoop", "goo girl", "goregasm", "grope", "group sex", "g-spot", "guro", "hand job", "handjob", "hard core", "hardcore", "hentai", "homoerotic", "honkey", "hooker", "horny", "hot carl", "hot chick", "how to kill", "how to murder", "huge fat", "humping", "incest", "intercourse", "jack off", "jail bait", "jailbait", "jelly donut", "jerk off", "jigaboo", "jiggaboo", "jiggerboo", "jizz", "juggs", "kike", "kinbaku", "kinkster", "kinky", "knobbing", "leather restraint", "leather straight jacket", "lemon party", "livesex", "lolita", "lovemaking", "make me come", "male squirting", "masturbate", "masturbating", "masturbation", "menage a trois", "milf", "missionary position", "mong", "motherfucker", "mound of venus", "mr hands", "muff diver", "muffdiving", "nambla", "nawashi", "negro", "neonazi", "nigga", "nigger", "nig nog", "nimphomania", "nipple", "nipples", "nsfw", "nsfw images", "nude", "nudity", "nutten", "nympho", "nymphomania", "octopussy", "omorashi", "one cup two girls", "one guy one jar", "orgasm", "orgy", "paedophile", "paki", "panties", "panty", "pedobear", "pedophile", "pegging", "penis", "phone sex", "piece of shit", "pikey", "pissing", "piss pig", "pisspig", "playboy", "pleasure chest", "pole smoker", "ponyplay", "poof", "poon", "poontang", "punany", "poop chute", "poopchute", "porn", "porno", "pornography", "prince albert piercing", "pthc", "pubes", "pussy", "queaf", "queef", "quim", "raghead", "raging boner", "rape", "raping", "rapist", "rectum", "reverse cowgirl", "rimjob", "rimming", "rosy palm", "rosy palm and her 5 sisters", "rusty trombone", "sadism", "santorum", "scat", "schlong", "scissoring", "semen", "sex", "sexcam", "sexo", "sexy", "sexual", "sexually", "sexuality", "shaved beaver", "shaved pussy", "shemale", "shibari", "shit", "shitblimp", "shitty", "shota", "shrimping", "skeet", "slanteye", "slut", "s&m", "smut", "snatch", "snowballing", "sodomize", "sodomy", "spastic", "spic", "splooge", "splooge moose", "spooge", "spread legs", "spunk", "strap on", "strapon", "strappado", "strip club", "style doggy", "suck", "sucks", "suicide girls", "sultry women", "swastika", "swinger", "tainted love", "taste my", "tea bagging", "threesome", "throating", "thumbzilla", "tied up", "tight white", "tit", "tits", "titties", "titty", "tongue in a", "topless", "tosser", "towelhead", "tranny", "tribadism", "tub girl", "tubgirl", "tushy", "twat", "twink", "twinkie", "two girls one cup", "undressing", "upskirt", "urethra play", "urophilia", "vagina", "venus mound", "viagra", "vibrator", "violet wand", "vorarephilia", "voyeur", "voyeurweb", "voyuer", "vulva", "wank", "wetback", "wet dream", "white power", "whore", "worldsex", "wrapping men", "wrinkled starfish", "xx", "xxx", "yaoi", "yellow showers", "yiffy", "zoophilia"],
   hi: ["aand", "aandu", "balatkar", "balatkari", "behen chod", "beti chod", "bhadva", "bhadve", "bhandve", "bhangi", "bhootni ke", "bhosad", "bhosadi ke", "boobe", "chakke", "chinaal", "chinki", "chod", "chodu", "chodu bhagat", "chooche", "choochi", "choope", "choot", "choot ke baal", "chootia", "chootiya", "chuche", "chuchi", "chudaap", "chudai khanaa", "chudam chudai", "chude", "chut", "chut ka chuha", "chut ka churan", "chut ka mail", "chut ke baal", "chut ke dhakkan", "chut maarli", "chutad", "chutadd", "chutan", "chutia", "chutiya", "gaand", "gaandfat", "gaandmasti", "gaandufad", "gandfattu", "gandu", "gashti", "gasti", "ghassa", "ghasti", "gucchi", "gucchu", "harami", "haramzade", "hawas", "hawas ke pujari", "hijda", "hijra", "jhant", "jhant chaatu", "jhant ka keeda", "jhant ke baal", "jhant ke pissu", "jhantu", "kamine", "kaminey", "kanjar", "kutta", "kutta kamina", "kutte ki aulad", "kutte ki jat", "kuttiya", "loda", "lodu", "lund", "lund choos", "lund ka bakkal", "lund khajoor", "lundtopi", "lundure", "maa ki chut", "maal", "madar chod", "madarchod", "madhavchod", "mooh mein le", "mutth", "mutthal", "najayaz", "najayaz aulaad", "najayaz paidaish", "paki", "pataka", "patakha", "raand", "randaap", "randi", "randi rona", "saala", "saala kutta", "saali kutti", "saali randi", "suar", "suar ke lund", "suar ki aulad", "tatte", "tatti", "teri maa ka bhosada", "teri maa ka boba chusu", "teri maa ki behenchod", "teri maa ki chut", "tharak", "tharki", "tu chuda"],
@@ -4465,7 +4465,7 @@ var WORD_LISTS = {
   ar: ["\u0633\u0643\u0633", "\u0637\u064A\u0632", "\u0634\u0631\u062C", "\u0644\u0639\u0642", "\u0644\u062D\u0633", "\u0645\u0635", "\u062A\u0645\u0635", "\u0628\u064A\u0636\u0627\u0646", "\u062B\u062F\u064A", "\u0628\u0632", "\u0628\u0632\u0627\u0632", "\u062D\u0644\u0645\u0629", "\u0645\u0641\u0644\u0642\u0633\u0629", "\u0628\u0638\u0631", "\u0643\u0633", "\u0641\u0631\u062C", "\u0634\u0647\u0648\u0629", "\u0634\u0627\u0630", "\u0645\u0628\u0627\u062F\u0644", "\u0639\u0627\u0647\u0631\u0629", "\u062C\u0645\u0627\u0639", "\u0642\u0636\u064A\u0628", "\u0632\u0628", "\u0644\u0648\u0637\u064A", "\u0644\u0648\u0627\u0637", "\u0633\u062D\u0627\u0642", "\u0633\u062D\u0627\u0642\u064A\u0629", "\u0627\u063A\u062A\u0635\u0627\u0628", "\u062E\u0646\u062B\u064A", "\u0627\u062D\u062A\u0644\u0627\u0645", "\u0646\u064A\u0643", "\u0645\u062A\u0646\u0627\u0643", "\u0645\u062A\u0646\u0627\u0643\u0629", "\u0634\u0631\u0645\u0648\u0637\u0629", "\u0639\u0631\u0635", "\u062E\u0648\u0644", "\u0642\u062D\u0628\u0629", "\u0644\u0628\u0648\u0629"]
 };
 
-// server/src/moderation/wordlist.ts
+// ../gola-source/server/src/moderation/wordlist.ts
 var wordSets = new Map;
 function getSet(lang) {
   let set = wordSets.get(lang);
@@ -4513,7 +4513,7 @@ function detectSpam(text) {
   return null;
 }
 
-// node_modules/drizzle-orm/entity.js
+// ../gola-source/server/node_modules/drizzle-orm/entity.js
 var entityKind = Symbol.for("drizzle:entityKind");
 var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
 function is(value, type) {
@@ -4538,7 +4538,7 @@ function is(value, type) {
   return false;
 }
 
-// node_modules/drizzle-orm/column.js
+// ../gola-source/server/node_modules/drizzle-orm/column.js
 class Column {
   constructor(table, config) {
     this.table = table;
@@ -4588,7 +4588,7 @@ class Column {
   }
 }
 
-// node_modules/drizzle-orm/column-builder.js
+// ../gola-source/server/node_modules/drizzle-orm/column-builder.js
 class ColumnBuilder {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -4644,21 +4644,21 @@ class ColumnBuilder {
   }
 }
 
-// node_modules/drizzle-orm/table.utils.js
+// ../gola-source/server/node_modules/drizzle-orm/table.utils.js
 var TableName = Symbol.for("drizzle:Name");
 
-// node_modules/drizzle-orm/tracing-utils.js
+// ../gola-source/server/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// node_modules/drizzle-orm/pg-core/columns/enum.js
+// ../gola-source/server/node_modules/drizzle-orm/pg-core/columns/enum.js
 var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
 function isPgEnum(obj) {
   return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
 }
 
-// node_modules/drizzle-orm/subquery.js
+// ../gola-source/server/node_modules/drizzle-orm/subquery.js
 class Subquery {
   static [entityKind] = "Subquery";
   constructor(sql, fields, alias, isWith = false, usedTables = []) {
@@ -4673,10 +4673,10 @@ class Subquery {
   }
 }
 
-// node_modules/drizzle-orm/version.js
+// ../gola-source/server/node_modules/drizzle-orm/version.js
 var version2 = "0.45.2";
 
-// node_modules/drizzle-orm/tracing.js
+// ../gola-source/server/node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -4703,10 +4703,10 @@ var tracer = {
   }
 };
 
-// node_modules/drizzle-orm/view-common.js
+// ../gola-source/server/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
 
-// node_modules/drizzle-orm/table.js
+// ../gola-source/server/node_modules/drizzle-orm/table.js
 var Schema = Symbol.for("drizzle:Schema");
 var Columns = Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
@@ -4744,7 +4744,7 @@ class Table {
   }
 }
 
-// node_modules/drizzle-orm/sql/sql.js
+// ../gola-source/server/node_modules/drizzle-orm/sql/sql.js
 function isSQLWrapper(value) {
   return value !== null && value !== undefined && typeof value.getSQL === "function";
 }
@@ -5107,7 +5107,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// node_modules/drizzle-orm/utils.js
+// ../gola-source/server/node_modules/drizzle-orm/utils.js
 function getColumnNameAndConfig(a, b) {
   return {
     name: typeof a === "string" && a.length > 0 ? a : "",
@@ -5116,7 +5116,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder;
 
-// node_modules/drizzle-orm/sql/expressions/conditions.js
+// ../gola-source/server/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -5176,7 +5176,7 @@ function isNull(value) {
   return sql`${value} is null`;
 }
 
-// node_modules/drizzle-orm/sql/expressions/select.js
+// ../gola-source/server/node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
   return sql`${column} asc`;
 }
@@ -5184,7 +5184,7 @@ function desc(column) {
   return sql`${column} desc`;
 }
 
-// node_modules/drizzle-orm/sqlite-core/foreign-keys.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/foreign-keys.js
 class ForeignKeyBuilder {
   static [entityKind] = "SQLiteForeignKeyBuilder";
   reference;
@@ -5238,12 +5238,12 @@ class ForeignKey {
   }
 }
 
-// node_modules/drizzle-orm/sqlite-core/unique-constraint.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/common.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/common.js
 class SQLiteColumnBuilder extends ColumnBuilder {
   static [entityKind] = "SQLiteColumnBuilder";
   foreignKeyConfigs = [];
@@ -5294,7 +5294,7 @@ class SQLiteColumn extends Column {
   static [entityKind] = "SQLiteColumn";
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/blob.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/blob.js
 class SQLiteBigIntBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBigIntBuilder";
   constructor(name) {
@@ -5382,7 +5382,7 @@ function blob(a, b) {
   return new SQLiteBlobBufferBuilder(name);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/custom.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/custom.js
 class SQLiteCustomColumnBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -5423,7 +5423,7 @@ function customType(customTypeParams) {
   };
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/integer.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/integer.js
 class SQLiteBaseIntegerBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteBaseIntegerBuilder";
   constructor(name, dataType, columnType) {
@@ -5525,7 +5525,7 @@ function integer2(a, b) {
   return new SQLiteIntegerBuilder(name);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/numeric.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/numeric.js
 class SQLiteNumericBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteNumericBuilder";
   constructor(name) {
@@ -5595,7 +5595,7 @@ function numeric(a, b) {
   return mode === "number" ? new SQLiteNumericNumberBuilder(name) : mode === "bigint" ? new SQLiteNumericBigIntBuilder(name) : new SQLiteNumericBuilder(name);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/real.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/real.js
 class SQLiteRealBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteRealBuilder";
   constructor(name) {
@@ -5616,7 +5616,7 @@ function real(name) {
   return new SQLiteRealBuilder(name ?? "");
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/text.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/text.js
 class SQLiteTextBuilder extends SQLiteColumnBuilder {
   static [entityKind] = "SQLiteTextBuilder";
   constructor(name, config) {
@@ -5671,7 +5671,7 @@ function text(a, b = {}) {
   return new SQLiteTextBuilder(name, config);
 }
 
-// node_modules/drizzle-orm/sqlite-core/columns/all.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/columns/all.js
 function getSQLiteColumnBuilders() {
   return {
     blob,
@@ -5683,7 +5683,7 @@ function getSQLiteColumnBuilders() {
   };
 }
 
-// node_modules/drizzle-orm/sqlite-core/table.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/table.js
 var InlineForeignKeys = Symbol.for("drizzle:SQLiteInlineForeignKeys");
 
 class SQLiteTable extends Table {
@@ -5717,7 +5717,7 @@ var sqliteTable = (name, columns, extraConfig) => {
   return sqliteTableBase(name, columns, extraConfig);
 };
 
-// node_modules/drizzle-orm/sqlite-core/indexes.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/indexes.js
 class IndexBuilderOn {
   constructor(name, unique) {
     this.name = name;
@@ -5763,7 +5763,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(name, true);
 }
 
-// node_modules/drizzle-orm/sqlite-core/primary-keys.js
+// ../gola-source/server/node_modules/drizzle-orm/sqlite-core/primary-keys.js
 function primaryKey(...config) {
   if (config[0].columns) {
     return new PrimaryKeyBuilder(config[0].columns, config[0].name);
@@ -5798,7 +5798,7 @@ class PrimaryKey {
   }
 }
 
-// server/src/schema.ts
+// ../gola-source/server/src/schema.ts
 var profiles = sqliteTable("profiles", {
   id: integer2("id").primaryKey({ autoIncrement: true }),
   displayName: text("display_name").notNull(),
@@ -5806,6 +5806,7 @@ var profiles = sqliteTable("profiles", {
   email: text("email"),
   passwordHash: text("password_hash"),
   recoveryCodeHash: text("recovery_code_hash"),
+  recoveryCodeAckedAt: integer2("recovery_code_acked_at", { mode: "timestamp_ms" }),
   bio: text("bio"),
   avatarBlobKey: text("avatar_blob_key"),
   isFounder: integer2("is_founder", { mode: "boolean" }).notNull().default(false),
@@ -5991,8 +5992,47 @@ var reports = sqliteTable("reports", {
   index("reports_status_idx").on(table.status),
   index("reports_reporter_idx").on(table.reporterId)
 ]);
+var rateLimits = sqliteTable("rate_limits", {
+  key: text("key").primaryKey(),
+  windowStart: integer2("window_start").notNull(),
+  count: integer2("count").notNull()
+});
 
-// server/src/privileged.ts
+// ../gola-source/server/src/rateLimit.ts
+var LONGEST_WINDOW_MS = 60 * 60 * 1000;
+async function checkRateLimit(db, spec, nowMs = Date.now()) {
+  const expiredBefore = nowMs - spec.windowMs;
+  const rows = await db.insert(rateLimits).values({ key: spec.key, windowStart: nowMs, count: 1 }).onConflictDoUpdate({
+    target: rateLimits.key,
+    set: {
+      windowStart: sql`CASE WHEN ${rateLimits.windowStart} <= ${expiredBefore} THEN ${nowMs} ELSE ${rateLimits.windowStart} END`,
+      count: sql`CASE WHEN ${rateLimits.windowStart} <= ${expiredBefore} THEN 1 WHEN ${rateLimits.count} <= ${spec.limit} THEN ${rateLimits.count} + 1 ELSE ${rateLimits.count} END`
+    }
+  }).returning({ count: rateLimits.count });
+  const count = Number(rows[0]?.count ?? spec.limit + 1);
+  await db.delete(rateLimits).where(lt(rateLimits.windowStart, nowMs - LONGEST_WINDOW_MS));
+  return count <= spec.limit;
+}
+function pwResetKey(email, handle) {
+  const e = email.trim().toLowerCase();
+  const h = handle.trim().toLowerCase().replace(/^@/u, "");
+  return `pwreset:${e}:${h}`;
+}
+function recoveryKeyMintKey(profileId) {
+  return `rl:recovery:${profileId}`;
+}
+function ackKey(profileId) {
+  return `rl:ack:${profileId}`;
+}
+function loginKey(email) {
+  return `login:${email.trim().toLowerCase()}`;
+}
+var PWRESET_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
+var RECOVERY_MINT_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
+var ACK_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
+var LOGIN_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
+
+// ../gola-source/server/src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
 var privileged = definePrivilegedContracts({
@@ -6101,7 +6141,7 @@ var privilegedHandlers = definePrivilegedHandlers(privileged, {
     }
   }
 });
-// server/src/actions.ts
+// ../gola-source/server/src/actions.ts
 var fcmTokenCache = null;
 function getFcmServiceAccount() {
   try {
@@ -6365,6 +6405,7 @@ var colorChoiceSchema = _enum(["teal", "coral", "amber", "lime", "emerald", "sky
 var LATEST_APP_VERSION = "2.0.0";
 var LATEST_APP_URL = "https://gola-site.pages.dev/gola.apk";
 var LATEST_APP_NOTES = "";
+var RESERVED_HANDLES = new Set(["gola", "golaadmin"]);
 var profileSchema = object({
   id: number2(),
   displayName: string2(),
@@ -6770,6 +6811,10 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
   const images = await Promise.all(imagesRaw.map(async (row) => ({ ...row, url: await ctx.blobs.getUrl(row.blobKey) })));
   return Promise.all(rows.map(async ({ post, author }) => ({ id: post.id, text: post.text, slug: post.slug ?? null, createdAt: post.createdAt.toISOString(), editedAt: post.editedAt?.toISOString() ?? null, author: await publicProfile(ctx, author, viewerId, safetyCache), images: images.filter((x) => x.postId === post.id).map((x) => ({ id: x.id, url: x.url, altText: x.altText })), likeCount: likes2.filter((x) => x.postId === post.id).length, commentCount: commentsVisible.filter((x) => x.comment.postId === post.id).length, repostCount: reposts2.filter((x) => x.postId === post.id).length, viewerLiked: likes2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerReposted: reposts2.some((x) => x.postId === post.id && x.profileId === viewerId), viewerBookmarked: bookmarks2.some((x) => x.postId === post.id), comments: await Promise.all(commentsVisible.filter((x) => x.comment.postId === post.id).map(async ({ comment, author: commentAuthor }) => ({ id: comment.id, parentCommentId: comment.parentCommentId, text: comment.text, createdAt: comment.createdAt.toISOString(), author: await publicProfile(ctx, commentAuthor, viewerId, safetyCache) }))) })));
 }
+function trustedOAuthEmail(email, verified) {
+  return verified && email ? email.toLowerCase() : null;
+}
+var LEGACY_PASSWORD_RESET_ENABLED = false;
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -6872,11 +6917,13 @@ var Actions = {
     const handle = args.handle.toLowerCase().replace(/^@/u, "");
     if (!/^[a-z0-9_]+$/u.test(handle))
       return { status: "error", message: "Use only letters, numbers, and underscores in your username.", token: null, profile: null };
+    if (RESERVED_HANDLES.has(handle))
+      return { status: "error", message: "That username is reserved. Please choose another one.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, email)).limit(1))[0])
       return { status: "error", message: "An account already uses that email. Log in instead.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, handle)).limit(1))[0])
       return { status: "error", message: "That username is already taken.", token: null, profile: null };
-    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: handle === "gola" || handle === "golaadmin", approvalStatus: "approved", continent: "AS" }).returning();
+    const [created] = await db.insert(profiles).values({ email, passwordHash: await hashPassword(args.password), displayName: args.displayName.trim(), handle, bio: args.bio?.trim() || null, isPrivate: args.isPrivate, isFounder: false, approvalStatus: "approved", continent: "AS" }).returning();
     if (!created)
       return { status: "error", message: "The account could not be created.", token: null, profile: null };
     const token = await createSession(ctx, created.id);
@@ -6886,7 +6933,11 @@ var Actions = {
     return { status: "ok", message: null, token, profile: await accountProfile(ctx, created) };
   } }),
   loginAccount: defineAction({ privileged: [privileged.appendGoogleSheetRow], request: object({ email: string2().trim().email().max(200), password: string2().min(1).max(100) }), response: authResponse, async handler(ctx, args) {
-    const [profile] = await ctx.db().select().from(profiles).where(eq(profiles.email, args.email.trim().toLowerCase())).limit(1);
+    const db = ctx.db();
+    const email = args.email.trim().toLowerCase();
+    if (!await checkRateLimit(db, { key: loginKey(email), ...LOGIN_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please wait a few minutes and try again.", token: null, profile: null };
+    const [profile] = await db.select().from(profiles).where(eq(profiles.email, email)).limit(1);
     if (!profile?.passwordHash || !await verifyPassword(args.password, profile.passwordHash))
       return { status: "error", message: "The email or password is incorrect.", token: null, profile: null };
     if (!isActiveProfile(profile))
@@ -6903,14 +6954,16 @@ var Actions = {
     const db = ctx.db();
     const email = args.email.trim().toLowerCase();
     const handle = args.handle.trim().toLowerCase().replace(/^@/u, "");
+    if (!await checkRateLimit(db, { key: pwResetKey(email, handle), ...PWRESET_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please wait a few minutes and try again.", recoveryCode: null };
     const [profile] = await db.select().from(profiles).where(and(eq(profiles.email, email), eq(profiles.handle, handle))).limit(1);
     const suppliedCode = normalizeRecoveryCode(args.recoveryCode ?? "");
     const codeValid = profile?.recoveryCodeHash && suppliedCode ? await sha256(suppliedCode) === profile.recoveryCodeHash : false;
-    const legacyValid = Boolean(profile && !profile.recoveryCodeHash && handle === profile.handle);
+    const legacyValid = Boolean(LEGACY_PASSWORD_RESET_ENABLED && profile && !profile.isFounder && profile.passwordHash && !profile.recoveryCodeHash && handle === profile.handle);
     if (!profile || !codeValid && !legacyValid)
       return { status: "error", message: "Those recovery details do not match this account.", recoveryCode: null };
     const nextCode = createRecoveryCode();
-    await db.batch([db.update(profiles).set({ passwordHash: await hashPassword(args.newPassword), recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)) }).where(eq(profiles.id, profile.id)), db.delete(sessions).where(eq(sessions.profileId, profile.id))]);
+    await db.batch([db.update(profiles).set({ passwordHash: await hashPassword(args.newPassword), recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)), recoveryCodeAckedAt: null }).where(eq(profiles.id, profile.id)), db.delete(sessions).where(eq(sessions.profileId, profile.id))]);
     ctx.invalidateQueries();
     return { status: "ok", message: "Your password is reset. Save this new recovery key somewhere safe.", recoveryCode: nextCode };
   } }),
@@ -6918,10 +6971,24 @@ var Actions = {
     const viewer = await authenticatedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", recoveryCode: null };
+    const db = ctx.db();
+    if (!await checkRateLimit(db, { key: recoveryKeyMintKey(viewer.id), ...RECOVERY_MINT_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please try again later.", recoveryCode: null };
     const nextCode = createRecoveryCode();
-    await ctx.db().update(profiles).set({ recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)) }).where(eq(profiles.id, viewer.id));
+    await db.update(profiles).set({ recoveryCodeHash: await sha256(normalizeRecoveryCode(nextCode)), recoveryCodeAckedAt: null }).where(eq(profiles.id, viewer.id));
     ctx.invalidateQueries();
     return { status: "ok", message: "A new recovery key is ready. Any older recovery key will no longer work.", recoveryCode: nextCode };
+  } }),
+  ackRecoveryCode: defineAction({ request: object({ token: string2() }), response: object({ status: _enum(["ok", "error"]), message: string2() }), async handler(ctx, args) {
+    const viewer = await authenticatedProfile(ctx, args.token);
+    if (!viewer)
+      return { status: "error", message: "Please log in again." };
+    const db = ctx.db();
+    if (!await checkRateLimit(db, { key: ackKey(viewer.id), ...ACK_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please try again later." };
+    await db.update(profiles).set({ recoveryCodeAckedAt: new Date }).where(eq(profiles.id, viewer.id));
+    ctx.invalidateQueries();
+    return { status: "ok", message: "Recovery key saved." };
   } }),
   logoutAccount: defineAction({ request: object({ token: string2() }), response: object({ ok: literal(true) }), async handler(ctx, args) {
     await ctx.db().delete(sessions).where(eq(sessions.tokenHash, await sha256(args.token)));
@@ -6946,6 +7013,8 @@ var Actions = {
     const viewer = await profileForSession(ctx, args.token);
     if (!viewer || args.confirmation !== "DELETE")
       return { status: "error", message: "The account could not be deleted. Please log in again." };
+    if (viewer.isFounder)
+      return { status: "error", message: "Founder accounts cannot be permanently deleted." };
     await queueGoogleSync(ctx, "users", String(viewer.id), "delete", profileSheetRow(viewer, "delete"));
     await deleteAccountData(ctx, viewer);
     ctx.invalidateQueries();
@@ -7788,6 +7857,7 @@ var Actions = {
     let discordId = "";
     let discordName = "discord_user";
     let discordEmail = null;
+    let discordEmailVerified = false;
     try {
       const res = await fetch("https://discord.com/api/users/@me", { headers: { Authorization: `Bearer ${accessToken}` } });
       if (!res.ok) {
@@ -7802,13 +7872,16 @@ var Actions = {
         discordName = data.username;
       if (typeof data.email === "string")
         discordEmail = data.email;
+      if (data.verified === true)
+        discordEmailVerified = true;
     } catch {
       return fail("Discord could not be reached. Please try again.");
     }
+    const discordLinkEmail = trustedOAuthEmail(discordEmail, discordEmailVerified);
     const db = ctx.db();
     let [profile] = await db.select().from(profiles).where(eq(profiles.discordUserId, discordId)).limit(1);
-    if (!profile && discordEmail) {
-      const [byEmail] = await db.select().from(profiles).where(eq(profiles.email, discordEmail.toLowerCase())).limit(1);
+    if (!profile && discordLinkEmail) {
+      const [byEmail] = await db.select().from(profiles).where(eq(profiles.email, discordLinkEmail)).limit(1);
       if (byEmail) {
         const [linked] = await db.update(profiles).set({ discordUserId: discordId }).where(eq(profiles.id, byEmail.id)).returning();
         if (linked)
@@ -7826,7 +7899,7 @@ var Actions = {
           break;
         }
       }
-      const [created] = await db.insert(profiles).values({ email: discordEmail?.toLowerCase() ?? null, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "approved", continent: "AS" }).returning();
+      const [created] = await db.insert(profiles).values({ email: discordLinkEmail, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "approved", continent: "AS" }).returning();
       if (!created)
         return fail("The account could not be created.");
       profile = created;
@@ -7856,11 +7929,13 @@ var Actions = {
     if (clientId && info?.aud !== clientId)
       return fail("Google sign-in failed. Please try again.");
     const googleEmail = typeof info?.email === "string" ? info.email.toLowerCase() : null;
+    const googleEmailVerified = info?.email_verified === true || info?.email_verified === "true";
+    const googleLinkEmail = trustedOAuthEmail(googleEmail, googleEmailVerified);
     const googleName = typeof info?.name === "string" && info.name ? info.name : "google_user";
     const db = ctx.db();
     let [profile] = await db.select().from(profiles).where(eq(profiles.googleSub, sub)).limit(1);
-    if (!profile && googleEmail) {
-      const [byEmail] = await db.select().from(profiles).where(eq(profiles.email, googleEmail)).limit(1);
+    if (!profile && googleLinkEmail) {
+      const [byEmail] = await db.select().from(profiles).where(eq(profiles.email, googleLinkEmail)).limit(1);
       if (byEmail) {
         const [linked] = await db.update(profiles).set({ googleSub: sub }).where(eq(profiles.id, byEmail.id)).returning();
         if (linked)
@@ -7878,7 +7953,7 @@ var Actions = {
           break;
         }
       }
-      const [created] = await db.insert(profiles).values({ email: googleEmail, displayName: googleName.slice(0, 40), handle, googleSub: sub, approvalStatus: "approved", continent: "AS" }).returning();
+      const [created] = await db.insert(profiles).values({ email: googleLinkEmail, displayName: googleName.slice(0, 40), handle, googleSub: sub, approvalStatus: "approved", continent: "AS" }).returning();
       if (!created)
         return fail("The account could not be created.");
       profile = created;
@@ -7927,5 +8002,6 @@ export {
   classifyOAuthHttpReject,
   clearFcmTokenCacheForTests,
   getFcmAccessToken,
-  sanitizeOAuthErrorCode
+  sanitizeOAuthErrorCode,
+  trustedOAuthEmail
 };

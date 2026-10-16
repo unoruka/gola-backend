@@ -3583,4 +3583,35 @@ var initializer2 = (inst, issues) => {
     addIssue: {
       value: (issue) => {
         inst.issues.push(issue);
-        inst.message = JSON.stringify(inst.issues, js
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
+      }
+    },
+    addIssues: {
+      value: (issues) => {
+        inst.issues.push(...issues);
+        inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
+      }
+    },
+    isEmpty: {
+      get() {
+        return inst.issues.length === 0;
+      }
+    }
+  });
+};
+var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
+  Parent: Error
+});
+
+// ../gola-source/server/node_modules/zod/v4/classic/parse.js
+var parse3 = /* @__PURE__ */ _parse(ZodRealError);
+var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
+var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
+var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
+var encode = /* @__PURE__ */ _encode(ZodRealError);
+var decode = /* @__PURE__ */ _decode(ZodRealError);
+var encodeAsync = /* @__PURE__ */ _encodeAsync(ZodRealError);
+var decodeAsync = /* @__PURE__ */ _decodeAsync(ZodRealError);
+var safeEncode = /* @__PURE__ */ _safeEncode(ZodRealError);
+var safeDecode = /* @__PURE__ */ _safeDecode(ZodRealError);
+var safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError
