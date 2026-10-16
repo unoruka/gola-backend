@@ -323,6 +323,24 @@ async function loadPosts(ctx, viewerId, authorIds, limit, onlyIds) {
 function trustedOAuthEmail(email, verified) {
   return verified && email ? email.toLowerCase() : null;
 }
+var pwResetBuckets = new Map;
+var PWRESET_LIMIT = 10;
+var PWRESET_WINDOW_MS = 10 * 60 * 1000;
+function throttlePwReset(key) {
+  const now = Date.now();
+  const b = pwResetBuckets.get(key);
+  if (!b || now - b.windowStart > PWRESET_WINDOW_MS) {
+    pwResetBuckets.set(key, { count: 1, windowStart: now });
+    if (pwResetBuckets.size > 5000) {
+      for (const [k, v] of pwResetBuckets)
+        if (now - v.windowStart > PWRESET_WINDOW_MS)
+          pwResetBuckets.delete(k);
+    }
+    return true;
+  }
+  b.count += 1;
+  return b.count <= PWRESET_LIMIT;
+}
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -458,10 +476,13 @@ var Actions = {
     const db = ctx.db();
     const email = args.email.trim().toLowerCase();
     const handle = args.handle.trim().toLowerCase().replace(/^@/u, "");
+    const throttleKey = `pwreset:${email}:${handle}`;
+    if (!throttlePwReset(throttleKey))
+      return { status: "error", message: "Too many attempts. Please wait a few minutes and try again.", recoveryCode: null };
     const [profile] = await db.select().from(profiles).where(and(eq(profiles.email, email), eq(profiles.handle, handle))).limit(1);
     const suppliedCode = normalizeRecoveryCode(args.recoveryCode ?? "");
     const codeValid = profile?.recoveryCodeHash && suppliedCode ? await sha256(suppliedCode) === profile.recoveryCodeHash : false;
-    const legacyValid = Boolean(profile && !profile.recoveryCodeHash && handle === profile.handle);
+    const legacyValid = Boolean(profile && !profile.isFounder && profile.passwordHash && !profile.recoveryCodeHash && handle === profile.handle);
     if (!profile || !codeValid && !legacyValid)
       return { status: "error", message: "Those recovery details do not match this account.", recoveryCode: null };
     const nextCode = createRecoveryCode();
