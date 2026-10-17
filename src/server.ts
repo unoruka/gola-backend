@@ -19,6 +19,7 @@ import { createCtx } from "./ctx";
 import { runMigrations } from "./db";
 import { blobStore } from "./blobs";
 import { maintenanceGate } from "./maintenance";
+import { accessGate, accessMode, isAccessModeRecognized, versionEnforcementEnabled, checkAppBuild } from "./access";
 
 await runMigrations();
 
@@ -41,6 +42,39 @@ const CORS = {
   "access-control-allow-methods": "GET, POST, OPTIONS",
   "access-control-allow-headers": "content-type, x-request-id",
 };
+
+// H3: request-body cap for /actions, enforced BEFORE the body is buffered.
+// 110 MiB = 10 images at the 10 MiB per-image cap (see the actions module)
+// plus JSON headroom. This constant must move together with that per-image
+// cap — a body smaller than the sum of the per-image caps would reject
+// legitimate multi-photo posts.
+export const MAX_BODY_BYTES = 110 * 1024 * 1024;
+
+/** Read the request body as text, throwing if it exceeds `maxBytes`. */
+export async function readCappedBodyText(req: Request, maxBytes: number): Promise<string> {
+  const reader = req.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) throw new Error("body-too-large");
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    merged.set(c, offset);
+    offset += c.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
 
 function baseUrlOf(req: Request): string {
   const proto =
@@ -71,6 +105,16 @@ Bun.serve({
     const gate = maintenanceGate(req.method, url.pathname, { headers: CORS });
     if (gate) return gate;
 
+    // E: access-mode gate (2026-10-17). Runs AFTER the maintenance gate
+    // (maintenance always wins) and BEFORE every route. `closed` rejects
+    // everything except GET /health with a distinct message; `allowlist`
+    // passes through here and is enforced per-action in the actions layer;
+    // `open` (default) preserves today's behavior. Pure: zero database
+    // writes, so no account, session, recovery-key, or data changes are
+    // possible through it.
+    const access = accessGate(req.method, url.pathname, { headers: CORS });
+    if (access) return access;
+
     if (req.method === "GET" && url.pathname === "/health") {
       return Response.json(
         { ok: true, actions: table.size, time: new Date().toISOString() },
@@ -100,9 +144,14 @@ Bun.serve({
     if (req.method === "GET" && url.pathname === "/oauth/discord") {
       const code = url.searchParams.get("code") ?? "";
       const err = url.searchParams.get("error") ?? "";
+      // M1: carry the OAuth `state` through to the app so the client can
+      // verify the flow it started (login-CSRF protection). Same escaping
+      // treatment as code/error; absent state simply adds nothing.
+      const relayState = url.searchParams.get("state") ?? "";
+      const stateParam = relayState ? `&state=${encodeURIComponent(relayState)}` : "";
       const deepLink = err
-        ? `gola://oauth/discord?error=${encodeURIComponent(err)}`
-        : `gola://oauth/discord?code=${encodeURIComponent(code)}`;
+        ? `gola://oauth/discord?error=${encodeURIComponent(err)}${stateParam}`
+        : `gola://oauth/discord?code=${encodeURIComponent(code)}${stateParam}`;
       const safeLink = deepLink.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Returning to Gola…</title>
 <style>body{font-family:system-ui,sans-serif;background:#f6f1e7;color:#2b2620;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}.card{background:#fffdf8;border:3px solid #2b2620;border-radius:20px;box-shadow:6px 6px 0 #2b2620;padding:32px;max-width:340px;text-align:center}h1{font-size:20px;margin:0 0 8px}p{font-size:14px;opacity:.75}a{display:inline-block;margin-top:16px;background:#009788;color:#fff;font-weight:700;padding:12px 28px;border-radius:999px;text-decoration:none;border:3px solid #2b2620}</style>
@@ -123,7 +172,7 @@ Bun.serve({
             namespace: "android_app",
             package_name: "com.gola.app",
             sha256_cert_fingerprints: [
-              "00:97:BC:9E:2E:7D:30:86:56:95:B5:09:42:41:70:6C:30:6E:CA:41:44:CE:D7:1A:F5:12:7E:31:E7:E4:DA:DB",
+              "3E:FC:92:24:EA:E8:44:AA:DC:BC:36:23:19:95:CF:C4:51:F4:C0:3B:CC:94:FD:93:79:F0:88:48:C8:A6:F0:85",
             ],
           },
         },
@@ -235,13 +284,53 @@ Bun.serve({
       req.method === "POST" &&
       (url.pathname === "/actions" || url.pathname === "/actions/")
     ) {      let body: { action?: unknown; args?: unknown };
+      // H3: cheap Content-Length pre-check first, then a bounded streaming
+      // read — a missing or lying header cannot bypass the cap, and the
+      // server never buffers more than MAX_BODY_BYTES for one request.
+      const declaredLength = Number(req.headers.get("content-length"));
+      if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+        return Response.json(
+          { error: "Request too large." },
+          { status: 413, headers: CORS }
+        );
+      }
+      let rawText: string;
       try {
-        body = await req.json();
+        rawText = await readCappedBodyText(req, MAX_BODY_BYTES);
+      } catch {
+        return Response.json(
+          { error: "Request too large." },
+          { status: 413, headers: CORS }
+        );
+      }
+      try {
+        body = JSON.parse(rawText);
       } catch {
         return Response.json(
           { error: "Invalid JSON body" },
           { status: 400, headers: CORS }
         );
+      }
+      // H7: approved-build gate (default OFF). When
+      // GOLA_REQUIRE_APPROVED_BUILD=1, the envelope must carry a
+      // server-approved appCommit, or the caller must present a live founder
+      // session (break-glass). Old clients that send no appCommit are
+      // rejected ONLY while enforcement is on. The client sends
+      // appCommit from its __GOLA_COMMIT__ stamp (client follow-up); until
+      // then this stays off.
+      if (versionEnforcementEnabled()) {
+        const { db } = await import("./db");
+        const verdict = await checkAppBuild(
+          db.$client as unknown as Parameters<typeof checkAppBuild>[0],
+          (body as { appCommit?: unknown } | null)?.appCommit,
+          (body as { args?: { token?: unknown } } | null)?.args?.token
+        );
+        if (!verdict.ok) {
+          return Response.json(
+            { error: verdict.message, code: verdict.code },
+            { status: 426, headers: CORS }
+          );
+        }
       }
       const def = table.get(String(body?.action ?? ""));
       if (!def) {
@@ -266,9 +355,16 @@ Bun.serve({
         const validated = await def.response.parseAsync(result);
         return Response.json({ data: validated }, { headers: CORS });
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        console.error(`[gola][${body.action}] ${message}`);
-        return Response.json({ error: message }, { status: 500, headers: CORS });
+        // L1: never leak internals to the client. The full error (with stack)
+        // stays in the server log; the client gets a generic message. No
+        // client code path depends on the raw 500 text (the app surfaces its
+        // own fallback for server errors; only the 404 "Unknown action"
+        // signal above is message-inspected, and it is untouched).
+        console.error(`[gola][${body.action}]`, e);
+        return Response.json(
+          { error: "Something went wrong. Please try again." },
+          { status: 500, headers: CORS }
+        );
       }
     }
 
@@ -277,6 +373,13 @@ Bun.serve({
 });
 
 console.log(`[gola] listening on :${PORT}`);
+{
+  const mode = accessMode();
+  const recognized = isAccessModeRecognized();
+  console.log(
+    `[gola] access mode: ${mode}${recognized ? "" : ` (unrecognized GOLA_ACCESS_MODE=${JSON.stringify(process.env.GOLA_ACCESS_MODE)} — failing closed)`}, approved-build enforcement: ${versionEnforcementEnabled() ? "ON" : "off"}`
+  );
+}
 console.log(
   `[gola] moderation: ${
     process.env.GEMINI_API_KEY ? "Gemini configured" : "GEMINI_API_KEY MISSING — writes will fail closed"

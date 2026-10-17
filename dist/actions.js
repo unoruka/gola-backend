@@ -5992,6 +5992,32 @@ var reports = sqliteTable("reports", {
   index("reports_status_idx").on(table.status),
   index("reports_reporter_idx").on(table.reporterId)
 ]);
+var testers = sqliteTable("testers", {
+  profileId: integer2("profile_id").primaryKey().references(() => profiles.id, { onDelete: "cascade" }),
+  addedAt: integer2("added_at", { mode: "timestamp_ms" }).notNull(),
+  addedBy: integer2("added_by").references(() => profiles.id, {
+    onDelete: "set null"
+  }),
+  batchLabel: text("batch_label")
+});
+var accessLog = sqliteTable("access_log", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  at: integer2("at", { mode: "timestamp_ms" }).notNull(),
+  operator: integer2("operator").references(() => profiles.id, {
+    onDelete: "set null"
+  }),
+  action: text("action").notNull(),
+  target: integer2("target").references(() => profiles.id, {
+    onDelete: "set null"
+  }),
+  detail: text("detail")
+}, (table) => [index("access_log_at_idx").on(table.at)]);
+var approvedBuilds = sqliteTable("approved_builds", {
+  sha: text("sha").primaryKey(),
+  status: text("status", { enum: ["approved", "revoked"] }).notNull().default("approved"),
+  notes: text("notes"),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull()
+});
 var rateLimits = sqliteTable("rate_limits", {
   key: text("key").primaryKey(),
   windowStart: integer2("window_start").notNull(),
@@ -6031,6 +6057,31 @@ var PWRESET_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
 var RECOVERY_MINT_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 var ACK_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
 var LOGIN_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
+function signupEmailKey(email) {
+  return `signup:email:${email.trim().toLowerCase()}`;
+}
+var SIGNUP_GLOBAL_KEY = "signup:global";
+function oauthAttemptKey(provider, credentialFingerprint) {
+  return `oauth:${provider}:${credentialFingerprint}`;
+}
+function accountActionKey(action, profileId) {
+  return `rl:write:${action}:${profileId}`;
+}
+function reportKey(profileId) {
+  return `rl:report:${profileId}`;
+}
+var SIGNUP_EMAIL_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
+var SIGNUP_GLOBAL_LIMIT = { limit: 100, windowMs: 60 * 60 * 1000 };
+var OAUTH_ATTEMPT_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
+var CONTENT_WRITE_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+var COMMENT_LIMIT = { limit: 60, windowMs: 60 * 60 * 1000 };
+var AVATAR_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
+var LIKE_LIMIT = { limit: 300, windowMs: 60 * 60 * 1000 };
+var FOLLOW_LIMIT = { limit: 100, windowMs: 60 * 60 * 1000 };
+var REPORT_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+var PUSH_TOKEN_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
+var PROFILE_MUTATION_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+var DESTRUCTIVE_ACCOUNT_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 
 // ../gola-source/server/src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
@@ -6460,6 +6511,16 @@ function decodeBase64(value) {
     bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
+var MAX_IMAGE_BASE64_BYTES = 10 * 1024 * 1024;
+function isWellFormedBase64(value) {
+  if (value.length === 0 || value.length % 4 !== 0)
+    return false;
+  return /^[A-Za-z0-9+/]+={0,2}$/.test(value);
+}
+function isUniqueViolation(error) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /UNIQUE constraint failed/i.test(message);
+}
 function bytesToBase64(bytes) {
   let value = "";
   for (const byte of bytes)
@@ -6501,9 +6562,19 @@ async function verifyPassword(password, stored) {
     difference |= bits.charCodeAt(i) ^ expected.charCodeAt(i);
   return difference === 0;
 }
+var MAX_SESSIONS_PER_ACCOUNT = 5;
 async function createSession(ctx, profileId) {
   const raw = bytesToBase64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/gu, "");
-  await ctx.db().insert(sessions).values({ profileId, tokenHash: await sha256(raw), expiresAt: new Date(Date.now() + 30 * 86400000) });
+  const db = ctx.db();
+  await db.insert(sessions).values({ profileId, tokenHash: await sha256(raw), expiresAt: new Date(Date.now() + 30 * 86400000) });
+  await db.delete(sessions).where(sql`
+    ${sessions.profileId} = ${profileId}
+    AND ${sessions.id} NOT IN (
+      SELECT ${sessions.id} FROM ${sessions}
+      WHERE ${sessions.profileId} = ${profileId}
+      ORDER BY ${sessions.createdAt} DESC, ${sessions.id} DESC
+      LIMIT ${MAX_SESSIONS_PER_ACCOUNT}
+    )`);
   return raw;
 }
 function isActiveProfile(row) {
@@ -6512,9 +6583,35 @@ function isActiveProfile(row) {
 function isApprovedProfile(row) {
   return row.approvalStatus === "approved";
 }
+function accessMode(env = process.env) {
+  const raw = (env.GOLA_ACCESS_MODE ?? "").trim().toLowerCase();
+  if (raw === "" || raw === "open")
+    return "open";
+  if (raw === "allowlist" || raw === "closed")
+    return raw;
+  console.warn(`[gola][access] unrecognized GOLA_ACCESS_MODE=${JSON.stringify(raw)} \u2014 failing closed`);
+  return "closed";
+}
+async function isTester(ctx, profileId) {
+  const rows = await ctx.db().select({ profileId: testers.profileId }).from(testers).where(eq(testers.profileId, profileId)).limit(1);
+  return rows.length > 0;
+}
+async function logAccessEvent(ctx, operatorId, action, targetId, detail) {
+  await ctx.db().insert(accessLog).values({
+    at: new Date,
+    operator: operatorId,
+    action,
+    target: targetId,
+    detail
+  });
+}
 async function approvedProfile(ctx, token) {
   const profile = await authenticatedProfile(ctx, token);
-  return profile && isApprovedProfile(profile) ? profile : null;
+  if (!profile || !isApprovedProfile(profile))
+    return null;
+  if (accessMode() === "allowlist" && !profile.isFounder && !await isTester(ctx, profile.id))
+    return null;
+  return profile;
 }
 async function mentionAllowed(ctx, actorId, person) {
   if (person.mentionPrivacy === "off")
@@ -6815,6 +6912,53 @@ function trustedOAuthEmail(email, verified) {
   return verified && email ? email.toLowerCase() : null;
 }
 var LEGACY_PASSWORD_RESET_ENABLED = false;
+var DISCORD_STATE_VERSION = "v1";
+var DISCORD_STATE_TTL_MS = 10 * 60 * 1000;
+async function hmacSha256B64Url(key, data) {
+  const cryptoKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(data));
+  return b64url(new Uint8Array(sig));
+}
+function constantTimeEqual(a, b) {
+  if (a.length !== b.length)
+    return false;
+  let diff = 0;
+  for (let i = 0;i < a.length; i += 1)
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+async function mintDiscordState(nowMs = Date.now()) {
+  const secret = process.env.DISCORD_CLIENT_SECRET;
+  if (!secret)
+    return null;
+  const nonce = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  const payload = `${DISCORD_STATE_VERSION}.${nowMs}.${nonce}`;
+  return `${payload}.${await hmacSha256B64Url(secret, payload)}`;
+}
+async function verifyDiscordState(state, nowMs = Date.now()) {
+  const secret = process.env.DISCORD_CLIENT_SECRET;
+  if (!secret || typeof state !== "string")
+    return false;
+  const parts = state.split(".");
+  if (parts.length !== 4 || parts[0] !== DISCORD_STATE_VERSION)
+    return false;
+  const issuedAtText = parts[1] ?? "";
+  const nonce = parts[2] ?? "";
+  const sig = parts[3] ?? "";
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(nonce))
+    return false;
+  if (!/^[A-Za-z0-9_-]{20,100}$/.test(sig))
+    return false;
+  const issuedAt = Number(issuedAtText);
+  if (!Number.isFinite(issuedAt) || !/^[0-9]{1,20}$/.test(issuedAtText))
+    return false;
+  if (issuedAt > nowMs + 60000)
+    return false;
+  if (nowMs - issuedAt > DISCORD_STATE_TTL_MS)
+    return false;
+  const expected = await hmacSha256B64Url(secret, `${DISCORD_STATE_VERSION}.${issuedAtText}.${nonce}`);
+  return constantTimeEqual(expected, sig);
+}
 var Actions = {
   getGoogleIntegrationStatus: defineAction({ request: object({ token: string2() }), response: googleSyncStatusSchema, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
@@ -6919,6 +7063,10 @@ var Actions = {
       return { status: "error", message: "Use only letters, numbers, and underscores in your username.", token: null, profile: null };
     if (RESERVED_HANDLES.has(handle))
       return { status: "error", message: "That username is reserved. Please choose another one.", token: null, profile: null };
+    if (!await checkRateLimit(db, { key: signupEmailKey(email), ...SIGNUP_EMAIL_LIMIT }))
+      return { status: "error", message: "Too many signups from this email. Please try again later.", token: null, profile: null };
+    if (!await checkRateLimit(db, { key: SIGNUP_GLOBAL_KEY, ...SIGNUP_GLOBAL_LIMIT }))
+      return { status: "error", message: "Too many signups right now. Please try again later.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.email, email)).limit(1))[0])
       return { status: "error", message: "An account already uses that email. Log in instead.", token: null, profile: null };
     if ((await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.handle, handle)).limit(1))[0])
@@ -7002,10 +7150,12 @@ var Actions = {
     const nextAvailable = viewer.lastDeactivatedAt ? new Date(viewer.lastDeactivatedAt.getTime() + 30 * 86400000) : null;
     if (nextAvailable && nextAvailable.getTime() > Date.now())
       return { status: "error", message: "You can deactivate your account once every 30 days.", nextAvailableAt: nextAvailable.toISOString() };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("deactivateAccount", viewer.id), ...DESTRUCTIVE_ACCOUNT_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please try again later.", nextAvailableAt: null };
     const now = new Date;
     const until = new Date(now.getTime() + 7 * 86400000);
     const db = ctx.db();
-    await db.update(profiles).set({ deactivatedUntil: until, lastDeactivatedAt: now }).where(eq(profiles.id, viewer.id));
+    await db.batch([db.update(profiles).set({ deactivatedUntil: until, lastDeactivatedAt: now }).where(eq(profiles.id, viewer.id)), db.delete(sessions).where(eq(sessions.profileId, viewer.id))]);
     ctx.invalidateQueries();
     return { status: "ok", message: "Your account is hidden for 7 days and will return automatically.", nextAvailableAt: new Date(now.getTime() + 30 * 86400000).toISOString() };
   } }),
@@ -7015,6 +7165,8 @@ var Actions = {
       return { status: "error", message: "The account could not be deleted. Please log in again." };
     if (viewer.isFounder)
       return { status: "error", message: "Founder accounts cannot be permanently deleted." };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("deleteAccountPermanently", viewer.id), ...DESTRUCTIVE_ACCOUNT_LIMIT }))
+      return { status: "error", message: "Too many attempts. Please try again later." };
     await queueGoogleSync(ctx, "users", String(viewer.id), "delete", profileSheetRow(viewer, "delete"));
     await deleteAccountData(ctx, viewer);
     ctx.invalidateQueries();
@@ -7024,6 +7176,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null, nextEditableAt: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("updateProfile", viewer.id), ...PROFILE_MUTATION_LIMIT }))
+      return { status: "error", message: "Too many profile updates. Please try again later.", profile: null, nextEditableAt: null };
     const next = viewer.profileUpdatedAt ? new Date(viewer.profileUpdatedAt.getTime() + 86400000) : null;
     if (next && next.getTime() > Date.now())
       return { status: "error", message: "You can edit your name and bio again after the 24-hour wait.", profile: await accountProfile(ctx, viewer), nextEditableAt: next.toISOString() };
@@ -7038,6 +7192,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null, nextEditableAt: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("setProfilePrivacy", viewer.id), ...PROFILE_MUTATION_LIMIT }))
+      return { status: "error", message: "Too many changes. Please try again later.", profile: null, nextEditableAt: null };
     const [updated] = await ctx.db().update(profiles).set({ isPrivate: args.isPrivate }).where(eq(profiles.id, viewer.id)).returning();
     if (!updated)
       return { status: "error", message: "Privacy setting could not be changed.", profile: await accountProfile(ctx, viewer), nextEditableAt: null };
@@ -7064,6 +7220,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null, nextChangeAt: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("setColorTheme", viewer.id), ...PROFILE_MUTATION_LIMIT }))
+      return { status: "error", message: "Too many changes. Please try again later.", profile: null, nextChangeAt: null };
     if (viewer.themeColor === args.color)
       return { status: "ok", message: "That color is already active.", profile: await accountProfile(ctx, viewer), nextChangeAt: viewer.themeChangedAt ? new Date(viewer.themeChangedAt.getTime() + 30 * 86400000).toISOString() : null };
     const hasGoldenBadge = viewer.badge === "official";
@@ -7081,16 +7239,22 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("updatePreferences", viewer.id), ...PROFILE_MUTATION_LIMIT }))
+      return { status: "error", message: "Too many changes. Please try again later.", profile: null };
     const [updated] = await ctx.db().update(profiles).set({ language: args.language, continent: args.continent }).where(eq(profiles.id, viewer.id)).returning();
     if (!updated)
       return { status: "error", message: "Your preferences could not be saved.", profile: await accountProfile(ctx, viewer) };
     ctx.invalidateQueries();
     return { status: "ok", message: "Language and continent saved.", profile: await accountProfile(ctx, updated) };
   } }),
-  setAvatar: defineAction({ request: object({ token: string2(), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }) }), response: writeResponse, async handler(ctx, args) {
+  setAvatar: defineAction({ request: object({ token: string2(), photo: object({ dataBase64: string2().min(1).max(MAX_IMAGE_BASE64_BYTES), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("setAvatar", viewer.id), ...AVATAR_LIMIT }))
+      return { status: "error", message: "Too many photo updates. Please try again later.", id: null };
+    if (!isWellFormedBase64(args.photo.dataBase64))
+      return { status: "error", message: "That photo couldn't be read. Please try a different image.", id: null };
     const key = `avatars/${viewer.id}/${crypto.randomUUID()}`;
     await ctx.blobs.put(key, decodeBase64(args.photo.dataBase64), { contentType: args.photo.mimeType });
     await ctx.db().update(profiles).set({ avatarBlobKey: key }).where(eq(profiles.id, viewer.id));
@@ -7178,12 +7342,14 @@ var Actions = {
   } }),
   createPost: defineAction({
     privileged: [privileged.appendGoogleSheetRow],
-    request: object({ token: string2(), text: string2().max(12000), photos: array(object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp", "image/gif"]), filename: string2().max(200).optional() })).max(10) }),
+    request: object({ token: string2(), text: string2().max(12000), photos: array(object({ dataBase64: string2().min(1).max(MAX_IMAGE_BASE64_BYTES), mimeType: _enum(["image/jpeg", "image/png", "image/webp", "image/gif"]), filename: string2().max(200).optional() })).max(10) }),
     response: writeResponse,
     async handler(ctx, args) {
       const author = await approvedProfile(ctx, args.token);
       if (!author)
         return { status: "error", message: "Please log in again before posting.", id: null };
+      if (!await checkRateLimit(ctx.db(), { key: accountActionKey("createPost", author.id), ...CONTENT_WRITE_LIMIT }))
+        return { status: "error", message: "You're posting too fast. Please try again later.", id: null };
       const db0 = ctx.db();
       const [posterRow] = await db0.select().from(profiles).where(eq(profiles.id, author.id)).limit(1);
       if (posterRow?.postRestrictedUntil && new Date(posterRow.postRestrictedUntil).getTime() > Date.now()) {
@@ -7198,6 +7364,10 @@ var Actions = {
         const review = await moderateText(ctx, text);
         if (!review.allowed)
           return { status: "blocked", message: review.feedback || "Please rewrite this around your own experience or a positive request.", id: null };
+      }
+      for (const photo of args.photos) {
+        if (!isWellFormedBase64(photo.dataBase64))
+          return { status: "error", message: "One of those photos couldn't be read. Please try different images.", id: null };
       }
       const db = ctx.db();
       const [post] = await db.insert(posts).values({ authorId: author.id, text }).returning({ id: posts.id });
@@ -7231,6 +7401,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("editPost", viewer.id), ...CONTENT_WRITE_LIMIT }))
+      return { status: "error", message: "Too many edits. Please try again later.", id: null };
     const text = args.text.trim();
     if (!text || wordCount(text) > 1000)
       return { status: "error", message: "Write between 1 and 1,000 words.", id: null };
@@ -7279,6 +7451,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
       return { status: "error", message: "This post is unavailable.", id: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("addComment", viewer.id), ...COMMENT_LIMIT }))
+      return { status: "error", message: "You're commenting too fast. Please try again later.", id: null };
     const text = args.text.trim();
     if (wordCount(text) > 250)
       return { status: "error", message: "Comments can be up to 250 words.", id: null };
@@ -7317,6 +7491,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || !await canAccessPost(ctx, viewer.id, args.postId))
       return { active: false, count: 0 };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("toggleLike", viewer.id), ...LIKE_LIMIT }))
+      throw new Error("Too many attempts. Please try again later.");
     const db = ctx.db();
     const where = and(eq(likes.profileId, viewer.id), eq(likes.postId, args.postId));
     const [existing] = await db.select().from(likes).where(where).limit(1);
@@ -7470,6 +7646,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
+    if (!await checkRateLimit(ctx.db(), { key: reportKey(viewer.id), ...REPORT_LIMIT }))
+      return { status: "error", message: "Too many reports. Please try again later.", id: null };
     const db = ctx.db();
     const existing = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.reporterId, viewer.id), eq(reports.targetType, args.targetType), eq(reports.targetId, args.targetId))).limit(1);
     if (existing[0])
@@ -7495,6 +7673,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer || viewer.id === args.followingId)
       return { active: false, count: 0 };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("toggleFollow", viewer.id), ...FOLLOW_LIMIT }))
+      throw new Error("Too many attempts. Please try again later.");
     const db = ctx.db();
     const [target] = await db.select().from(profiles).where(eq(profiles.id, args.followingId)).limit(1);
     if (!target || !isActiveProfile(target) || target.isPrivate || await blockedPair(ctx, viewer.id, target.id))
@@ -7556,6 +7736,8 @@ var Actions = {
       const reporter = await approvedProfile(ctx, args.token);
       if (!reporter || reporter.id === args.profileId)
         return { ok: false };
+      if (!await checkRateLimit(ctx.db(), { key: reportKey(reporter.id), ...REPORT_LIMIT }))
+        return { ok: false };
       if (reporter.reportingSuspended)
         return { ok: false };
       const db = ctx.db();
@@ -7577,6 +7759,8 @@ var Actions = {
       const reporter = await approvedProfile(ctx, args.token);
       if (!reporter)
         return { ok: false };
+      if (!await checkRateLimit(ctx.db(), { key: reportKey(reporter.id), ...REPORT_LIMIT }))
+        return { ok: false };
       if (reporter.reportingSuspended)
         return { ok: false };
       const db = ctx.db();
@@ -7597,6 +7781,8 @@ var Actions = {
     async handler(ctx, args) {
       const reporter = await approvedProfile(ctx, args.token);
       if (!reporter)
+        return { ok: false };
+      if (!await checkRateLimit(ctx.db(), { key: reportKey(reporter.id), ...REPORT_LIMIT }))
         return { ok: false };
       if (reporter.reportingSuspended)
         return { ok: false };
@@ -7627,12 +7813,16 @@ var Actions = {
     }
     return { users };
   } }),
-  createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable(), visibility: _enum(["everyone", "followers", "only_me"]).default("everyone"), bgColor: string2().regex(/^#[0-9a-fA-F]{6}$/).nullable().default(null) }), response: writeResponse, async handler(ctx, args) {
+  createStory: defineAction({ request: object({ token: string2(), text: string2().trim().max(280), photo: object({ dataBase64: string2().min(1).max(MAX_IMAGE_BASE64_BYTES), mimeType: _enum(["image/jpeg", "image/png", "image/webp"]) }).nullable(), visibility: _enum(["everyone", "followers", "only_me"]).default("everyone"), bgColor: string2().regex(/^#[0-9a-fA-F]{6}$/).nullable().default(null) }), response: writeResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", id: null };
     if (!args.text && !args.photo)
       return { status: "error", message: "Add a photo or a short message.", id: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("createStory", viewer.id), ...CONTENT_WRITE_LIMIT }))
+      return { status: "error", message: "You're sharing too fast. Please try again later.", id: null };
+    if (args.photo && !isWellFormedBase64(args.photo.dataBase64))
+      return { status: "error", message: "That photo couldn't be read. Please try a different image.", id: null };
     if (args.text) {
       const review = await moderateText(ctx, args.text);
       if (!review.allowed)
@@ -7783,10 +7973,65 @@ var Actions = {
     ctx.invalidateQueries();
     return { status: "ok", message: args.decision === "approved" ? `@${target.handle} was approved. Welcome to Gola!` : `@${target.handle} was declined.` };
   } }),
+  grantTesterAccess: defineAction({
+    request: object({ token: string2(), handle: string2().trim().min(3).max(24), batchLabel: string2().trim().max(60).optional() }),
+    response: object({ status: _enum(["ok", "error"]), message: string2(), handle: string2().nullable() }),
+    async handler(ctx, args) {
+      const viewer = await approvedProfile(ctx, args.token);
+      if (!viewer?.isFounder)
+        return { status: "error", message: "Only the Gola creator can manage tester access.", handle: null };
+      const handle = args.handle.toLowerCase().replace(/^@/u, "");
+      if (!/^[a-z0-9_]+$/u.test(handle))
+        return { status: "error", message: "That doesn't look like a valid username.", handle: null };
+      const db = ctx.db();
+      const [target] = await db.select().from(profiles).where(eq(profiles.handle, handle)).limit(1);
+      if (!target)
+        return { status: "error", message: `@${handle} hasn't signed up yet \u2014 they need an account first.`, handle: null };
+      const batchLabel = args.batchLabel?.trim() || null;
+      await db.insert(testers).values({ profileId: target.id, addedAt: new Date, addedBy: viewer.id, batchLabel }).onConflictDoNothing();
+      await logAccessEvent(ctx, viewer.id, "grant_tester", target.id, batchLabel);
+      ctx.invalidateQueries();
+      return { status: "ok", message: `@${handle} is on the tester list.`, handle };
+    }
+  }),
+  revokeTesterAccess: defineAction({
+    request: object({ token: string2(), handle: string2().trim().min(3).max(24) }),
+    response: object({ status: _enum(["ok", "error"]), message: string2(), handle: string2().nullable() }),
+    async handler(ctx, args) {
+      const viewer = await approvedProfile(ctx, args.token);
+      if (!viewer?.isFounder)
+        return { status: "error", message: "Only the Gola creator can manage tester access.", handle: null };
+      const handle = args.handle.toLowerCase().replace(/^@/u, "");
+      if (!/^[a-z0-9_]+$/u.test(handle))
+        return { status: "error", message: "That doesn't look like a valid username.", handle: null };
+      const db = ctx.db();
+      const [target] = await db.select().from(profiles).where(eq(profiles.handle, handle)).limit(1);
+      if (!target)
+        return { status: "error", message: `No account uses @${handle}.`, handle: null };
+      await db.delete(testers).where(eq(testers.profileId, target.id));
+      await logAccessEvent(ctx, viewer.id, "revoke_tester", target.id, null);
+      ctx.invalidateQueries();
+      return { status: "ok", message: `@${handle} was removed from the tester list.`, handle };
+    }
+  }),
+  listTesters: defineAction({
+    request: object({ token: string2() }),
+    response: object({ testers: array(object({ handle: string2(), displayName: string2(), batchLabel: string2().nullable(), addedAt: string2() })) }),
+    async handler(ctx, args) {
+      const viewer = await approvedProfile(ctx, args.token);
+      if (!viewer?.isFounder)
+        return { testers: [] };
+      const db = ctx.db();
+      const rows = await db.select({ handle: profiles.handle, displayName: profiles.displayName, batchLabel: testers.batchLabel, addedAt: testers.addedAt }).from(testers).innerJoin(profiles, eq(testers.profileId, profiles.id)).orderBy(asc(testers.addedAt));
+      return { testers: rows.map((r) => ({ handle: r.handle, displayName: r.displayName, batchLabel: r.batchLabel, addedAt: r.addedAt.toISOString() })) };
+    }
+  }),
   setMentionPrivacy: defineAction({ request: object({ token: string2(), privacy: _enum(["everyone", "peopleIFollow", "off"]) }), response: preferenceResponse, async handler(ctx, args) {
     const viewer = await approvedProfile(ctx, args.token);
     if (!viewer)
       return { status: "error", message: "Please log in again.", profile: null };
+    if (!await checkRateLimit(ctx.db(), { key: accountActionKey("setMentionPrivacy", viewer.id), ...PROFILE_MUTATION_LIMIT }))
+      return { status: "error", message: "Too many changes. Please try again later.", profile: null };
     const [updated] = await ctx.db().update(profiles).set({ mentionPrivacy: args.privacy }).where(eq(profiles.id, viewer.id)).returning();
     if (!updated)
       return { status: "error", message: "Your mention setting could not be saved.", profile: await accountProfile(ctx, viewer) };
@@ -7827,19 +8072,26 @@ var Actions = {
     const ids = page.slice(0, args.limit).map((row) => row.id);
     return { posts: await loadPosts(ctx, viewer.id, authorIds, args.limit, ids), nextCursor: page.length > args.limit ? ids[ids.length - 1] ?? null : null };
   } }),
-  startDiscordOAuth: defineAction({ request: object({ redirectUri: string2().url().max(500) }), response: object({ status: _enum(["ok", "error"]), message: string2().nullable(), url: string2().nullable() }), async handler(ctx, args) {
+  startDiscordOAuth: defineAction({ request: object({ redirectUri: string2().url().max(500) }), response: object({ status: _enum(["ok", "error"]), message: string2().nullable(), url: string2().nullable(), state: string2().nullable() }), async handler(ctx, args) {
     const clientId = process.env.DISCORD_CLIENT_ID;
     if (!clientId)
-      return { status: "error", message: "Discord sign-in is not configured yet.", url: null };
-    const url = `https://discord.com/oauth2/authorize?${new URLSearchParams({ client_id: clientId, redirect_uri: args.redirectUri, response_type: "code", scope: "identify email" }).toString()}`;
-    return { status: "ok", message: null, url };
+      return { status: "error", message: "Discord sign-in is not configured yet.", url: null, state: null };
+    const state = await mintDiscordState();
+    if (!state)
+      return { status: "error", message: "Discord sign-in is not configured yet.", url: null, state: null };
+    const url = `https://discord.com/oauth2/authorize?${new URLSearchParams({ client_id: clientId, redirect_uri: args.redirectUri, response_type: "code", scope: "identify email", state }).toString()}`;
+    return { status: "ok", message: null, url, state };
   } }),
-  completeDiscordOAuth: defineAction({ request: object({ code: string2().min(1).max(500), redirectUri: string2().url().max(500) }), response: authResponse, async handler(ctx, args) {
+  completeDiscordOAuth: defineAction({ request: object({ code: string2().min(1).max(500), redirectUri: string2().url().max(500), state: string2().min(1).max(500).optional() }), response: authResponse, async handler(ctx, args) {
     const fail = (message) => ({ status: "error", message, token: null, profile: null });
     const clientId = process.env.DISCORD_CLIENT_ID;
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
     if (!clientId || !clientSecret)
       return fail("Discord sign-in is not configured yet.");
+    if (typeof args.state !== "string" || !args.state)
+      return fail("Please update Gola to continue with Discord, or sign in with email instead.");
+    if (!await verifyDiscordState(args.state))
+      return fail("That sign-in attempt expired or was tampered with. Please try again.");
     let accessToken = null;
     try {
       const res = await fetch("https://discord.com/api/oauth2/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: "authorization_code", code: args.code, redirect_uri: args.redirectUri }).toString() });
@@ -7878,6 +8130,8 @@ var Actions = {
       return fail("Discord could not be reached. Please try again.");
     }
     const discordLinkEmail = trustedOAuthEmail(discordEmail, discordEmailVerified);
+    if (!await checkRateLimit(ctx.db(), { key: oauthAttemptKey("discord", await sha256(args.code)), ...OAUTH_ATTEMPT_LIMIT }))
+      return fail("Too many attempts. Please try again later.");
     const db = ctx.db();
     let [profile] = await db.select().from(profiles).where(eq(profiles.discordUserId, discordId)).limit(1);
     if (!profile && discordLinkEmail) {
@@ -7899,10 +8153,17 @@ var Actions = {
           break;
         }
       }
-      const [created] = await db.insert(profiles).values({ email: discordLinkEmail, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "approved", continent: "AS" }).returning();
-      if (!created)
+      let createdDiscord;
+      try {
+        [createdDiscord] = await db.insert(profiles).values({ email: discordLinkEmail, displayName: discordName.slice(0, 40), handle, discordUserId: discordId, approvalStatus: "approved", continent: "AS" }).returning();
+      } catch (error) {
+        if (isUniqueViolation(error))
+          return fail("Someone just took that username. Please try again.");
+        throw error;
+      }
+      if (!createdDiscord)
         return fail("The account could not be created.");
-      profile = created;
+      profile = createdDiscord;
     }
     if (profile.approvalStatus === "declined")
       return fail("This account request was not approved.");
@@ -7932,6 +8193,8 @@ var Actions = {
     const googleEmailVerified = info?.email_verified === true || info?.email_verified === "true";
     const googleLinkEmail = trustedOAuthEmail(googleEmail, googleEmailVerified);
     const googleName = typeof info?.name === "string" && info.name ? info.name : "google_user";
+    if (!await checkRateLimit(ctx.db(), { key: oauthAttemptKey("google", await sha256(args.idToken)), ...OAUTH_ATTEMPT_LIMIT }))
+      return fail("Too many attempts. Please try again later.");
     const db = ctx.db();
     let [profile] = await db.select().from(profiles).where(eq(profiles.googleSub, sub)).limit(1);
     if (!profile && googleLinkEmail) {
@@ -7953,10 +8216,17 @@ var Actions = {
           break;
         }
       }
-      const [created] = await db.insert(profiles).values({ email: googleLinkEmail, displayName: googleName.slice(0, 40), handle, googleSub: sub, approvalStatus: "approved", continent: "AS" }).returning();
-      if (!created)
+      let createdGoogle;
+      try {
+        [createdGoogle] = await db.insert(profiles).values({ email: googleLinkEmail, displayName: googleName.slice(0, 40), handle, googleSub: sub, approvalStatus: "approved", continent: "AS" }).returning();
+      } catch (error) {
+        if (isUniqueViolation(error))
+          return fail("Someone just took that username. Please try again.");
+        throw error;
+      }
+      if (!createdGoogle)
         return fail("The account could not be created.");
-      profile = created;
+      profile = createdGoogle;
     }
     if (profile.approvalStatus === "declined")
       return fail("This account request was not approved.");
@@ -7968,6 +8238,8 @@ var Actions = {
     const viewer = await approvedProfile(ctx, args.token);
     if (viewer) {
       const db = ctx.db();
+      if (!await checkRateLimit(db, { key: accountActionKey("registerPushToken", viewer.id), ...PUSH_TOKEN_LIMIT }))
+        return { ok: true };
       const [existing] = await db.select({ id: pushTokens.id }).from(pushTokens).where(eq(pushTokens.pushToken, args.pushToken)).limit(1);
       if (existing)
         await db.update(pushTokens).set({ profileId: viewer.id, platform: args.platform, createdAt: new Date }).where(eq(pushTokens.id, existing.id));
@@ -7997,11 +8269,21 @@ var Actions = {
 export {
   Actions,
   FCM_OUTCOMES,
+  MAX_IMAGE_BASE64_BYTES,
+  MAX_SESSIONS_PER_ACCOUNT,
+  accessMode,
   classifyDiscordReject,
   classifyFcmResponse,
   classifyOAuthHttpReject,
   clearFcmTokenCacheForTests,
+  createSession,
   getFcmAccessToken,
+  hmacSha256B64Url,
+  isTester,
+  isWellFormedBase64,
+  logAccessEvent,
+  mintDiscordState,
   sanitizeOAuthErrorCode,
-  trustedOAuthEmail
+  trustedOAuthEmail,
+  verifyDiscordState
 };

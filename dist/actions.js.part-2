@@ -1,182 +1,4 @@
-);
-var safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// ../gola-source/server/node_modules/zod/v4/classic/schemas.js
-var _installedGroups = /* @__PURE__ */ new WeakMap;
-function _installLazyMethods(inst, group, methods) {
-  const proto = Object.getPrototypeOf(inst);
-  let installed = _installedGroups.get(proto);
-  if (!installed) {
-    installed = new Set;
-    _installedGroups.set(proto, installed);
-  }
-  if (installed.has(group))
-    return;
-  installed.add(group);
-  for (const key in methods) {
-    const fn = methods[key];
-    Object.defineProperty(proto, key, {
-      configurable: true,
-      enumerable: false,
-      get() {
-        const bound = fn.bind(this);
-        Object.defineProperty(this, key, {
-          configurable: true,
-          writable: true,
-          enumerable: true,
-          value: bound
-        });
-        return bound;
-      },
-      set(v) {
-        Object.defineProperty(this, key, {
-          configurable: true,
-          writable: true,
-          enumerable: true,
-          value: v
-        });
-      }
-    });
-  }
-}
-var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
-  $ZodType.init(inst, def);
-  Object.assign(inst["~standard"], {
-    jsonSchema: {
-      input: createStandardJSONSchemaMethod(inst, "input"),
-      output: createStandardJSONSchemaMethod(inst, "output")
-    }
-  });
-  inst.toJSONSchema = createToJSONSchemaMethod(inst, {});
-  inst.def = def;
-  inst.type = def.type;
-  Object.defineProperty(inst, "_def", { value: def });
-  inst.parse = (data, params) => parse3(inst, data, params, { callee: inst.parse });
-  inst.safeParse = (data, params) => safeParse2(inst, data, params);
-  inst.parseAsync = async (data, params) => parseAsync2(inst, data, params, { callee: inst.parseAsync });
-  inst.safeParseAsync = async (data, params) => safeParseAsync2(inst, data, params);
-  inst.spa = inst.safeParseAsync;
-  inst.encode = (data, params) => encode(inst, data, params);
-  inst.decode = (data, params) => decode(inst, data, params);
-  inst.encodeAsync = async (data, params) => encodeAsync(inst, data, params);
-  inst.decodeAsync = async (data, params) => decodeAsync(inst, data, params);
-  inst.safeEncode = (data, params) => safeEncode(inst, data, params);
-  inst.safeDecode = (data, params) => safeDecode(inst, data, params);
-  inst.safeEncodeAsync = async (data, params) => safeEncodeAsync(inst, data, params);
-  inst.safeDecodeAsync = async (data, params) => safeDecodeAsync(inst, data, params);
-  _installLazyMethods(inst, "ZodType", {
-    check(...chks) {
-      const def = this.def;
-      return this.clone(mergeDefs(def, {
-        checks: [
-          ...def.checks ?? [],
-          ...chks.map((ch) => typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" }, onattach: [] } } : ch)
-        ]
-      }), { parent: true });
-    },
-    with(...chks) {
-      return this.check(...chks);
-    },
-    clone(def, params) {
-      return clone(this, def, params);
-    },
-    brand() {
-      return this;
-    },
-    register(reg, meta) {
-      reg.add(this, meta);
-      return this;
-    },
-    refine(check, params) {
-      return this.check(refine(check, params));
-    },
-    superRefine(refinement, params) {
-      return this.check(superRefine(refinement, params));
-    },
-    overwrite(fn) {
-      return this.check(_overwrite(fn));
-    },
-    optional() {
-      return optional(this);
-    },
-    exactOptional() {
-      return exactOptional(this);
-    },
-    nullable() {
-      return nullable(this);
-    },
-    nullish() {
-      return optional(nullable(this));
-    },
-    nonoptional(params) {
-      return nonoptional(this, params);
-    },
-    array() {
-      return array(this);
-    },
-    or(arg) {
-      return union([this, arg]);
-    },
-    and(arg) {
-      return intersection(this, arg);
-    },
-    transform(tx) {
-      return pipe(this, transform(tx));
-    },
-    default(d) {
-      return _default(this, d);
-    },
-    prefault(d) {
-      return prefault(this, d);
-    },
-    catch(params) {
-      return _catch(this, params);
-    },
-    pipe(target) {
-      return pipe(this, target);
-    },
-    readonly() {
-      return readonly(this);
-    },
-    describe(description) {
-      const cl = this.clone();
-      globalRegistry.add(cl, { description });
-      return cl;
-    },
-    meta(...args) {
-      if (args.length === 0)
-        return globalRegistry.get(this);
-      const cl = this.clone();
-      globalRegistry.add(cl, args[0]);
-      return cl;
-    },
-    isOptional() {
-      return this.safeParse(undefined).success;
-    },
-    isNullable() {
-      return this.safeParse(null).success;
-    },
-    apply(fn) {
-      return fn(this);
-    }
-  });
-  Object.defineProperty(inst, "description", {
-    get() {
-      return globalRegistry.get(inst)?.description;
-    },
-    configurable: true
-  });
-  return inst;
-});
-var _ZodString = /* @__PURE__ */ $constructor("_ZodString", (inst, def) => {
-  $ZodString.init(inst, def);
-  ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json, params) => stringProcessor(inst, ctx, json, params);
-  const bag = inst._zod.bag;
-  inst.format = bag.format ?? null;
-  inst.minLength = bag.minimum ?? null;
-  inst.maxLength = bag.maximum ?? null;
-  _installLazyMethods(inst, "_ZodString", {
     regex(...args) {
       return this.check(_regex(...args));
     },
@@ -2376,6 +2198,32 @@ var reports = sqliteTable("reports", {
   index("reports_status_idx").on(table.status),
   index("reports_reporter_idx").on(table.reporterId)
 ]);
+var testers = sqliteTable("testers", {
+  profileId: integer2("profile_id").primaryKey().references(() => profiles.id, { onDelete: "cascade" }),
+  addedAt: integer2("added_at", { mode: "timestamp_ms" }).notNull(),
+  addedBy: integer2("added_by").references(() => profiles.id, {
+    onDelete: "set null"
+  }),
+  batchLabel: text("batch_label")
+});
+var accessLog = sqliteTable("access_log", {
+  id: integer2("id").primaryKey({ autoIncrement: true }),
+  at: integer2("at", { mode: "timestamp_ms" }).notNull(),
+  operator: integer2("operator").references(() => profiles.id, {
+    onDelete: "set null"
+  }),
+  action: text("action").notNull(),
+  target: integer2("target").references(() => profiles.id, {
+    onDelete: "set null"
+  }),
+  detail: text("detail")
+}, (table) => [index("access_log_at_idx").on(table.at)]);
+var approvedBuilds = sqliteTable("approved_builds", {
+  sha: text("sha").primaryKey(),
+  status: text("status", { enum: ["approved", "revoked"] }).notNull().default("approved"),
+  notes: text("notes"),
+  createdAt: integer2("created_at", { mode: "timestamp_ms" }).notNull()
+});
 var rateLimits = sqliteTable("rate_limits", {
   key: text("key").primaryKey(),
   windowStart: integer2("window_start").notNull(),
@@ -2415,6 +2263,31 @@ var PWRESET_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
 var RECOVERY_MINT_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 var ACK_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
 var LOGIN_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
+function signupEmailKey(email) {
+  return `signup:email:${email.trim().toLowerCase()}`;
+}
+var SIGNUP_GLOBAL_KEY = "signup:global";
+function oauthAttemptKey(provider, credentialFingerprint) {
+  return `oauth:${provider}:${credentialFingerprint}`;
+}
+function accountActionKey(action, profileId) {
+  return `rl:write:${action}:${profileId}`;
+}
+function reportKey(profileId) {
+  return `rl:report:${profileId}`;
+}
+var SIGNUP_EMAIL_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
+var SIGNUP_GLOBAL_LIMIT = { limit: 100, windowMs: 60 * 60 * 1000 };
+var OAUTH_ATTEMPT_LIMIT = { limit: 10, windowMs: 10 * 60 * 1000 };
+var CONTENT_WRITE_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+var COMMENT_LIMIT = { limit: 60, windowMs: 60 * 60 * 1000 };
+var AVATAR_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 };
+var LIKE_LIMIT = { limit: 300, windowMs: 60 * 60 * 1000 };
+var FOLLOW_LIMIT = { limit: 100, windowMs: 60 * 60 * 1000 };
+var REPORT_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+var PUSH_TOKEN_LIMIT = { limit: 20, windowMs: 60 * 60 * 1000 };
+var PROFILE_MUTATION_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+var DESTRUCTIVE_ACCOUNT_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 
 // ../gola-source/server/src/privileged.ts
 import { mkdir, rm, writeFile } from "fs/promises";
@@ -2844,6 +2717,16 @@ function decodeBase64(value) {
     bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
+var MAX_IMAGE_BASE64_BYTES = 10 * 1024 * 1024;
+function isWellFormedBase64(value) {
+  if (value.length === 0 || value.length % 4 !== 0)
+    return false;
+  return /^[A-Za-z0-9+/]+={0,2}$/.test(value);
+}
+function isUniqueViolation(error) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /UNIQUE constraint failed/i.test(message);
+}
 function bytesToBase64(bytes) {
   let value = "";
   for (const byte of bytes)
@@ -2881,4 +2764,159 @@ async function verifyPassword(password, stored) {
   if (bits.length !== expected.length)
     return false;
   let difference = 0;
-  for (let i = 0;i < bits.le
+  for (let i = 0;i < bits.length; i += 1)
+    difference |= bits.charCodeAt(i) ^ expected.charCodeAt(i);
+  return difference === 0;
+}
+var MAX_SESSIONS_PER_ACCOUNT = 5;
+async function createSession(ctx, profileId) {
+  const raw = bytesToBase64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/gu, "");
+  const db = ctx.db();
+  await db.insert(sessions).values({ profileId, tokenHash: await sha256(raw), expiresAt: new Date(Date.now() + 30 * 86400000) });
+  await db.delete(sessions).where(sql`
+    ${sessions.profileId} = ${profileId}
+    AND ${sessions.id} NOT IN (
+      SELECT ${sessions.id} FROM ${sessions}
+      WHERE ${sessions.profileId} = ${profileId}
+      ORDER BY ${sessions.createdAt} DESC, ${sessions.id} DESC
+      LIMIT ${MAX_SESSIONS_PER_ACCOUNT}
+    )`);
+  return raw;
+}
+function isActiveProfile(row) {
+  return !row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now();
+}
+function isApprovedProfile(row) {
+  return row.approvalStatus === "approved";
+}
+function accessMode(env = process.env) {
+  const raw = (env.GOLA_ACCESS_MODE ?? "").trim().toLowerCase();
+  if (raw === "" || raw === "open")
+    return "open";
+  if (raw === "allowlist" || raw === "closed")
+    return raw;
+  console.warn(`[gola][access] unrecognized GOLA_ACCESS_MODE=${JSON.stringify(raw)} \u2014 failing closed`);
+  return "closed";
+}
+async function isTester(ctx, profileId) {
+  const rows = await ctx.db().select({ profileId: testers.profileId }).from(testers).where(eq(testers.profileId, profileId)).limit(1);
+  return rows.length > 0;
+}
+async function logAccessEvent(ctx, operatorId, action, targetId, detail) {
+  await ctx.db().insert(accessLog).values({
+    at: new Date,
+    operator: operatorId,
+    action,
+    target: targetId,
+    detail
+  });
+}
+async function approvedProfile(ctx, token) {
+  const profile = await authenticatedProfile(ctx, token);
+  if (!profile || !isApprovedProfile(profile))
+    return null;
+  if (accessMode() === "allowlist" && !profile.isFounder && !await isTester(ctx, profile.id))
+    return null;
+  return profile;
+}
+async function mentionAllowed(ctx, actorId, person) {
+  if (person.mentionPrivacy === "off")
+    return false;
+  if (person.mentionPrivacy === "peopleIFollow") {
+    const [link] = await ctx.db().select({ followerId: follows.followerId }).from(follows).where(and(eq(follows.followerId, person.id), eq(follows.followingId, actorId))).limit(1);
+    if (!link)
+      return false;
+  }
+  return true;
+}
+async function profileForSession(ctx, token) {
+  if (!token)
+    return null;
+  const rows = await ctx.db().select({ session: sessions, profile: profiles }).from(sessions).innerJoin(profiles, eq(sessions.profileId, profiles.id)).where(eq(sessions.tokenHash, await sha256(token))).limit(1);
+  const row = rows[0];
+  return row && row.session.expiresAt.getTime() > Date.now() ? row.profile : null;
+}
+async function authenticatedProfile(ctx, token) {
+  const profile = await profileForSession(ctx, token);
+  return profile && isActiveProfile(profile) ? profile : null;
+}
+async function publicProfile(ctx, row, viewerId, safetyCache) {
+  const hidden = row.isPrivate && row.id !== viewerId;
+  const safetyStatus = await getSafetyStatus(ctx, row, safetyCache);
+  return { id: row.id, displayName: row.displayName, handle: row.handle, bio: hidden ? null : row.bio, isFounder: row.isFounder, badge: row.badge, badgeGrantedAt: row.badgeGrantedAt?.toISOString() ?? null, isPrivate: row.isPrivate, mentionPrivacy: row.mentionPrivacy, createdAt: row.createdAt.toISOString(), avatarUrl: !hidden && row.avatarBlobKey ? await ctx.blobs.getUrl(row.avatarBlobKey) : null, themeColor: row.themeColor, safetyStatus };
+}
+async function getSafetyStatus(ctx, row, safetyCache) {
+  if (!row)
+    return "safe";
+  const cached = safetyCache?.get(row.id);
+  if (cached)
+    return cached;
+  const pending = computeSafetyStatus(ctx, row);
+  const tracked = pending.then((status) => status, (err) => {
+    if (safetyCache?.get(row.id) === tracked)
+      safetyCache.delete(row.id);
+    throw err;
+  });
+  safetyCache?.set(row.id, tracked);
+  return tracked;
+}
+async function computeSafetyStatus(ctx, row) {
+  const db = ctx.db();
+  const profile = row;
+  let status = "safe";
+  if (profile.postRestrictedUntil && new Date(profile.postRestrictedUntil).getTime() > Date.now())
+    status = "restricted";
+  else if ((profile.violationCount || 0) >= 2)
+    status = "restricted";
+  else if ((profile.violationCount || 0) >= 1)
+    status = "caution";
+  else {
+    const accountReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "account"), eq(reports.targetId, profile.id), eq(reports.status, "pending"))).limit(1);
+    if (accountReports.length > 0)
+      status = "caution";
+    else {
+      const userPosts = await db.select({ id: posts.id }).from(posts).where(eq(posts.authorId, profile.id));
+      const postIds = userPosts.map((p) => p.id);
+      if (postIds.length > 0) {
+        const postReports = await db.select({ id: reports.id }).from(reports).where(and(eq(reports.targetType, "post"), inArray(reports.targetId, postIds), eq(reports.status, "pending"))).limit(1);
+        if (postReports.length > 0)
+          status = "caution";
+      }
+    }
+  }
+  return status;
+}
+async function accountProfile(ctx, row) {
+  return { ...await publicProfile(ctx, row, row.id), approvalStatus: row.approvalStatus, profileUpdatedAt: row.profileUpdatedAt?.toISOString() ?? null, themeColor: row.themeColor, themeChangedAt: row.themeChangedAt?.toISOString() ?? null, language: row.language, continent: row.continent, lastDeactivatedAt: row.lastDeactivatedAt?.toISOString() ?? null };
+}
+async function canAccessPost(ctx, viewerId, postId) {
+  const [row] = await ctx.db().select({ authorId: posts.authorId, isPrivate: profiles.isPrivate, deactivatedUntil: profiles.deactivatedUntil }).from(posts).innerJoin(profiles, eq(posts.authorId, profiles.id)).where(eq(posts.id, postId)).limit(1);
+  return Boolean(row && (!row.deactivatedUntil || row.deactivatedUntil.getTime() <= Date.now()) && (row.authorId === viewerId || !row.isPrivate && !await blockedPair(ctx, viewerId, row.authorId)));
+}
+async function moderateText(ctx, text) {
+  const banned = findBannedWordAny(text);
+  if (banned) {
+    return { allowed: false, feedback: "Please remove the inappropriate language and try again." };
+  }
+  const spam = detectSpam(text);
+  if (spam) {
+    const messages = {
+      excessive_caps: "Please don't use excessive capital letters.",
+      repeated_chars: "Please don't use excessive repeated characters.",
+      excessive_emoji: "Please use fewer emoji.",
+      link_spam: "Please don't post multiple links."
+    };
+    return { allowed: false, feedback: messages[spam] || "This looks like spam. Please revise." };
+  }
+  return ctx.inference.complete(`Review this social post for a kindness-first community. Block attacks, criticism aimed at a person, insults, stereotypes, dehumanization, threats, racism, discrimination, dog whistles, and praise of harm. Allow supportive speech, neutral information, first-person feelings, constructive self-reflection, and discussion condemning racism. If blocked, give one calm sentence helping the writer rephrase around their own experience or a positive request. If allowed, feedback is empty. Text: ${JSON.stringify(text)}`, { schema: moderationSchema, timeout_secs: 30 });
+}
+async function blockedPair(ctx, a, b) {
+  const rows = await ctx.db().select().from(blocks).where(and(inArray(blocks.blockerId, [a, b]), inArray(blocks.blockedId, [a, b])));
+  return rows.some((row) => row.blockerId === a && row.blockedId === b || row.blockerId === b && row.blockedId === a);
+}
+async function blockedIdsFor(ctx, viewerId) {
+  const rows = await ctx.db().select().from(blocks).where(eq(blocks.blockerId, viewerId));
+  return new Set(rows.map((row) => row.blockedId));
+}
+function mentionedHandles(text) {
+  ret
