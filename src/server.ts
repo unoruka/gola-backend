@@ -318,9 +318,16 @@ Bun.serve({
         const validated = await def.response.parseAsync(result);
         return Response.json({ data: validated }, { headers: CORS });
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        console.error(`[gola][${body.action}] ${message}`);
-        return Response.json({ error: message }, { status: 500, headers: CORS });
+        // L1: never leak internals to the client. The full error (with stack)
+        // stays in the server log; the client gets a generic message. No
+        // client code path depends on the raw 500 text (the app surfaces its
+        // own fallback for server errors; only the 404 "Unknown action"
+        // signal above is message-inspected, and it is untouched).
+        console.error(`[gola][${body.action}]`, e);
+        return Response.json(
+          { error: "Something went wrong. Please try again." },
+          { status: 500, headers: CORS }
+        );
       }
     }
 
