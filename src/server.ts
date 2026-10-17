@@ -19,6 +19,7 @@ import { createCtx } from "./ctx";
 import { runMigrations } from "./db";
 import { blobStore } from "./blobs";
 import { maintenanceGate } from "./maintenance";
+import { accessGate, accessMode, isAccessModeRecognized, versionEnforcementEnabled, checkAppBuild } from "./access";
 
 await runMigrations();
 
@@ -104,6 +105,16 @@ Bun.serve({
     const gate = maintenanceGate(req.method, url.pathname, { headers: CORS });
     if (gate) return gate;
 
+    // E: access-mode gate (2026-10-17). Runs AFTER the maintenance gate
+    // (maintenance always wins) and BEFORE every route. `closed` rejects
+    // everything except GET /health with a distinct message; `allowlist`
+    // passes through here and is enforced per-action in the actions layer;
+    // `open` (default) preserves today's behavior. Pure: zero database
+    // writes, so no account, session, recovery-key, or data changes are
+    // possible through it.
+    const access = accessGate(req.method, url.pathname, { headers: CORS });
+    if (access) return access;
+
     if (req.method === "GET" && url.pathname === "/health") {
       return Response.json(
         { ok: true, actions: table.size, time: new Date().toISOString() },
@@ -133,9 +144,14 @@ Bun.serve({
     if (req.method === "GET" && url.pathname === "/oauth/discord") {
       const code = url.searchParams.get("code") ?? "";
       const err = url.searchParams.get("error") ?? "";
+      // M1: carry the OAuth `state` through to the app so the client can
+      // verify the flow it started (login-CSRF protection). Same escaping
+      // treatment as code/error; absent state simply adds nothing.
+      const relayState = url.searchParams.get("state") ?? "";
+      const stateParam = relayState ? `&state=${encodeURIComponent(relayState)}` : "";
       const deepLink = err
-        ? `gola://oauth/discord?error=${encodeURIComponent(err)}`
-        : `gola://oauth/discord?code=${encodeURIComponent(code)}`;
+        ? `gola://oauth/discord?error=${encodeURIComponent(err)}${stateParam}`
+        : `gola://oauth/discord?code=${encodeURIComponent(code)}${stateParam}`;
       const safeLink = deepLink.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Returning to Gola…</title>
 <style>body{font-family:system-ui,sans-serif;background:#f6f1e7;color:#2b2620;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}.card{background:#fffdf8;border:3px solid #2b2620;border-radius:20px;box-shadow:6px 6px 0 #2b2620;padding:32px;max-width:340px;text-align:center}h1{font-size:20px;margin:0 0 8px}p{font-size:14px;opacity:.75}a{display:inline-block;margin-top:16px;background:#009788;color:#fff;font-weight:700;padding:12px 28px;border-radius:999px;text-decoration:none;border:3px solid #2b2620}</style>
@@ -295,6 +311,27 @@ Bun.serve({
           { status: 400, headers: CORS }
         );
       }
+      // H7: approved-build gate (default OFF). When
+      // GOLA_REQUIRE_APPROVED_BUILD=1, the envelope must carry a
+      // server-approved appCommit, or the caller must present a live founder
+      // session (break-glass). Old clients that send no appCommit are
+      // rejected ONLY while enforcement is on. The client sends
+      // appCommit from its __GOLA_COMMIT__ stamp (client follow-up); until
+      // then this stays off.
+      if (versionEnforcementEnabled()) {
+        const { db } = await import("./db");
+        const verdict = await checkAppBuild(
+          db.$client as unknown as Parameters<typeof checkAppBuild>[0],
+          (body as { appCommit?: unknown } | null)?.appCommit,
+          (body as { args?: { token?: unknown } } | null)?.args?.token
+        );
+        if (!verdict.ok) {
+          return Response.json(
+            { error: verdict.message, code: verdict.code },
+            { status: 426, headers: CORS }
+          );
+        }
+      }
       const def = table.get(String(body?.action ?? ""));
       if (!def) {
         return Response.json(
@@ -336,6 +373,13 @@ Bun.serve({
 });
 
 console.log(`[gola] listening on :${PORT}`);
+{
+  const mode = accessMode();
+  const recognized = isAccessModeRecognized();
+  console.log(
+    `[gola] access mode: ${mode}${recognized ? "" : ` (unrecognized GOLA_ACCESS_MODE=${JSON.stringify(process.env.GOLA_ACCESS_MODE)} — failing closed)`}, approved-build enforcement: ${versionEnforcementEnabled() ? "ON" : "off"}`
+  );
+}
 console.log(
   `[gola] moderation: ${
     process.env.GEMINI_API_KEY ? "Gemini configured" : "GEMINI_API_KEY MISSING — writes will fail closed"
