@@ -8,6 +8,37 @@
 // is allowed through until Gemini recovers.
 import { z } from "zod";
 
+// ---------------------------------------------------------------------------
+// M2 hardening: GOLA_TEST_MODERATION is a test-only seam. If it is set
+// WITHOUT an explicit test context, this module throws at import time and
+// the process refuses to start. Rationale: silently running production with
+// ALL kindness moderation disabled is worse than not starting at all —
+// fail closed and loud instead of fail open and silent.
+//
+// Local integration tests opt in explicitly:
+//   GOLA_ENV=test GOLA_TEST_MODERATION=allow bun ...
+//
+// Why not strip it from production bundles instead: the backend runs from
+// source (Docker CMD: `bun src/server.ts`), so there is no bundling step for
+// src/ where a strip could happen. The one prebuilt bundle (dist/actions.js)
+// provably does not contain this seam; the live moderation path is
+// server.ts -> ctx.ts -> this file, so the guard here covers production.
+// ---------------------------------------------------------------------------
+{
+  const stub = process.env.GOLA_TEST_MODERATION;
+  if (
+    (stub === "allow" || stub === "block") &&
+    process.env.GOLA_ENV !== "test"
+  ) {
+    throw new Error(
+      "[gola][moderation] FATAL: GOLA_TEST_MODERATION is set but GOLA_ENV is " +
+        "not 'test'. Refusing to start with kindness moderation disabled. " +
+        "Unset GOLA_TEST_MODERATION, or run with GOLA_ENV=test for local " +
+        "integration testing only."
+    );
+  }
+}
+
 export interface CompleteOptions<T extends z.ZodType> {
   schema: T;
   system?: string;
@@ -80,7 +111,9 @@ export async function complete<T extends z.ZodType>(
 ): Promise<z.infer<T>> {
   // Test-only seam: GOLA_TEST_MODERATION=allow|block bypasses the live model
   // for local integration testing. NEVER set this in production — it disables
-  // real kindness moderation.
+  // real kindness moderation. (M2: importing this module with the seam set
+  // and GOLA_ENV != 'test' throws at startup, so a misconfigured production
+  // deploy fails closed instead of moderating nothing.)
   const stub = process.env.GOLA_TEST_MODERATION;
   if (stub === "allow" || stub === "block") {
     const verdict =
