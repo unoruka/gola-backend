@@ -1427,7 +1427,7 @@ var Actions = {
     if (iss !== "https://accounts.google.com" && iss !== "accounts.google.com" || typeof sub !== "string" || !sub)
       return fail("Google sign-in failed. Please try again.");
     const clientId = process.env.GOOGLE_CLIENT_ID;
-    if (clientId && info?.aud !== clientId)
+    if (!clientId || info?.aud !== clientId)
       return fail("Google sign-in failed. Please try again.");
     const googleEmail = typeof info?.email === "string" ? info.email.toLowerCase() : null;
     const googleEmailVerified = info?.email_verified === true || info?.email_verified === "true";
