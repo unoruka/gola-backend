@@ -42,6 +42,39 @@ const CORS = {
   "access-control-allow-headers": "content-type, x-request-id",
 };
 
+// H3: request-body cap for /actions, enforced BEFORE the body is buffered.
+// 110 MiB = 10 images at the 10 MiB per-image cap (see the actions module)
+// plus JSON headroom. This constant must move together with that per-image
+// cap — a body smaller than the sum of the per-image caps would reject
+// legitimate multi-photo posts.
+export const MAX_BODY_BYTES = 110 * 1024 * 1024;
+
+/** Read the request body as text, throwing if it exceeds `maxBytes`. */
+export async function readCappedBodyText(req: Request, maxBytes: number): Promise<string> {
+  const reader = req.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) throw new Error("body-too-large");
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    merged.set(c, offset);
+    offset += c.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
 function baseUrlOf(req: Request): string {
   const proto =
     req.headers.get("x-forwarded-proto") ??
@@ -235,8 +268,27 @@ Bun.serve({
       req.method === "POST" &&
       (url.pathname === "/actions" || url.pathname === "/actions/")
     ) {      let body: { action?: unknown; args?: unknown };
+      // H3: cheap Content-Length pre-check first, then a bounded streaming
+      // read — a missing or lying header cannot bypass the cap, and the
+      // server never buffers more than MAX_BODY_BYTES for one request.
+      const declaredLength = Number(req.headers.get("content-length"));
+      if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+        return Response.json(
+          { error: "Request too large." },
+          { status: 413, headers: CORS }
+        );
+      }
+      let rawText: string;
       try {
-        body = await req.json();
+        rawText = await readCappedBodyText(req, MAX_BODY_BYTES);
+      } catch {
+        return Response.json(
+          { error: "Request too large." },
+          { status: 413, headers: CORS }
+        );
+      }
+      try {
+        body = JSON.parse(rawText);
       } catch {
         return Response.json(
           { error: "Invalid JSON body" },
